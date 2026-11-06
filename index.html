@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Telegram Web App</title>
+    <!-- Подключаем стили -->
+    <link rel="stylesheet" href="style.css">
+    <!-- КРИТИЧЕСКИ ВАЖНО: Подключаем официальный скрипт Telegram -->
+    <script src="https://telegram.org"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Привет, <span id="user-name">Пользователь</span>!</h1>
+        <p>Это твой первый сайт внутри Telegram-бота.</p>
+        
+        <button id="main-btn">Отправить данные в бот</button>
+    </div>
+
+    <!-- Подключаем логику сайта -->
+    <script src="app.js"></script>
+</body>
+</html>
