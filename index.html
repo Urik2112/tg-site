@@ -40,20 +40,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 </head>
 <body>
 <div id="s-market" class="screen active">
-  <div class="search"><input id="q" placeholder="🔍 Найти авто, дом, скин..."></div>
-  <div class="cats">
-  <button class="cat active" onclick="setCat('all',this)">Все</button>
-  <button class="cat" onclick="setCat('Недвижимость',this)">🏠 Недвижимость</button>
-  <button class="cat" onclick="setCat('Автомобили',this)">🚘 Автомобили</button>
-  <button class="cat" onclick="setCat('Одежда',this)">🧥 Одежда</button>
-  <button class="cat" onclick="setCat('Аксессуары',this)">🎒 Аксессуары</button>
-  <button class="cat" onclick="setCat('Предприятие',this)">🏢 Предприятие</button>
-</div><span>Все</span></div>
-    <div class="cat" onclick="setCat('Недвижка',this)"><div class="cat-i">🏠</div><span>Недвижка</span></div>
-    <div class="cat" onclick="setCat('Авто',this)"><div class="cat-i">🚗</div><span>Авто</span></div>
-    <div class="cat" onclick="setCat('Скины',this)"><div class="cat-i">👕</div><span>Скины</span></div>
-  </div>
-  <div class="filters">
+  <div class="search"><input id="q" placeholder="🔍 Найти авто, дом, одежду..."></div>
+  <div class="cats" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none">
+  <div class="cat active" onclick="setCat('all',this)" style="min-width:74px;flex-shrink:0"><div class="cbox">🌐</div><span>Все</span></div>
+  <div class="cat" onclick="setCat('Недвижимость',this)" style="min-width:86px;flex-shrink:0"><div class="cbox">🏠</div><span>Недвижимость</span></div>
+  <div class="cat" onclick="setCat('Автомобили',this)" style="min-width:82px;flex-shrink:0"><div class="cbox">🚘</div><span>Автомобили</span></div>
+  <div class="cat" onclick="setCat('Одежда',this)" style="min-width:74px;flex-shrink:0"><div class="cbox">🧥</div><span>Одежда</span></div>
+  <div class="cat" onclick="setCat('Аксессуары',this)" style="min-width:82px;flex-shrink:0"><div class="cbox">🎒</div><span>Аксессуары</span></div>
+  <div class="cat" onclick="setCat('Предприятие',this)" style="min-width:86px;flex-shrink:0"><div class="cbox">🏢</div><span>Предприятие</span></div>
+</div>
+<div class="filters">
     <div class="pills">
       <button class="pill active" onclick="setType('all',this)">Все</button>
       <button class="pill" onclick="setType('Продам',this)">Продажа</button>
