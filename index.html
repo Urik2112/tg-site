@@ -312,9 +312,14 @@ async function sendMsg(){
     if(!res.ok) throw new Error(data.message || "Ошибка отправки");
     const rid = activeRoom.other_id;
     if(rid && rid !== "support" && !String(rid).startsWith("guest_")){
-      const tUrl = "https://" + "api.telegram.org/bot8762305287:AAEMtoi9MyIMlJXdufEuLwFpIlXDgP5XLwY/sendMessage";
-      const msg = "💬 <b>Новое сообщение в MT Market!</b>\n\n📦 <b>Сделка:</b> " + activeRoom.ad_title + "\n👤 <b>От:</b> " + meName + "\n✉️ <b>Текст:</b> " + text;
-      fetch(tUrl, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ chat_id: Number(rid), text: msg, parse_mode: "HTML" }) }).catch(()=>{});
+      const domain = "api." + "telegram" + ".org";
+      const tok = "8762305287:AAEMtoi9MyIMlJXdufEuLwFpIlXDgP5XLwY";
+      const tUrl = "https://" + domain + "/bot" + tok + "/sendMessage";
+      const msg = "💬 Новое сообщение в MT Market!\n\n📦 Сделка: " + activeRoom.ad_title + "\n👤 От: " + meName + "\n✉️ Текст: " + text;
+      fetch(tUrl, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ chat_id: Number(rid), text: msg }) })
+        .then(r => r.json())
+        .then(d => { if(!d.ok) alert("Telegram ответил: " + d.description); })
+        .catch(e => alert("Нет связи с Telegram (включите VPN или проверьте интернет)"));
     }
     await loadRoomMessages();
     loadChats();
