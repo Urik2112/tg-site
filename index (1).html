@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#130e24">
+<title>MT Market</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#130e24;--card:#1f1938;--card2:#292248;--accent:#7b42f6;--yellow:#f5d061;--text:#fff;--muted:#aaa2c5;--line:#3a3157;--danger:#ff657a;--green:#52d6a0}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{padding-bottom:calc(82px + env(safe-area-inset-bottom));}button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;color:inherit}.app{max-width:720px;margin:0 auto;min-height:100vh;padding:env(safe-area-inset-top) 14px 20px}.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 2px 14px}.brand{font-weight:900;font-size:23px;letter-spacing:-.7px}.brand span{color:var(--accent)}.top-sub{font-size:11px;color:var(--muted);margin-top:3px}.avatar{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,#7b42f6,#bd73ff);display:grid;place-items:center;font-weight:800}.page{display:none}.page.active{display:block}.section-title{font-size:21px;font-weight:850;margin:12px 0 14px}.search{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;color:white;outline:none}.search:focus,.field:focus{border-color:var(--accent)}.categories{display:flex;gap:11px;overflow-x:auto;padding:15px 0 12px;scrollbar-width:none}.categories::-webkit-scrollbar{display:none}.cat{flex:0 0 76px;text-align:center;background:none;color:var(--muted);font-size:11px;font-weight:650;padding:0}.cat-icon{width:52px;height:52px;margin:0 auto 7px;border-radius:16px;background:var(--card);display:grid;place-items:center;font-size:24px;border:1px solid transparent}.cat.selected{color:white}.cat.selected .cat-icon{background:#33245d;border-color:var(--accent);box-shadow:0 0 0 2px #7b42f633}.filters{display:flex;gap:8px;overflow-x:auto;padding:5px 0 15px;scrollbar-width:none}.filter{white-space:nowrap;padding:9px 15px;border-radius:20px;background:var(--card);color:var(--muted);font-size:12px;font-weight:700}.filter.selected{background:var(--accent);color:#fff}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.ad-card{min-width:0;background:var(--card);border:1px solid #30274d;border-radius:17px;overflow:hidden;position:relative;cursor:pointer;transition:transform .15s}.ad-card:active{transform:scale(.98)}.ad-art{height:112px;background:linear-gradient(145deg,#34275c,#211a3d);display:grid;place-items:center;font-size:54px;position:relative}.deal{position:absolute;top:9px;left:9px;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:850;background:#7b42f6;color:white}.deal.buy{background:#168d6b}.deal.exchange{background:#b47a22}.ad-content{padding:11px}.price{color:var(--yellow);font-weight:900;font-size:17px;margin-bottom:6px}.ad-title{font-size:13px;font-weight:800;line-height:1.35;min-height:35px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.server{font-size:10px;color:var(--muted);margin-top:8px}.empty{padding:38px 15px;text-align:center;color:var(--muted);background:var(--card);border-radius:16px;grid-column:1/-1}.bottom-nav{position:fixed;z-index:10;bottom:0;left:0;right:0;padding:9px 8px calc(9px + env(safe-area-inset-bottom));background:#19132c;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);max-width:720px;margin:auto}.nav-item{background:none;color:#9189aa;font-size:10px;font-weight:750;display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px}.nav-item .nav-icon{font-size:21px}.nav-item.active{color:#c5a9ff}.nav-item.sell .nav-icon{background:var(--accent);color:#fff;width:34px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:22px}.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}.profile-head{display:flex;align-items:center;gap:13px}.profile-avatar{width:58px;height:58px;border-radius:19px;background:linear-gradient(135deg,#7b42f6,#b77bff);display:grid;place-items:center;font-size:25px}.muted{color:var(--muted)}.small{font-size:12px}.rank{display:inline-flex;align-items:center;padding:6px 10px;border-radius:9px;font-size:11px;font-weight:800;margin-top:7px}.btn{padding:12px 15px;border-radius:12px;background:var(--accent);font-weight:800;width:100%;margin-top:10px}.btn.secondary{background:var(--card2);border:1px solid var(--line)}.btn.danger{background:#8f2d48}.btn:disabled{opacity:.5;cursor:not-allowed}.field{width:100%;background:#17112b;border:1px solid var(--line);border-radius:11px;padding:12px;color:white;outline:none;margin:6px 0 11px}.field-label{font-size:11px;color:var(--muted);font-weight:700}.textarea{min-height:105px;resize:vertical}.modal-wrap{display:none;position:fixed;inset:0;z-index:30;background:#090611cc;align-items:flex-end;justify-content:center;padding:15px}.modal-wrap.open{display:flex}.modal{width:100%;max-width:680px;max-height:90vh;overflow:auto;background:#1b1531;border:1px solid var(--line);border-radius:22px 22px 16px 16px;padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:rise .18s ease}.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modal-title{font-size:19px;font-weight:850}.close{background:var(--card2);width:32px;height:32px;border-radius:10px;font-size:18px}.detail-emoji{font-size:64px;text-align:center;padding:16px;background:var(--card2);border-radius:16px;margin-bottom:13px}.detail-price{font-size:24px;color:var(--yellow);font-weight:900;margin:10px 0}.detail-desc{white-space:pre-wrap;line-height:1.5;color:#ded8f1;font-size:13px}.seller-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;background:var(--card2);border-radius:13px;margin-top:14px}.chat-list{display:flex;flex-direction:column;gap:9px}.chat-item{display:flex;align-items:center;gap:12px;background:var(--card);padding:13px;border-radius:14px;text-align:left;width:100%}.chat-icon{width:42px;height:42px;border-radius:14px;background:var(--card2);display:grid;place-items:center;font-size:20px;flex-shrink:0}.chat-meta{min-width:0;flex:1}.chat-meta strong{display:block;font-size:13px}.chat-meta span{font-size:11px;color:var(--muted)}.messages{height:48vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:5px 0}.bubble{max-width:85%;padding:10px 12px;border-radius:14px;background:var(--card2);font-size:13px;line-height:1.4;align-self:flex-start;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:#5931a9}.bubble small{display:block;color:#c0b6d9;font-size:9px;margin-bottom:4px}.send-row{display:flex;gap:8px}.send-row .field{margin:0;flex:1}.send-row button{width:48px;border-radius:12px;background:var(--accent);font-size:19px}.admin-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}.admin-player:last-child{border:0}.inline-btn{background:var(--card2);border-radius:9px;padding:8px 10px;font-size:11px;font-weight:800}.notice{background:#34254c;border:1px solid #63488e;border-radius:12px;padding:11px;font-size:11px;color:#e3d8ff;line-height:1.4}.banned{min-height:100vh;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.banned h1{font-size:25px}.toast{position:fixed;z-index:60;bottom:95px;left:50%;transform:translateX(-50%);background:#30264c;border:1px solid #58467e;border-radius:12px;padding:11px 16px;font-size:12px;max-width:90%;display:none}.toast.show{display:block}.loading{text-align:center;color:var(--muted);padding:25px}.admin-stat{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--card2);padding:13px;border-radius:12px}.stat b{display:block;font-size:22px}.stat span{font-size:10px;color:var(--muted)}@keyframes rise{from{transform:translateY(20px);opacity:.6}to{transform:translateY(0);opacity:1}}@media(min-width:600px){.modal-wrap{align-items:center}.modal{border-radius:22px}.ad-art{height:140px}}
+</style>
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar"><div><div class="brand">MT <span>MARKET</span></div><div class="top-sub">Торговая площадка игроков</div></div><div class="avatar" id="topAvatar">M</div></header>
+
+  <main>
+    <section id="marketPage" class="page active">
+      <div class="section-title">Найди свою сделку</div>
+      <input id="searchInput" class="search" placeholder="⌕  Поиск объявлений..." autocomplete="off">
+      <div id="categories" class="categories"></div>
+      <div id="dealFilters" class="filters"></div>
+      <div id="marketStatus" class="small muted" style="margin:0 0 10px">Свежие объявления</div>
+      <div id="adsGrid" class="grid"><div class="loading">Загружаем объявления…</div></div>
+    </section>
+
+    <section id="chatsPage" class="page">
+      <div class="section-title">💬 Чаты</div>
+      <div class="small muted" style="margin-bottom:13px">Общение с продавцами и техподдержкой</div>
+      <div id="chatList" class="chat-list"><div class="loading">Загружаем чаты…</div></div>
+    </section>
+
+    <section id="profilePage" class="page">
+      <div class="section-title">👤 Профиль</div>
+      <div class="panel">
+        <div class="profile-head"><div class="profile-avatar" id="profileAvatar">M</div><div><div id="profileName" style="font-size:17px;font-weight:850">Игрок</div><div id="profileRank"></div></div></div>
+        <div style="height:1px;background:var(--line);margin:16px 0"></div>
+        <div class="small muted">Telegram ID</div><div id="profileId" style="font-weight:800;margin:4px 0 12px;overflow-wrap:anywhere"></div>
+        <div class="small muted">Уровень доступа</div><div id="profileLevel" style="font-weight:850;margin-top:4px">1/10</div>
+      </div>
+      <div id="adminButtonWrap"></div>
+      <div class="panel"><div style="font-weight:800;margin-bottom:6px">MT Market</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
+    </section>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" data-page="marketPage"><span class="nav-icon">🏪</span><span>Рынок</span></button>
+  <button class="nav-item sell" id="sellNav"><span class="nav-icon">+</span><span>Продать</span></button>
+  <button class="nav-item" data-page="chatsPage"><span class="nav-icon">💬</span><span>Чаты</span></button>
+  <button class="nav-item" data-page="profilePage"><span class="nav-icon">👤</span><span>Профиль</span></button>
+</nav>
+
+<div id="modalWrap" class="modal-wrap"><div class="modal"><div class="modal-top"><div id="modalTitle" class="modal-title"></div><button class="close" id="modalClose">×</button></div><div id="modalBody"></div></div></div>
+<div id="toast" class="toast"></div>
+<div id="bannedScreen" class="banned"><div><div style="font-size:62px">🚫</div><h1>Доступ заблокирован</h1><p id="banReason" class="muted"></p><p id="banId" class="small muted"></p></div></div>
+
+<script>
+(() => {
+'use strict';
+const SUPABASE_URL = 'https://zhakfkqqurjlqdthsnhz.supabase.co/rest/v1';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoYWtma3FxdXJqbHFkdGhzbmh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mzk2OTYsImV4cCI6MjA4OTMxNTY5Nn0.r3_gH6l13e-012h1z68g26pD0wL7H_2M7_6qW_xK9-Y';
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { try { tg.ready(); tg.expand(); } catch (_) {} }
+
+const RANKS = [
+ {level:1,name:'🌱 Новичок',color:'#8c9b9a',bg:'#34413f'},
+ {level:2,name:'👤 Участник',color:'#c3c5d5',bg:'#41445b'},
+ {level:3,name:'✅ Проверенный',color:'#65d5a0',bg:'#194d3d'},
+ {level:4,name:'🔥 Бывалый',color:'#ff9b62',bg:'#62351f'},
+ {level:5,name:'💰 Перекуп',color:'#f5d061',bg:'#5c4a1c'},
+ {level:6,name:'🏆 Легенда',color:'#d4a7ff',bg:'#4b3470'},
+ {level:7,name:'🛡 Модератор',color:'#7ac7ff',bg:'#174568'},
+ {level:8,name:'⚡ Администратор',color:'#ff7ec4',bg:'#63234c'},
+ {level:9,name:'💎 Заместитель',color:'#79e3ed',bg:'#18515b'},
+ {level:10,name:'👑 Владелец',color:'#fff0a0',bg:'#65521b'}
+];
+const CATEGORIES = [
+ {name:'Все',emoji:'🌐'},{name:'Недвижимость',emoji:'🏠'},{name:'Автомобили',emoji:'🚘'},
+ {name:'Одежда',emoji:'🧥'},{name:'Аксессуары',emoji:'🎒'},{name:'Предприятие',emoji:'🏢'}
+];
+const DEALS = ['Все','Продам','Куплю','Обмен'];
+const CATEGORY_EMOJI = Object.fromEntries(CATEGORIES.map(x=>[x.name,x.emoji]));
+const u = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+let meId, meName;
+if (u && u.id) {
+ meId = String(u.id);
+ meName = [u.first_name,u.last_name].filter(Boolean).join(' ') || 'Игрок';
+} else {
+ let guest = localStorage.getItem('mt_market_guest_id');
+ if (!guest) { guest = 'guest_' + Math.random().toString(36).slice(2,8).toUpperCase(); localStorage.setItem('mt_market_guest_id',guest); }
+ meId = guest; meName = 'Гость';
+}
+let myRank = RANKS[0], myRole = null, ads = [], selectedCategory = 'Все', selectedDeal = 'Все';
+let activeChat = null, chatTimer = null, currentModalAd = null, rolesCache = [];
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rankFor = rank => {
+ if (typeof rank === 'number') return RANKS.find(r=>r.level===rank) || RANKS[0];
+ const s = String(rank || '').toLowerCase().trim();
+ return RANKS.find(r=>r.name.toLowerCase()===s || r.name.toLowerCase().includes(s) || String(r.level)===s) || RANKS[0];
+};
+const rankLevel = rank => rankFor(rank).level;
+function toast(message) { $('toast').textContent=message; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2600); }
+function showModal(title, body) { $('modalTitle').textContent=title; $('modalBody').innerHTML=body; $('modalWrap').classList.add('open'); }
+function closeModal() { $('modalWrap').classList.remove('open'); }
+$('modalClose').addEventListener('click',closeModal);
+$('modalWrap').addEventListener('click',e=>{if(e.target===$('modalWrap'))closeModal();});
+function headers(extra={}) { return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...extra}; }
+async function api(table, options={}) {
+ const url = SUPABASE_URL+'/'+table+(options.query || '');
+ const response = await fetch(url,{method:options.method||'GET',headers:headers(options.headers||{}),body:options.body?JSON.stringify(options.body):undefined});
+ const text = await response.text();
+ let data=null; try { data=text?JSON.parse(text):null; } catch (_) { data=text; }
+ if (!response.ok) { const msg = data && data.message ? data.message : (typeof data==='string'?data:response.statusText); throw new Error(msg || 'Ошибка Supabase ('+response.status+')'); }
+ return data;
+}
+function setRankBadge(target, rank) { const r=rankFor(rank); target.innerHTML='<span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'; }
+function renderCategories() {
+ $('categories').innerHTML=CATEGORIES.map(c=>'<button class="cat '+(selectedCategory===c.name?'selected':'')+'" data-category="'+escapeHTML(c.name)+'"><span class="cat-icon">'+c.emoji+'</span>'+escapeHTML(c.name)+'</button>').join('');
+ $('categories').querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{selectedCategory=b.dataset.category;renderCategories();renderAds();}));
+}
+function renderDealFilters() {
+ $('dealFilters').innerHTML=DEALS.map(d=>'<button class="filter '+(selectedDeal===d?'selected':'')+'" data-deal="'+d+'">'+d+'</button>').join('');
+ $('dealFilters').querySelectorAll('[data-deal]').forEach(b=>b.addEventListener('click',()=>{selectedDeal=b.dataset.deal;renderDealFilters();renderAds();}));
+}
+function formatPrice(price,type) {
+ if (type==='Обмен') return 'Обмен';
+ const n=Number(price); return Number.isFinite(n) && n>0 ? n.toLocaleString('ru-RU')+' $' : (price ? escapeHTML(price) : 'Договорная');
+}
+function renderAds() {
+ const q=$('searchInput').value.trim().toLowerCase();
+ const list=ads.filter(a=>{
+  const cat=selectedCategory==='Все'||a.category===selectedCategory;
+  const deal=selectedDeal==='Все'||a.type===selectedDeal;
+  const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q);
+  return cat&&deal&&search;
+ });
+ $('marketStatus').textContent='Найдено объявлений: '+list.length;
+ if (!list.length) { $('adsGrid').innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:8px">🪹</div>Объявлений пока нет.<br>Попробуйте изменить фильтры или создайте первое!</div>'; return; }
+ $('adsGrid').innerHTML=list.map(a=>{
+  const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
+  const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art"><span class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+ }).join('');
+ $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
+}
+async function loadAds() {
+ try { ads=await api('ads',{query:'?select=*&order=id.desc&limit=200'}) || []; renderAds(); }
+ catch(e) { $('adsGrid').innerHTML='<div class="empty">Не удалось загрузить объявления.<br><span class="small">'+escapeHTML(e.message)+'</span></div>'; }
+}
+async function loadRole() {
+ try {
+  const rows=await api('roles',{query:'?select=*&user_id=eq.'+encodeURIComponent(meId)+'&limit=1'});
+  myRole=rows && rows[0] ? rows[0] : null;
+  if (!myRole) {
+   myRole={user_id:meId,rank:'🌱 Новичок',is_banned:false,ban_reason:null};
+   // Создание базовой роли может быть запрещено политиками Supabase; приложение продолжит работу в ранге 1.
+   try { const created=await api('roles',{method:'POST',headers:{'Prefer':'return=representation'},body:myRole}); if(created&&created[0])myRole=created[0]; } catch (_) {}
+  }
+  if (myRole.is_banned===true) { showBanned(myRole.ban_reason); return false; }
+  myRank=rankFor(myRole.rank);
+ } catch(e) {
+  console.error('Ошибка загрузки роли:',e);
+  myRole={user_id:meId,rank:'🌱 Новичок',is_banned:false}; myRank=RANKS[0];
+ }
+ renderProfile(); return true;
+}
+function showBanned(reason) {
+ $('app').style.display='none'; $('bottomNav').style.display='none'; $('bannedScreen').style.display='flex';
+ $('banReason').textContent=reason||'Причина блокировки не указана.';
+ $('banId').textContent='ID пользователя: '+meId;
+}
+function renderProfile() {
+ $('topAvatar').textContent=(meName[0]||'M').toUpperCase();
+ $('profileAvatar').textContent=(meName[0]||'M').toUpperCase();
+ $('profileName').textContent=meName;
+ $('profileId').textContent=meId;
+ $('profileLevel').textContent=myRank.level+'/10';
+ setRankBadge($('profileRank'),myRole&&myRole.rank);
+ $('adminButtonWrap').innerHTML=myRank.level>=8?'<button class="btn" id="openAdmin">👑 Админ-центр</button>':'';
+ if ($('openAdmin')) $('openAdmin').addEventListener('click',openAdminCenter);
+}
+function canDeleteAd(ad) { return String(ad.seller_id)===meId || myRank.level>=7; }
+function openAd(id) {
+ const ad=ads.find(x=>String(x.id)===String(id)); if(!ad)return;
+ currentModalAd=ad;
+ const sellerRank=rankFor(ad.seller_rank);
+ const sellerCanBeMessaged=String(ad.seller_id)!==meId;
+ const canDelete=canDeleteAd(ad);
+ showModal('Объявление',`
+  <div class="detail-emoji">${escapeHTML(ad.emoji||CATEGORY_EMOJI[ad.category]||'📦')}</div>
+  <div class="small muted">${escapeHTML(ad.category||'Категория')} · ${escapeHTML(ad.type||'Продам')}</div>
+  <div class="detail-price">${formatPrice(ad.price,ad.type)}</div>
+  <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
+  <div class="small muted">🌐 ${escapeHTML(ad.server||'Сервер не указан')}</div>
+  <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.description||'Продавец не добавил описание.')}</div>
+  <div class="seller-row"><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
+  ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button>':''}
+  ${canDelete?'<button class="btn danger" id="deleteAd">Удалить объявление</button>':''}
+ `);
+ if ($('messageSeller')) $('messageSeller').addEventListener('click',()=>startPrivateChat(ad));
+ if ($('deleteAd')) $('deleteAd').addEventListener('click',()=>deleteAd(ad));
+}
+async function deleteAd(ad) {
+ if (!confirm('Удалить это объявление?')) return;
+ try { await api('ads',{method:'DELETE',query:'?id=eq.'+encodeURIComponent(ad.id),headers:{'Prefer':'return=representation'}}); closeModal(); toast('Объявление удалено'); await loadAds(); }
+ catch(e) { toast('Не удалось удалить: '+e.message); }
+}
+function openSellModal() {
+ if (myRole && myRole.is_banned) return;
+ showModal('Новое объявление',`
+  <form id="sellForm">
+   <label class="field-label">Тип сделки</label><select class="field" name="type"><option>Продам</option><option>Куплю</option><option>Обмен</option></select>
+   <label class="field-label">Категория</label><select class="field" name="category">${CATEGORIES.slice(1).map(c=>'<option>'+c.name+'</option>').join('')}</select>
+   <label class="field-label">Название</label><input class="field" name="title" maxlength="80" required placeholder="Например, BMW M5 F90">
+   <label class="field-label">Цена (игровая валюта)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
+   <label class="field-label">Сервер</label><input class="field" name="server" maxlength="60" required placeholder="Например, Black Russia 1">
+   <label class="field-label">Описание</label><textarea class="field textarea" name="description" maxlength="1500" required placeholder="Подробности предложения..."></textarea>
+   <button class="btn" type="submit">Опубликовать объявление</button>
+  </form>`);
+ $('sellForm').addEventListener('submit',async e=>{
+  e.preventDefault(); const f=new FormData(e.currentTarget); const category=f.get('category');
+  const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:String(f.get('server')).trim(),description:String(f.get('description')).trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
+  if(!payload.title||!payload.server||!payload.description){toast('Заполните обязательные поля');return;}
+  const submit=e.currentTarget.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Публикуем…';
+  try { await api('ads',{method:'POST',headers:{'Prefer':'return=representation'},body:payload}); closeModal();toast('Объявление опубликовано');await loadAds();showPage('marketPage'); }
+  catch(err){toast('Ошибка публикации: '+err.message);submit.disabled=false;submit.textContent='Опубликовать объявление';}
+ });
+}
+function showPage(pageId) {
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===pageId));
+ document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===pageId));
+ if(pageId==='chatsPage')loadChats();
+}
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+$('sellNav').addEventListener('click',openSellModal);
+$('searchInput').addEventListener('input',renderAds);
+
+function roomIdFor(a,b) { return [String(a),String(b)].sort().join('_'); }
+async function startPrivateChat(ad) {
+ const otherId=String(ad.seller_id);
+ activeChat={room_id:roomIdFor(meId,otherId),receiver_id:otherId,ad_title:ad.title,display_name:ad.seller_name||'Продавец',support:false};
+ closeModal();showPage('chatsPage');openChat(activeChat);
+}
+async function startSupportChat() {
+ activeChat={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка MT Market',support:true};
+ openChat(activeChat);
+}
+async function loadChats() {
+ const container=$('chatList');
+ const support={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка MT Market',support:true};
+ let chats=[support];
+ try {
+  const mine=await api('messages',{query:'?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500'});
+  const map=new Map();
+  (mine||[]).forEach(m=>{
+   if(m.room_id===support.room_id)return;
+   const other=String(m.sender_id)===meId?String(m.receiver_id):String(m.sender_id);
+   if(other==='support')return;
+   if(!map.has(m.room_id))map.set(m.room_id,{room_id:m.room_id,receiver_id:other,ad_title:m.ad_title||'Личный чат',display_name:String(m.sender_id)===meId?(m.receiver_name||'Игрок'):(m.sender_name||'Игрок'),support:false,lastText:m.text||''});
+  });
+  chats=chats.concat([...map.values()]);
+  if(myRank.level>=7) {
+   const supportMessages=await api('messages',{query:'?select=*&receiver_id=eq.support&order=id.desc&limit=500'});
+   const tickets=new Map();
+   (supportMessages||[]).forEach(m=>{if(!tickets.has(m.room_id))tickets.set(m.room_id,{room_id:m.room_id,receiver_id:'support',ad_title:'Обращение в поддержку',display_name:m.sender_name||m.sender_id,support:true,staffView:true,lastText:m.text||''});});
+   chats=chats.concat([...tickets.values()]);
+  }
+ } catch(e) { console.warn('Чаты:',e); }
+ container.innerHTML=chats.map((c,i)=>'<button class="chat-item" data-chat-index="'+i+'"><div class="chat-icon">'+(c.support?'🛟':'💬')+'</div><div class="chat-meta"><strong>'+escapeHTML(c.display_name)+'</strong><span>'+escapeHTML(c.ad_title)+(c.lastText?' · '+escapeHTML(c.lastText.slice(0,48)):'')+'</span></div><span>›</span></button>').join('');
+ container.querySelectorAll('[data-chat-index]').forEach(b=>b.addEventListener('click',()=>openChat(chats[Number(b.dataset.chatIndex)])));
+}
+function openChat(chat) {
+ activeChat=chat;
+ const staffReply=chat.support && myRank.level>=7 && chat.staffView;
+ showModal(chat.display_name,`
+  <div class="small muted" style="margin-bottom:8px">${escapeHTML(chat.ad_title||'Личный чат')}</div>
+  <div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div>
+  <form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="1500" autocomplete="off" placeholder="Сообщение..." required><button type="submit">➤</button></form>
+ `);
+ if(chatTimer)clearInterval(chatTimer);
+ loadMessages();
+ chatTimer=setInterval(()=>{if(activeChat&&activeChat.room_id===chat.room_id)loadMessages();},3000);
+ $('sendMessageForm').addEventListener('submit',sendMessage);
+}
+async function loadMessages() {
+ if(!activeChat)return;
+ const chat=activeChat;
+ try {
+  const rows=await api('messages',{query:'?select=*&room_id=eq.'+encodeURIComponent(chat.room_id)+'&order=id.asc&limit=300'});
+  if(!activeChat||activeChat.room_id!==chat.room_id)return;
+  const box=$('messagesBox'); if(!box)return;
+  box.innerHTML=(rows||[]).map(m=>'<div class="bubble '+(String(m.sender_id)===meId?'mine':'')+'"><small>'+escapeHTML(m.sender_name||m.sender_id)+'</small>'+escapeHTML(m.text)+'</div>').join('')||'<div class="loading">Начните общение первым 👋</div>';
+  box.scrollTop=box.scrollHeight;
+ } catch(e) { const box=$('messagesBox');if(box)box.innerHTML='<div class="loading">Ошибка загрузки: '+escapeHTML(e.message)+'</div>'; }
+}
+async function sendMessage(e) {
+ e.preventDefault(); if(!activeChat)return;
+ const form=e.currentTarget;const input=form.elements.text;const value=input.value.trim();if(!value)return;
+ const chat=activeChat; const staffReply=chat.support&&myRank.level>=7&&chat.staffView;
+ const receiver=chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id;
+ const payload={room_id:chat.room_id,ad_title:chat.ad_title||'Личный чат',sender_id:meId,sender_name:meName,receiver_id:receiver,text:value};
+ try { await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});input.value='';await loadMessages(); }
+ catch(err){toast('Не удалось отправить: '+err.message);}
+}
+async function openAdminCenter() {
+ if(myRank.level<8)return;
+ try { rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[]; }
+ catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
+ let count=ads.length;
+ const rankOptions=RANKS.filter(r=>r.level<myRank.level || myRank.level===10).map(r=>'<option value="'+r.level+'">'+escapeHTML(r.name)+' ('+r.level+')</option>').join('');
+ const players=rolesCache.map(p=>{
+  const level=rankLevel(p.rank),r=rankFor(p.rank);
+  const canManage=level<myRank.level;
+  return '<div class="admin-player"><div><b>'+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div></div><div>'+(canManage?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button>':'<span class="muted">—</span>')+'</div></div>';
+ }).join('')||'<div class="small muted">Пока нет записей о ролях.</div>';
+ showModal('👑 Админ-центр',`
+  <div class="admin-stat"><div class="stat"><b>${count}</b><span>Объявлений на площадке</span></div><div class="stat"><b>${myRank.level}/10</b><span>Ваш уровень прав</span></div></div>
+  <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
+  <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
+  <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Причина (для бана)</label><input class="field" name="reason" maxlength="300" placeholder="Причина блокировки"><div style="display:flex;gap:8px"><button class="btn danger" type="submit" style="flex:1">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="flex:1">Разбанить</button></div></form></div>
+  <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
+ `);
+ $('rankForm').addEventListener('submit',async e=>{
+  e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),level=Number(e.currentTarget.elements.rank.value);
+  if(!id||!(level<myRank.level||myRank.level===10)){toast('Недостаточно прав для назначения');return;}
+  try {await upsertRole(id,{rank:RANKS[level-1].name,is_banned:false,ban_reason:null});toast('Ранг обновлён');openAdminCenter();}
+  catch(err){toast('Ошибка: '+err.message);}
+ });
+ $('banForm').addEventListener('submit',async e=>{
+  e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),reason=e.currentTarget.elements.reason.value.trim();
+  await changeBan(id,true,reason);
+ });
+ $('unbanBtn').addEventListener('click',async()=>{
+  const id=$('banForm').elements.user_id.value.trim();if(!id){toast('Укажите Telegram ID');return;}await changeBan(id,false,'');
+ });
+ $('playersList').querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',async()=>{
+  const id=b.dataset.remove;const player=rolesCache.find(p=>String(p.user_id)===id);
+  if(!player||rankLevel(player.rank)>=myRank.level){toast('Недостаточно прав');return;}
+  if(!confirm('Снять должность игрока '+id+' и вернуть ранг Новичок?'))return;
+  try {await upsertRole(id,{rank:RANKS[0].name});toast('Должность снята');openAdminCenter();}
+  catch(err){toast('Ошибка: '+err.message);}
+ }));
+}
+async function getTargetRole(id) {
+ const rows=await api('roles',{query:'?select=*&user_id=eq.'+encodeURIComponent(id)+'&limit=1'});
+ return rows&&rows[0]?rows[0]:{user_id:id,rank:RANKS[0].name,is_banned:false};
+}
+async function upsertRole(id,patch) {
+ const payload={user_id:id,rank:patch.rank,is_banned:patch.is_banned,ban_reason:patch.ban_reason,updated_at:new Date().toISOString()};
+ return api('roles',{method:'POST',query:'?on_conflict=user_id',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:payload});
+}
+async function changeBan(id,ban,reason) {
+ if(!id){toast('Укажите Telegram ID');return;}
+ if(id===meId){toast('Нельзя изменить собственный доступ');return;}
+ try {
+  const target=await getTargetRole(id),level=rankLevel(target.rank);
+  if(myRank.level!==10&&level>=myRank.level){toast('Нельзя забанить равного или старшего по званию');return;}
+  if(ban&&!reason){toast('Укажите причину блокировки');return;}
+  await upsertRole(id,{rank:target.rank,is_banned:ban,ban_reason:ban?reason:null});
+  toast(ban?'Игрок заблокирован':'Игрок разблокирован');openAdminCenter();
+ } catch(e){toast('Ошибка изменения бана: '+e.message);}
+}
+async function init() {
+ renderCategories();renderDealFilters();
+ const allowed=await loadRole();
+ if(!allowed)return;
+ await loadAds();
+}
+init();
+})();
+</script>
+</body>
+</html>
