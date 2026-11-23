@@ -42,7 +42,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <div id="s-market" class="screen active">
   <div class="search"><input id="q" placeholder="🔍 Найти авто, дом, скин..."></div>
   <div class="cats">
-    <div class="cat active" onclick="setCat('all',this)"><div class="cat-i">⊞</div><span>Все</span></div>
+  <button class="cat active" onclick="setCat('all',this)">Все</button>
+  <button class="cat" onclick="setCat('Недвижимость',this)">🏠 Недвижимость</button>
+  <button class="cat" onclick="setCat('Автомобили',this)">🚘 Автомобили</button>
+  <button class="cat" onclick="setCat('Одежда',this)">🧥 Одежда</button>
+  <button class="cat" onclick="setCat('Аксессуары',this)">🎒 Аксессуары</button>
+  <button class="cat" onclick="setCat('Предприятие',this)">🏢 Предприятие</button>
+</div><span>Все</span></div>
     <div class="cat" onclick="setCat('Недвижка',this)"><div class="cat-i">🏠</div><span>Недвижка</span></div>
     <div class="cat" onclick="setCat('Авто',this)"><div class="cat-i">🚗</div><span>Авто</span></div>
     <div class="cat" onclick="setCat('Скины',this)"><div class="cat-i">👕</div><span>Скины</span></div>
@@ -207,7 +213,7 @@ async function publish(){
   btn.disabled = true; btn.innerText = "Публикация...";
 
   try {
-    const icons = {"Авто":"🚘","Скины":"🧥","Недвижка":"🏠"};
+    const icons = {"Недвижимость":"🏠","Автомобили":"🚘","Одежда":"🧥","Аксессуары":"🎒","Предприятие":"🏢"};
     const res = await fetch(ADS_URL, {
       method: "POST",
       headers: HEADERS,
