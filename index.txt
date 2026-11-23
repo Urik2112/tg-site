@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MT Market</title>
+  <script src="https://telegram.org"></script>
+  <style>
+    :root { --bg:#130e24; --card:#1f1938; --card2:#292248; --acc:#7b42f6; --txt:#fff; --mut:#a49ec2; }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+    body { background:var(--bg); color:var(--txt); padding-bottom:84px; -webkit-tap-highlight-color:transparent; }
+    header { padding:16px 16px 10px; }
+    .search { width:100%; background:var(--card); border:1px solid #312854; border-radius:14px; padding:12px 14px; color:#fff; font-size:15px; outline:none; }
+    .cats { display:flex; gap:10px; overflow-x:auto; padding:6px 16px 12px; scrollbar-width:none; }
+    .cats::-webkit-scrollbar { display:none; }
+    .cat { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--mut); min-width:78px; flex-shrink:0; }
+    .cbox { width:56px; height:56px; background:var(--card); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:24px; border:2px solid transparent; transition:.2s; }
+    .cat.active .cbox { border-color:var(--acc); background:var(--card2); }
+    .cat.active { color:#fff; font-weight:600; }
+    .filters { display:flex; gap:8px; padding:0 16px 14px; overflow-x:auto; }
+    .chip { background:var(--card); border:none; color:var(--mut); padding:8px 14px; border-radius:20px; font-size:13px; cursor:pointer; white-space:nowrap; }
+    .chip.active { background:var(--acc); color:#fff; font-weight:600; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px; }
+    .card { background:var(--card); border-radius:18px; overflow:hidden; display:flex; flex-direction:column; cursor:pointer; }
+    .thumb { height:120px; background:linear-gradient(135deg,#2d2452,#4a2c82); display:flex; align-items:center; justify-content:center; font-size:44px; position:relative; }
+    .tag { position:absolute; top:8px; left:8px; background:rgba(19,14,36,.75); padding:4px 8px; border-radius:8px; font-size:11px; font-weight:600; }
+    .cbody { padding:10px 12px 12px; display:flex; flex-direction:column; gap:4px; flex:1; }
+    .price { font-size:16px; font-weight:700; color:#f5d061; }
+    .title { font-size:13px; font-weight:500; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .meta { font-size:11px; color:var(--mut); margin-top:auto; padding-top:4px; }
+    .nav { position:fixed; bottom:0; left:0; right:0; height:68px; background:#18122e; border-top:1px solid #2b234d; display:flex; justify-content:space-around; align-items:center; z-index:20; }
+    .nbtn { background:none; border:none; color:var(--mut); display:flex; flex-direction:column; align-items:center; gap:3px; font-size:11px; cursor:pointer; }
+    .nbtn.active { color:#fff; }
+    .add { width:44px; height:44px; border-radius:15px; background:var(--acc); color:#fff; font-size:24px; display:flex; align-items:center; justify-content:center; margin-top:-12px; }
+    .sec { display:none; padding:16px; }
+    .sec.active { display:block; }
+    .modal { position:fixed; inset:0; background:var(--bg); z-index:50; display:none; flex-direction:column; padding:16px; overflow-y:auto; }
+    .modal.open { display:flex; }
+    .mhead { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .xbtn { background:var(--card); border:none; color:#fff; width:36px; height:36px; border-radius:12px; font-size:18px; cursor:pointer; }
+    .inp, select, textarea { width:100%; background:var(--card); border:1px solid #312854; border-radius:14px; padding:13px; color:#fff; font-size:15px; margin-bottom:12px; outline:none; }
+    .pbtn { width:100%; background:var(--acc); border:none; border-radius:14px; padding:15px; color:#fff; font-size:16px; font-weight:600; cursor:pointer; }
+    .chat-list { display:flex; flex-direction:column; gap:10px; }
+    .chat-row { background:var(--card); padding:14px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .msgs { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-bottom:12px; }
+    .msg { max-width:80%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.4; word-break:break-word; }
+    .msg.me { background:var(--acc); align-self:flex-end; border-bottom-right-radius:4px; }
+    .msg.them { background:var(--card2); align-self:flex-start; border-bottom-left-radius:4px; }
+    .cbar { display:flex; gap:8px; padding-top:8px; }
+  </style>
+</head>
+<body>
+  <div id="s-home" class="sec active" style="padding:0">
+    <header><input id="q" class="search" placeholder="Найти авто, дом, одежду..." oninput="render()" /></header>
+    <div class="cats">
+      <div class="cat active" onclick="setCat('all',this)"><div class="cbox">🌐</div><span>Все</span></div>
+      <div class="cat" onclick="setCat('Недвижимость',this)"><div class="cbox">🏠</div><span>Недвижимость</span></div>
+      <div class="cat" onclick="setCat('Автомобили',this)"><div class="cbox">🚘</div><span>Автомобили</span></div>
+      <div class="cat" onclick="setCat('Одежда',this)"><div class="cbox">🧥</div><span>Одежда</span></div>
+      <div class="cat" onclick="setCat('Аксессуары',this)"><div class="cbox">🎒</div><span>Аксессуары</span></div>
+      <div class="cat" onclick="setCat('Предприятие',this)"><div class="cbox">🏢</div><span>Предприятие</span></div>
+    </div>
+    <div class="filters">
+      <button class="chip active" onclick="setType('all',this)">Все сделки</button>
+      <button class="chip" onclick="setType('Продам',this)">Продам</button>
+      <button class="chip" onclick="setType('Куплю',this)">Куплю</button>
+      <button class="chip" onclick="setType('Обмен',this)">Обмен</button>
+    </div>
+    <div id="grid" class="grid"></div>
+  </div>
+  <div id="s-chats" class="sec"><h2 style="margin-bottom:14px">Сообщения</h2><div id="chat-list" class="chat-list"></div></div>
+  <div id="s-prof" class="sec">
+    <h2 style="margin-bottom:14px">Профиль</h2>
+    <div style="background:var(--card);padding:18px;border-radius:18px">
+      <div id="uname" style="font-size:18px;font-weight:700">Игрок</div>
+      <div id="uid-line" style="color:var(--mut);font-size:13px;margin-top:6px">Загрузка...</div>
+    </div>
+    <div id="adm-btn-slot"></div>
+  </div>
+  <nav class="nav">
+    <button class="nbtn active" onclick="tab('s-home',this)"><span style="font-size:20px">🏪</span><span>Рынок</span></button>
+    <button class="nbtn" onclick="openM('m-add')"><div class="add">+</div><span>Продать</span></button>
+    <button class="nbtn" onclick="tab('s-chats',this)"><span style="font-size:20px">💬</span><span>Чаты</span></button>
+    <button class="nbtn" onclick="tab('s-prof',this)"><span style="font-size:20px">👤</span><span>Профиль</span></button>
+  </nav>
+  <div id="m-add" class="modal">
+    <div class="mhead"><button class="xbtn" onclick="closeM('m-add')">✕</button><h3>Новое объявление</h3><div style="width:36px"></div></div>
+    <select id="nt"><option value="Продам">Продам</option><option value="Куплю">Куплю</option><option value="Обмен">Обмен</option></select>
+    <select id="nc"><option value="Недвижимость">Недвижимость</option><option value="Автомобили">Автомобили</option><option value="Одежда">Одежда</option><option value="Аксессуары">Аксессуары</option><option value="Предприятие">Предприятие</option></select>
+    <input id="ntitle" class="inp" placeholder="Название" /><input id="nprice" class="inp" placeholder="Цена" /><input id="nserv" class="inp" placeholder="Сервер" />
+    <textarea id="ndesc" rows="3" placeholder="Описание..."></textarea><button id="pub-btn" class="pbtn" onclick="publish()">Опубликовать</button>
+  </div>
+  <div id="m-item" class="modal">
+    <div class="mhead"><button class="xbtn" onclick="closeM('m-item')">✕</button><h3>Объявление</h3><div style="width:36px"></div></div>
+    <div id="mi-img" class="thumb" style="height:180px;border-radius:18px;margin-bottom:14px"></div>
+    <div id="mi-type" style="color:var(--mut);font-size:13px;line-height:1.5;margin-bottom:6px"></div>
+    <h2 id="mi-title" style="margin-bottom:6px"></h2><div id="mi-price" class="price" style="font-size:22px;margin-bottom:12px"></div>
+    <p id="mi-desc" style="color:#d6d0eb;line-height:1.5;margin-bottom:20px"></p>
+    <button id="mi-btn" class="pbtn">Написать продавцу</button><div id="mi-del-slot"></div>
+  </div>
+  <div id="m-room" class="modal">
+    <div class="mhead"><button class="xbtn" onclick="closeRoom()">←</button><h3 id="mr-title" style="font-size:15px">Чат</h3><div style="width:36px"></div></div>
+    <div id="msgs" class="msgs"></div>
+    <div class="cbar"><input id="minp" class="inp" style="margin:0" placeholder="Сообщение..." onkeydown="if(event.key==='Enter')sendMsg()" /><button class="pbtn" style="width:auto;padding:0 18px" onclick="sendMsg()">➤</button></div>
+  </div>
+  <div id="m-admins" class="modal">
+    <div class="mhead"><button class="xbtn" onclick="closeM('m-admins')">✕</button><h3>👑 Админ-центр</h3><div style="width:36px"></div></div>
+    <div id="adm-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <div style="background:var(--card);padding:14px;border-radius:16px;margin-bottom:14px">
+      <h4 style="margin-bottom:10px;font-size:14px">🎖 Выдача должностей и рангов</h4>
+      <input id="new-adm-id" class="inp" placeholder="Telegram ID игрока" /><select id="new-adm-rank" class="inp"></select>
+      <button class="pbtn" onclick="setRank()">Назначить</button>
+    </div>
+    <div id="ban-box" style="background:var(--card);padding:14px;border-radius:16px;margin-bottom:16px;display:none">
+
+**2. Нажмите `Enter` в TextEdit, затем скопируйте этот второй блок (Часть 2) и вставьте сразу ниже:**
+```html
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+  const BASE = "https://zhakfkqqurjlqdthsnhz" + ".supabase" + ".co/rest/v1";
+  const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoYWtma3FxdXJqbHFkdGhzbmh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mzk2OTYsImV4cCI6MjA4OTMxNTY5Nn0.r3_gH6l13e-012h1z68g26pD0wL7H_2M7_6qW_xK9-Y";
+  const ADS_URL = BASE + "/ads", MSGS_URL = BASE + "/messages", ROLES_URL = BASE + "/roles";
+  const HEADERS = { "apikey": API_KEY, "Authorization": "Bearer " + API_KEY, "Content-Type": "application/json", "Prefer": "return=representation" };
+
+  let guestId = localStorage.getItem("mt_guest_id");
+  if (!guestId) { guestId = "guest_" + Math.floor(100000 + Math.random() * 900000); localStorage.setItem("mt_guest_id", guestId); }
+  const u = tg?.initDataUnsafe?.user;
+  const meId = u?.id ? String(u.id) : guestId;
+  const meName = u ? (u.first_name + (u.last_name ? " " + u.last_name : "")) : "Гость";
+
+  let ads = [], cat = "all", typ = "all", myRank = "Новичок", activeRoom = null, pollTimer = null;
+  const RANK_LEVEL = { "Новичок":1, "Участник":2, "Проверенный":3, "Бывалый":4, "Перекуп":5, "Легенда":6, "Модератор":7, "Администратор":8, "Заместитель":9, "Владелец":10 };
+  const RANK_STYLE = {
+    "Новичок":{icon:"🌱",bg:"#3a3554",col:"#d6d0eb"}, "Участник":{icon:"👤",bg:"#2b4c7e",col:"#fff"}, "Проверенный":{icon:"✅",bg:"#1b5e20",col:"#a5d6a7"},
+    "Бывалый":{icon:"🔥",bg:"#e65100",col:"#ffe0b2"}, "Перекуп":{icon:"💰",bg:"#f57f17",col:"#fff9c4"}, "Легенда":{icon:"🏆",bg:"#6a1b9a",col:"#f3e5f5"},
+    "Модератор":{icon:"🛡",bg:"#0277bd",col:"#e1f5fe"}, "Администратор":{icon:"⚡",bg:"#c62828",col:"#ffcdd2"}, "Заместитель":{icon:"💎",bg:"#00838f",col:"#e0f7fa"},
+    "Владелец":{icon:"👑",bg:"linear-gradient(90deg,#ff8f00,#d500f9)",col:"#fff"}
+  };
+
+  function myLvl() { return RANK_LEVEL[myRank] || 1; }
+  function badge(r) { const s = RANK_STYLE[r] || RANK_STYLE["Новичок"]; return `<span style="background:${s.bg};color:${s.col};font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;display:inline-block;vertical-align:middle">${s.icon} ${r||"Новичок"}</span>`; }
+  function canModerate() { return myLvl() >= 7; }
+  function canBan() { return myLvl() >= 8; }
+  function canManageRoles() { return myLvl() >= 8; }
+
+  async function checkAdmin() {
+    try {
+      const res = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(meId)}`, { headers: { "apikey": API_KEY } });
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        if (rows[0].rank) myRank = rows[0].rank;
+        if (rows[0].is_banned) {
+          document.body.innerHTML = `<div style="padding:32px;text-align:center;margin-top:20vh"><h1>🚫 Доступ заблокирован</h1><p style="color:#a49ec2;margin-top:12px">Причина: <b>${rows[0].ban_reason||"Нарушение правил"}</b></p><p style="color:#a49ec2;font-size:13px;margin-top:8px">Ваш ID: ${meId}</p></div>`;
+          return;
+        }
+      }
+    } catch (e) {}
+    document.getElementById("uname").innerHTML = meName + " " + badge(myRank);
+    document.getElementById("uid-line").innerText = `Ваш ID: ${meId} • Уровень: ${myLvl()}/10`;
+    const slot = document.getElementById("adm-btn-slot"); slot.innerHTML = "";
+    if (canManageRoles()) {
+      const b = document.createElement("button"); b.className = "pbtn"; b.style.cssText = "margin-top:16px;background:#272044;border:1px solid #7b42f6";
+      b.innerText = `👑 Админ-центр (${myRank})`; b.onclick = openAdmins; slot.appendChild(b);
+    }
+    loadChats();
+  }
+
+  async function openAdmins() {
+    openM("m-admins");
+    const sel = document.getElementById("new-adm-rank"); sel.innerHTML = "";
+    Object.entries(RANK_LEVEL).forEach(([rName, lvl]) => {
+      if (lvl < myLvl() || (myLvl() === 10 && lvl === 10)) {
+        const opt = document.createElement("option"); opt.value = rName; opt.innerText = `${RANK_STYLE[rName].icon} ${rName} (Ур. ${lvl})`; sel.appendChild(opt);
+      }
+    });
+    document.getElementById("ban-box").style.display = canBan() ? "block" : "none";
+    document.getElementById("adm-stats").innerHTML = `<div style="background:var(--card);padding:12px;border-radius:14px;text-align:center"><div style="font-size:20px;font-weight:700">${ads.length}</div><div style="font-size:12px;color:var(--mut)">Объявлений</div></div><div style="background:var(--card);padding:12px;border-radius:14px;text-align:center"><div style="font-size:20px;font-weight:700">Ур. ${myLvl()}</div><div style="font-size:12px;color:var(--mut)">Ваши права</div></div>`;
+    const list = document.getElementById("adm-list"); list.innerHTML = '<p style="color:var(--mut)">Загрузка...</p>';
+    try {
+      const res = await fetch(ROLES_URL + "?select=*&order=updated_at.desc", { headers: { "apikey": API_KEY } });
+      const rows = await res.json(); list.innerHTML = "";
+      (rows || []).forEach(r => {
+        const tLvl = RANK_LEVEL[r.rank] || 1;
+        const canEdit = r.user_id !== meId && myLvl() > tLvl;
+        const d = document.createElement("div"); d.style.cssText = "display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 14px;border-radius:14px";
+        d.innerHTML = `<div><div style="font-size:13px;margin-bottom:4px">ID: <b>${r.user_id}</b> ${r.is_banned ? "<span style='color:#ff6b6b;font-size:11px'>[БАН]</span>" : ""}</div>${badge(r.rank)}</div>` +
+          (canEdit ? `<button onclick="delAdmin('${r.user_id}')" style="background:#e53935;border:none;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px">Снять</button>` : `<span style="color:var(--mut);font-size:12px">${r.user_id===meId?"Вы":"Старше/равен"}</span>`);
+        list.appendChild(d);
+      });
+    } catch (e) { list.innerHTML = '<p style="color:var(--mut)">Таблица roles не найдена</p>'; }
+  }
+
+  async function setRank() {
+    const inp = document.getElementById("new-adm-id"), rank = document.getElementById("new-adm-rank").value, uid = inp.value.trim();
+    if (!uid) return alert("Введите ID!");
+    const chk = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { headers: { "apikey": API_KEY } });
+    const cur = await chk.json();
+    if (cur && cur.length > 0 && (RANK_LEVEL[cur[0].rank] || 1) >= myLvl() && uid !== meId) return alert("Нельзя менять должность старшего!");
+    await fetch(ROLES_URL, { method: "POST", headers: { ...HEADERS, "Prefer": "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ user_id: uid, rank: rank, updated_at: new Date().toISOString() }) });
+    inp.value = ""; openAdmins();
+  }
+
+  async function banUser(state) {
+    const uid = document.getElementById("ban-uid").value.trim(), rsn = document.getElementById("ban-rsn").value.trim() || "Нарушение правил";
+    if (!uid || uid === meId) return alert("Некорректный ID!");
+    const chk = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { headers: { "apikey": API_KEY } });
+    const cur = await chk.json();
+    if (cur && cur.length > 0 && (RANK_LEVEL[cur[0].rank] || 1) >= myLvl()) return alert("Нельзя банить старшего!");
+    await fetch(ROLES_URL, { method: "POST", headers: { ...HEADERS, "Prefer": "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ user_id: uid, is_banned: state, ban_reason: state ? rsn : null, updated_at: new Date().toISOString() }) });
+    alert(state ? "Забанен!" : "Разбанен!"); document.getElementById("ban-uid").value = ""; openAdmins();
+  }
+
+  async function delAdmin(uid) { await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { method: "DELETE", headers: HEADERS }); openAdmins(); }
+  async function deleteAd(id) { if (!confirm("Удалить объявление?")) return; await fetch(ADS_URL + `?id=eq.${id}`, { method: "DELETE", headers: HEADERS }); closeM("m-item"); loadAds(); }
+
+  function openM(id) { document.getElementById(id).classList.add("open"); }
+  function closeM(id) { document.getElementById(id).classList.remove("open"); }
+  function closeRoom() { closeM("m-room"); activeRoom = null; clearInterval(pollTimer); loadChats(); }
+  function tab(id, el) { document.querySelectorAll(".sec").forEach(s => s.classList.remove("active")); document.getElementById(id).classList.add("active"); document.querySelectorAll(".nbtn").forEach(b => b.classList.remove("active")); el.classList.add("active"); if (id === "s-chats") loadChats(); }
+  function setCat(c, el) { cat = c; document.querySelectorAll(".cat").forEach(x => x.classList.remove("active")); el.classList.add("active"); render(); }
+  function setType(t, el) { typ = t; document.querySelectorAll(".chip").forEach(x => x.classList.remove("active")); el.classList.add("active"); render(); }
+
+  async function loadAds() {
+    const g = document.getElementById("grid"); g.innerHTML = "<p style='color:var(--mut);grid-column:1/-1;text-align:center;padding:30px'>Загрузка...</p>";
+    try { const res = await fetch(ADS_URL + "?select=*&order=id.desc", { headers: { "apikey": API_KEY } }); ads = await res.json(); if (!Array.isArray(ads)) ads = []; render(); } catch (e) {}
+  }
+
+  function render() {
+    const g = document.getElementById("grid"); g.innerHTML = "";
+    const qVal = document.getElementById("q").value.trim().toLowerCase();
+    const list = ads.filter(a => (cat === "all" || a.category === cat) && (typ === "all" || a.type === typ) && (!qVal || (a.title||"").toLowerCase().includes(qVal) || (a.description||"").toLowerCase().includes(qVal)));
+    if (!list.length) { g.innerHTML = "<p style='color:var(--mut);grid-column:1/-1;text-align:center;padding:30px'>Объявлений пока нет</p>"; return; }
+    list.forEach(a => {
+      const d = document.createElement("div"); d.className = "card";
+d.innerHTML = <div class="thumb"><span class="tag">${a.type}</span>${a.emoji||"📦"}</div><div class="cbody"><div class="price">${a.price}</div><div class="title">${a.title}</div><div class="meta">${a.server||""}</div></div>;
+d.onclick = () => {
+document.getElementById("mi-img").innerText = a.emoji || "📦";
+document.getElementById("mi-type").innerHTML = a.type + " • " + a.category + (a.seller_name ? <br>Продавец: <b>${a.seller_name}</b> ${badge(a.seller_rank)} : "");
+document.getElementById("mi-title").innerText = a.title; document.getElementById("mi-price").innerText = a.price; document.getElementById("mi-desc").innerText = a.description || "";
+const sId = a.seller_id || "support", rId = ad_${a.id}_${[meId, sId].sort().join("_")}, btn = document.getElementById("mi-btn");
+if (a.seller_id === meId) { btn.innerText = "Это ваше объявление"; btn.onclick = () => alert("Вы автор"); }
+else { btn.innerText = "Написать продавцу"; btn.onclick = () => { closeM("m-item"); openRoom({ room_id: rId, ad_title: a.title, other_id: sId, other_name: a.seller_name || "Продавец" }); }; }
+const delSlot = document.getElementById("mi-del-slot"); delSlot.innerHTML = "";
+if (canModerate() || a.seller_id === meId) {
+const db = document.createElement("button"); db.className = "pbtn"; db.style.cssText = "background:#d32f2f;margin-top:10px";
+db.innerText = canModerate() && a.seller_id !== meId ? 🗑 Удалить (${myRank}) : "🗑 Снять с продажи"; db.onclick = () => deleteAd(a.id); delSlot.appendChild(db);
+}
+openM("m-item");
+};
+g.appendChild(d);
+});
+}
+async function publish() {
+const t = document.getElementById("ntitle").value.trim(), p = document.getElementById("nprice").value.trim(), s = document.getElementById("nserv").value.trim() || "Сервер 01", d = document.getElementById("ndesc").value.trim(), c = document.getElementById("nc").value, tp = document.getElementById("nt").value;
+if (!t || !p) return alert("Заполните название и цену!");
+const btn = document.getElementById("pub-btn"); btn.disabled = true; btn.innerText = "Публикация...";
+const icons = {"Недвижимость":"🏠","Автомобили":"🚘","Одежда":"🧥","Аксессуары":"🎒","Предприятие":"🏢"};
+try {
+await fetch(ADS_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ type: tp, category: c, title: t, price: p, server: s, description: d, emoji: icons[c]||"📦", seller_id: meId, seller_name: meName, seller_rank: myRank }) });
+document.getElementById("ntitle").value = ""; document.getElementById("nprice").value = ""; document.getElementById("ndesc").value = "";
+closeM("m-add"); await loadAds();
+} catch (e) {} finally { btn.disabled = false; btn.innerText = "Опубликовать"; }
+}
+async function loadChats() {
+const box = document.getElementById("chat-list"); box.innerHTML = "Загрузка...";
+try {
+const q = canModerate() ? ?or=(sender_id.eq.${encodeURIComponent(meId)},receiver_id.eq.${encodeURIComponent(meId)},receiver_id.eq.support)&order=id.asc : ?or=(sender_id.eq.${encodeURIComponent(meId)},receiver_id.eq.${encodeURIComponent(meId)})&order=id.asc;
+const res = await fetch(MSGS_URL + q, { headers: { "apikey": API_KEY } }); const rows = await res.json();
+const rooms = new Map();
+rooms.set("support_" + meId, { room_id: "support_" + meId, ad_title: "Техподдержка MT Market", other_id: "support", other_name: "Поддержка", last_text: "Задайте вопрос" });
+if (Array.isArray(rows)) rows.forEach(m => { const isMe = m.sender_id === meId; rooms.set(m.room_id, { room_id: m.room_id, ad_title: m.ad_title||"Сделка", other_id: isMe?m.receiver_id:m.sender_id, other_name: isMe?(rooms.get(m.room_id)?.other_name||"Собеседник"):(m.sender_name||"Игрок"), last_text: (isMe?"Вы: ":"")+m.text }); });
+box.innerHTML = "";
+rooms.forEach(r => { const div = document.createElement("div"); div.className = "chat-row"; div.innerHTML = <div><b>${r.ad_title}</b><div style="font-size:12px;color:#b89cff;margin-top:2px">${r.other_name}</div><div style="font-size:13px;color:var(--mut);margin-top:4px">${r.last_text}</div></div><span>›</span>; div.onclick = () => openRoom(r); box.appendChild(div); });
+} catch (e) {}
+}
+function openRoom(room) { activeRoom = room; document.getElementById("mr-title").innerText = room.ad_title; openM("m-room"); loadRoomMessages(); clearInterval(pollTimer); pollTimer = setInterval(loadRoomMessages, 3000); }
+async function loadRoomMessages() {
+if (!activeRoom) return;
+try {
+const res = await fetch(MSGS_URL + ?room_id=eq.${encodeURIComponent(activeRoom.room_id)}&order=id.asc, { headers: { "apikey": API_KEY } }); const rows = await res.json();
+const box = document.getElementById("msgs"); box.innerHTML = "";
+if (!Array.isArray(rows) || !rows.length) { box.innerHTML = "Напишите первое сообщение..."; return; }
+rows.forEach(m => { const isMe = m.sender_id === meId, d = document.createElement("div"); d.className = "msg " + (isMe?"me":"them"); d.innerHTML = (!isMe?<div style="font-size:11px;opacity:.7;margin-bottom:2px">${m.sender_name||"Игрок"}</div>:"") + m.text; box.appendChild(d); });
+box.scrollTop = box.scrollHeight;
+} catch (e) {}
+}
+async function sendMsg() {
+const inp = document.getElementById("minp"), text = inp.value.trim(); if (!text || !activeRoom) return; inp.value = "";
+await fetch(MSGS_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ room_id: activeRoom.room_id, ad_title: activeRoom.ad_title, sender_id: meId, sender_name: meName, receiver_id: activeRoom.other_id, text: text }) });
+await loadRoomMessages(); loadChats();
+}
+checkAdmin(); loadAds();
+
