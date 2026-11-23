@@ -186,7 +186,7 @@ function renderAds(){
         closeM("m-item");
         const sellerId = a.seller_id || "support";
         const roomId = "ad_" + a.id + "_" + meId;
-        tab("s-chats", document.querySelectorAll(".nbtn"));
+        tab("s-chats", document.querySelectorAll(".nbtn")[1]);
         openRoom({ room_id: roomId, ad_title: a.title, other_id: sellerId, other_name: a.seller_name || "Продавец" });
       };
       openM("m-item");
