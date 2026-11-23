@@ -133,170 +133,8 @@ const MSG_URL = BASE + "/messages";
 const API_KEY = "sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl";
 const HEADERS = { "apikey": API_KEY, "Content-Type": "application/json", "Prefer": "return=representation" };
 
-let ads = [], cat = "all", typ = "all", q = "", myRank = "Новичок";
-const ROLES_URL = BASE + "/roles";
-
-const RANK_LEVEL = {
-  "Новичок": 1,
-  "Участник": 2,
-  "Проверенный": 3,
-  "Бывалый": 4,
-  "Перекуп": 5,
-  "Легенда": 6,
-  "Модератор": 7,
-  "Администратор": 8,
-  "Заместитель": 9,
-  "Владелец": 10
-};
-
-const RANK_STYLE = {
-  "Новичок":       { icon: "🌱", bg: "#3a3554", col: "#d6d0eb" },
-  "Участник":      { icon: "👤", bg: "#2b4c7e", col: "#ffffff" },
-  "Проверенный":   { icon: "✅", bg: "#1b5e20", col: "#a5d6a7" },
-  "Бывалый":       { icon: "🔥", bg: "#e65100", col: "#ffe0b2" },
-  "Перекуп":       { icon: "💰", bg: "#f57f17", col: "#fff9c4" },
-  "Легенда":       { icon: "🏆", bg: "#6a1b9a", col: "#f3e5f5" },
-  "Модератор":     { icon: "🛡", bg: "#0277bd", col: "#e1f5fe" },
-  "Администратор": { icon: "⚡", bg: "#c62828", col: "#ffcdd2" },
-  "Заместитель":   { icon: "💎", bg: "#00838f", col: "#e0f7fa" },
-  "Владелец":      { icon: "👑", bg: "linear-gradient(90deg,#ff8f00,#d500f9)", col: "#ffffff" }
-};
-
-function myLvl(){ return RANK_LEVEL[myRank] || 1; }
-function badge(rank){
-  const r = RANK_STYLE[rank] || RANK_STYLE["Новичок"];
-  return `<span style="background:${r.bg};color:${r.col};font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;display:inline-block;vertical-align:middle">${r.icon} ${rank||"Новичок"}</span>`;
-}
-
-function canModerate(){ return myLvl() >= 7; }
-function canBan(){ return myLvl() >= 8; }
-function canManageRoles(){ return myLvl() >= 8; }
-
-async function checkAdmin(){
-  try {
-    const res = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(meId)}`, { headers: { "apikey": API_KEY } });
-    const rows = await res.json();
-    if(Array.isArray(rows) && rows.length > 0){
-      if(rows[0].rank) myRank = rows[0].rank;
-      if(rows[0].is_banned){
-        const rsn = rows[0].ban_reason || "Нарушение правил площадки";
-        document.body.innerHTML = `<div style="padding:32px;text-align:center;margin-top:20vh"><h1>🚫 Доступ заблокирован</h1><p style="color:#a49ec2;margin-top:12px">Причина: <b>${rsn}</b></p><p style="color:#a49ec2;font-size:13px;margin-top:8px">Ваш ID: ${meId}</p></div>`;
-        return;
-      }
-    }
-  } catch(e){}
-
-  document.getElementById("uname").innerHTML = meName + " " + badge(myRank);
-  const prof = document.getElementById("s-prof");
-  if(prof){
-    let idBox = document.getElementById("my-tg-id");
-    if(!idBox){
-      idBox = document.createElement("p");
-      idBox.id = "my-tg-id";
-      idBox.style.cssText = "color:var(--mut);font-size:13px;margin-top:6px";
-      document.getElementById("uname").after(idBox);
-    }
-    idBox.innerText = `Ваш ID: ${meId} • Уровень: ${myLvl()}/10`;
-
-    if(canManageRoles() && !document.getElementById("adm-panel-btn")){
-      const b = document.createElement("button");
-      b.id = "adm-panel-btn";
-      b.className = "pbtn";
-      b.style.cssText = "margin-top:16px;background:#272044;border:1px solid #7b42f6";
-      b.innerText = `👑 Админ-центр (${myRank})`;
-      b.onclick = openAdmins;
-      prof.appendChild(b);
-    }
-  }
-  loadChats();
-}
-
-async function openAdmins(){
-  openM("m-admins");
-  const sel = document.getElementById("new-adm-rank");
-  sel.innerHTML = "";
-  Object.entries(RANK_LEVEL).forEach(([rName, lvl]) => {
-    if(lvl < myLvl() || (myLvl() === 10 && lvl === 10)){
-      const opt = document.createElement("option");
-      opt.value = rName;
-      opt.innerText = `${RANK_STYLE[rName].icon} ${rName} (Ур. ${lvl})`;
-      sel.appendChild(opt);
-    }
-  });
-
-  document.getElementById("ban-box").style.display = canBan() ? "block" : "none";
-  document.getElementById("adm-stats").innerHTML = `<div style="background:var(--card);padding:12px;border-radius:14px;text-align:center"><div style="font-size:20px;font-weight:700">${ads.length}</div><div style="font-size:12px;color:var(--mut)">Объявлений</div></div><div style="background:var(--card);padding:12px;border-radius:14px;text-align:center"><div style="font-size:20px;font-weight:700">Ур. ${myLvl()}</div><div style="font-size:12px;color:var(--mut)">Ваши права</div></div>`;
-
-  const list = document.getElementById("adm-list");
-  list.innerHTML = '<p style="color:var(--mut)">Загрузка...</p>';
-  const res = await fetch(ROLES_URL + "?select=*&order=updated_at.desc", { headers: { "apikey": API_KEY } });
-  const rows = await res.json();
-  list.innerHTML = "";
-  (rows || []).forEach(r => {
-    const targetLvl = RANK_LEVEL[r.rank] || 1;
-    const canEditTarget = r.user_id !== meId && myLvl() > targetLvl;
-    const d = document.createElement("div");
-    d.style.cssText = "display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 14px;border-radius:14px";
-    d.innerHTML = `<div><div style="font-size:13px;margin-bottom:4px">ID: <b>${r.user_id}</b> ${r.is_banned ? "<span style='color:#ff6b6b;font-size:11px'>[БАН]</span>" : ""}</div>${badge(r.rank)}</div>` +
-      (canEditTarget ? `<button onclick="delAdmin('${r.user_id}')" style="background:#e53935;border:none;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px">Снять</button>` : `<span style="color:var(--mut);font-size:12px">${r.user_id === meId ? "Вы" : "Старше/равен"}</span>`);
-    list.appendChild(d);
-  });
-}
-
-async function setRank(){
-  const inp = document.getElementById("new-adm-id");
-  const rank = document.getElementById("new-adm-rank").value;
-  const uid = inp.value.trim();
-  if(!uid) return alert("Введите Telegram ID игрока!");
-
-  const chk = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { headers: { "apikey": API_KEY } });
-  const cur = await chk.json();
-  if(cur && cur.length > 0 && (RANK_LEVEL[cur[0].rank]||1) >= myLvl() && uid !== meId){
-    return alert("Нельзя менять должность игрока, который равен или старше вас!");
-  }
-
-  await fetch(ROLES_URL, {
-    method: "POST",
-    headers: { ...HEADERS, "Prefer": "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify({ user_id: uid, rank: rank, updated_at: new Date().toISOString() })
-  });
-  inp.value = "";
-  openAdmins();
-}
-
-async function banUser(state){
-  const uid = document.getElementById("ban-uid").value.trim();
-  const rsn = document.getElementById("ban-rsn").value.trim() || "Нарушение правил сервера";
-  if(!uid) return alert("Введите Telegram ID игрока!");
-  if(uid === meId) return alert("Нельзя забанить самого себя!");
-
-  const chk = await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { headers: { "apikey": API_KEY } });
-  const cur = await chk.json();
-  if(cur && cur.length > 0 && (RANK_LEVEL[cur[0].rank]||1) >= myLvl()){
-    return alert("Нельзя заблокировать старшего или равного по должности!");
-  }
-
-  await fetch(ROLES_URL, {
-    method: "POST",
-    headers: { ...HEADERS, "Prefer": "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify({ user_id: uid, is_banned: state, ban_reason: state ? rsn : null, updated_at: new Date().toISOString() })
-  });
-  alert(state ? `Игрок ${uid} заблокирован!` : `Игрок ${uid} разблокирован!`);
-  document.getElementById("ban-uid").value = "";
-  openAdmins();
-}
-
-async function delAdmin(uid){
-  await fetch(ROLES_URL + `?user_id=eq.${encodeURIComponent(uid)}`, { method: "DELETE", headers: HEADERS });
-  openAdmins();
-}
-
-async function deleteAd(id){
-  if(!confirm("Удалить это объявление навсегда?")) return;
-  await fetch(ADS_URL + `?id=eq.${id}`, { method: "DELETE", headers: HEADERS });
-  closeM("m-item");
-  loadAds();
-}
+let ads = [], cat = "all", typ = "all", q = "";
+let activeRoom = null, chatTimer = null;
 
 function openM(id){ document.getElementById(id).classList.add("open"); }
 function closeM(id){
@@ -342,7 +180,7 @@ function renderAds(){
     d.innerHTML = `<div class="card-img">${a.icon||"📦"}</div><div class="card-b"><div class="card-t">${a.title}</div><div class="card-s">${a.type} • ${a.category}</div><div class="card-p">${Number(a.price).toLocaleString("ru-RU")} ₽</div></div>`;
     d.onclick = () => {
       document.getElementById("mi-img").innerText = a.icon||"📦";
-      document.getElementById("mi-type").innerHTML = a.type + " • " + a.category + (a.seller_name ? <br>Продавец: <b>${a.seller_name}</b> ${badge(a.seller_rank)} : "");
+      document.getElementById("mi-type").innerText = a.type + " • " + a.category + (a.seller_name ? " • Продавец: " + a.seller_name : "");
       document.getElementById("mi-title").innerText = a.title;
       document.getElementById("mi-price").innerText = Number(a.price).toLocaleString("ru-RU") + " ₽";
       document.getElementById("mi-desc").innerText = a.desc || "";
@@ -375,7 +213,7 @@ async function publish(){
     const res = await fetch(ADS_URL, {
       method: "POST",
       headers: HEADERS,
-      body: JSON.stringify({ title, type, category, price, icon: icons[category], desc, seller_id: meId, seller_name: meName, seller_rank: myRank })
+      body: JSON.stringify({ title, type, category, price, icon: icons[category], desc, seller_id: meId, seller_name: meName })
     });
     const data = await res.json();
     if(!res.ok) throw new Error(data.message || JSON.stringify(data));
@@ -492,32 +330,7 @@ async function sendMsg(){
   }
 }
 
-checkAdmin(); loadChats(); loadAds();
+loadChats(); loadAds();
 </script>
-<div id="m-admins" class="modal">
-  <div class="mhead"><button class="xbtn" onclick="closeM('m-admins')">✕</button><h3>👑 Админ-центр</h3><div style="width:36px"></div></div>
-  
-  <div id="adm-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
-
-  <div style="background:var(--card);padding:14px;border-radius:16px;margin-bottom:14px">
-    <h4 style="margin-bottom:10px;font-size:14px">🎖 Выдача должностей и рангов</h4>
-    <input id="new-adm-id" class="inp" placeholder="Telegram ID игрока">
-    <select id="new-adm-rank" class="inp"></select>
-    <button class="pbtn" onclick="setRank()">Назначить</button>
-  </div>
-
-  <div id="ban-box" style="background:var(--card);padding:14px;border-radius:16px;margin-bottom:16px;display:none">
-    <h4 style="margin-bottom:10px;font-size:14px;color:#ff6b6b">🚫 Блокировка нарушителя</h4>
-    <input id="ban-uid" class="inp" placeholder="Telegram ID нарушителя">
-    <input id="ban-rsn" class="inp" placeholder="Причина бана">
-    <div style="display:flex;gap:8px">
-      <button class="pbtn" style="background:#d32f2f" onclick="banUser(true)">Забанить</button>
-      <button class="pbtn" style="background:#2e7d32" onclick="banUser(false)">Разбанить</button>
-    </div>
-  </div>
-
-  <h4 style="margin-bottom:10px;font-size:14px">📋 Персонал и статусы</h4>
-  <div id="adm-list" style="display:flex;flex-direction:column;gap:8px"></div>
-</div>
 </body>
 </html>
