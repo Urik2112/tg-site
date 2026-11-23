@@ -310,6 +310,12 @@ async function sendMsg(){
     });
     const data = await res.json();
     if(!res.ok) throw new Error(data.message || "Ошибка отправки");
+    const rid = activeRoom.other_id;
+    if(rid && rid !== "support" && !String(rid).startsWith("guest_")){
+      const tUrl = "https://" + "api.telegram.org/bot8762305287:AAEMtoi9MyIMlJXdufEuLwFpIlXDgP5XLwY/sendMessage";
+      const msg = "💬 <b>Новое сообщение в MT Market!</b>\n\n📦 <b>Сделка:</b> " + activeRoom.ad_title + "\n👤 <b>От:</b> " + meName + "\n✉️ <b>Текст:</b> " + text;
+      fetch(tUrl, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ chat_id: Number(rid), text: msg, parse_mode: "HTML" }) }).catch(()=>{});
+    }
     await loadRoomMessages();
     loadChats();
   } catch(e) {
