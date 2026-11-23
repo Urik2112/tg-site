@@ -117,9 +117,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 const tg = window.Telegram && window.Telegram.WebApp;
 if(tg){ tg.ready(); tg.expand(); if(tg.initDataUnsafe && tg.initDataUnsafe.user) document.getElementById("uname").innerText = tg.initDataUnsafe.user.first_name; }
 
-const URL = "https://" + "zhakfkqqurjlqdthsnhz.supabase.co";
+const URL = "https://" + "zhakfkqqurjlqdthsnhz" + ".supabase.co";
 const KEY = "sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl";
-const db = window.supabase ? window.supabase.createClient(URL, KEY) : null;
+const db = window.supabase ? window.supabase.createClient(URL, KEY) : null; if(!db) alert("База не подключилась");
 
 let ads = [], cat = "all", typ = "all", q = "", cid = null;
 let chats = [{id:"sup", name:"Техподдержка", icon:"🎧", col:"#2481cc", msgs:[{f:"them", t:"Напишите сюда, если возникнут вопросы."}]}];
