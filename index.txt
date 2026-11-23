@@ -49,6 +49,7 @@
     .cbar { display:flex; gap:8px; padding-top:8px; }
   </style>
 </head>
+
 <body>
   <div id="s-home" class="sec active" style="padding:0">
     <header><input id="q" class="search" placeholder="Найти авто, дом, одежду..." oninput="render()" /></header>
@@ -83,6 +84,7 @@
     <button class="nbtn" onclick="tab('s-chats',this)"><span style="font-size:20px">💬</span><span>Чаты</span></button>
     <button class="nbtn" onclick="tab('s-prof',this)"><span style="font-size:20px">👤</span><span>Профиль</span></button>
   </nav>
+
   <div id="m-add" class="modal">
     <div class="mhead"><button class="xbtn" onclick="closeM('m-add')">✕</button><h3>Новое объявление</h3><div style="width:36px"></div></div>
     <select id="nt"><option value="Продам">Продам</option><option value="Куплю">Куплю</option><option value="Обмен">Обмен</option></select>
@@ -112,9 +114,13 @@
       <button class="pbtn" onclick="setRank()">Назначить</button>
     </div>
     <div id="ban-box" style="background:var(--card);padding:14px;border-radius:16px;margin-bottom:16px;display:none">
+      <h4 style="margin-bottom:10px;font-size:14px;color:#ff6b6b">🚫 Блокировка нарушителя</h4>
+      <input id="ban-uid" class="inp" placeholder="Telegram ID нарушителя" /><input id="ban-rsn" class="inp" placeholder="Причина бана" />
+      <div style="display:flex;gap:8px"><button class="pbtn" style="background:#d32f2f" onclick="banUser(true)">Забанить</button><button class="pbtn" style="background:#2e7d32" onclick="banUser(false)">Разбанить</button></div>
+    </div>
+    <h4 style="margin-bottom:10px;font-size:14px">📋 Персонал и статусы</h4><div id="adm-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
 
-**2. Нажмите `Enter` в TextEdit, затем скопируйте этот второй блок (Часть 2) и вставьте сразу ниже:**
-```html
 <script>
   const tg = window.Telegram?.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
@@ -233,6 +239,7 @@
     if (!list.length) { g.innerHTML = "<p style='color:var(--mut);grid-column:1/-1;text-align:center;padding:30px'>Объявлений пока нет</p>"; return; }
     list.forEach(a => {
       const d = document.createElement("div"); d.className = "card";
+
 d.innerHTML = <div class="thumb"><span class="tag">${a.type}</span>${a.emoji||"📦"}</div><div class="cbody"><div class="price">${a.price}</div><div class="title">${a.title}</div><div class="meta">${a.server||""}</div></div>;
 d.onclick = () => {
 document.getElementById("mi-img").innerText = a.emoji || "📦";
@@ -290,5 +297,101 @@ const inp = document.getElementById("minp"), text = inp.value.trim(); if (!text 
 await fetch(MSGS_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ room_id: activeRoom.room_id, ad_title: activeRoom.ad_title, sender_id: meId, sender_name: meName, receiver_id: activeRoom.other_id, text: text }) });
 await loadRoomMessages(); loadChats();
 }
+checkAdmin(); loadAds();d.innerHTML = <div class="thumb"><span class="tag">${a.type}</span>${a.emoji||"📦"}</div><div class="cbody"><div class="price">${a.price}</div><div class="title">${a.title}</div><div class="meta">${a.server||""}</div></div>;
+d.onclick = () => {
+document.getElementById("mi-img").innerText = a.emoji || "📦";
+document.getElementById("mi-type").innerHTML = a.type + " • " + a.category + (a.seller_name ? "
+Продавец: " + a.seller_name + " " + badge(a.seller_rank) : "");
+document.getElementById("mi-title").innerText = a.title; document.getElementById("mi-price").innerText = a.price; document.getElementById("mi-desc").innerText = a.description || "";
+const sId = a.seller_id || "support", rId = "ad_" + a.id + "" + [meId, sId].sort().join(""), btn = document.getElementById("mi-btn");
+if (a.seller_id === meId) { btn.innerText = "Это ваше объявление"; btn.onclick = () => alert("Вы автор"); }
+else { btn.innerText = "Написать продавцу"; btn.onclick = () => { closeM("m-item"); openRoom({ room_id: rId, ad_title: a.title, other_id: sId, other_name: a.seller_name || "Продавец" }); }; }
+const delSlot = document.getElementById("mi-del-slot"); delSlot.innerHTML = "";
+if (canModerate() || a.seller_id === meId) {
+const db = document.createElement("button"); db.className = "pbtn"; db.style.cssText = "background:#d32f2f;margin-top:10px";
+db.innerText = canModerate() && a.seller_id !== meId ? "🗑 Удалить (" + myRank + ")" : "🗑 Снять с продажи"; db.onclick = () => deleteAd(a.id); delSlot.appendChild(db);
+}
+openM("m-item");
+};
+g.appendChild(d);
+});
+}
+async function publish() {
+const t = document.getElementById("ntitle").value.trim(), p = document.getElementById("nprice").value.trim(), s = document.getElementById("nserv").value.trim() || "Сервер 01", d = document.getElementById("ndesc").value.trim(), c = document.getElementById("nc").value, tp = document.getElementById("nt").value;
+if (!t || !p) return alert("Заполните название и цену!");
+const btn = document.getElementById("pub-btn"); btn.disabled = true; btn.innerText = "Публикация...";
+const icons = {"Недвижимость":"🏠","Автомобили":"🚘","Одежда":"🧥","Аксессуары":"🎒","Предприятие":"🏢"};
+try {
+await fetch(ADS_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ type: tp, category: c, title: t, price: p, server: s, description: d, emoji: icons[c]||"📦", seller_id: meId, seller_name: meName, seller_rank: myRank }) });
+document.getElementById("ntitle").value = ""; document.getElementById("nprice").value = ""; document.getElementById("ndesc").value = "";
+closeM("m-add"); await loadAds();
+} catch (e) {} finally { btn.disabled = false; btn.innerText = "Опубликовать"; }
+}
+async function loadChats() {
+const box = document.getElementById("chat-list"); box.innerHTML = "Загрузка...";
+try {
+const q = canModerate() ? "?or=(sender_id.eq." + encodeURIComponent(meId) + ",receiver_id.eq." + encodeURIComponent(meId) + ",receiver_id.eq.support)&order=id.asc" : "?or=(sender_id.eq." + encodeURIComponent(meId) + ",receiver_id.eq." + encodeURIComponent(meId) + ")&order=id.asc";
+const res = await fetch(MSGS_URL + q, { headers: { "apikey": API_KEY } }); const rows = await res.json();
+const rooms = new Map();
+rooms.set("support_" + meId, { room_id: "support_" + meId, ad_title: "Техподдержка MT Market", other_id: "support", other_name: "Поддержка", last_text: "Задайте вопрос" });
+if (Array.isArray(rows)) rows.forEach(m => { const isMe = m.sender_id === meId; rooms.set(m.room_id, { room_id: m.room_id, ad_title: m.ad_title||"Сделка", other_id: isMe?m.receiver_id:m.sender_id, other_name: isMe?(rooms.get(m.room_id)?.other_name||"Собеседник"):(m.sender_name||"Игрок"), last_text: (isMe?"Вы: ":"")+m.text }); });
+box.innerHTML = "";
+rooms.forEach(r => { const div = document.createElement("div"); div.className = "chat-row"; div.innerHTML = <div><b>${r.ad_title}</b><div style="font-size:12px;color:#b89cff;margin-top:2px">${r.other_name}</div><div style="font-size:13px;color:var(--mut);margin-top:4px">${r.last_text}</div></div><span>›</span>; div.onclick = () => openRoom(r); box.appendChild(div); });
+} catch (e) {}
+}
+function openRoom(room) { activeRoom = room; document.getElementById("mr-title").innerText = room.ad_title; openM("m-room"); loadRoomMessages(); clearInterval(pollTimer); pollTimer = setInterval(loadRoomMessages, 3000); }
+async function loadRoomMessages() {
+if (!activeRoom) return;
+try {
+const res = await fetch(MSGS_URL + "?room_id=eq." + encodeURIComponent(activeRoom.room_id) + "&order=id.asc", { headers: { "apikey": API_KEY } }); const rows = await res.json();
+const box = document.getElementById("msgs"); box.innerHTML = "";
+if (!Array.isArray(rows) || !rows.length) { box.innerHTML = "Напишите первое сообщение..."; return; }
+rows.forEach(m => { const isMe = m.sender_id === meId, d = document.createElement("div"); d.className = "msg " + (isMe?"me":"them"); d.innerHTML = (!isMe?<div style="font-size:11px;opacity:.7;margin-bottom:2px">${m.sender_name||"Игрок"}</div>:"") + m.text; box.appendChild(d); });
+box.scrollTop = box.scrollHeight;
+} catch (e) {}
+}
+async function sendMsg() {
+const inp = document.getElementById("minp"), text = inp.value.trim(); if (!text || !activeRoom) return; inp.value = "";
+await fetch(MSGS_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ room_id: activeRoom.room_id, ad_title: activeRoom.ad_title, sender_id: meId, sender_name: meName, receiver_id: activeRoom.other_id, text: text }) });
+await loadRoomMessages(); loadChats();
+}
 checkAdmin(); loadAds();
 
+
+
+EOF
+echo "3/3 ГОТОВО!"
+python3 -c '
+import os
+p = os.path.expanduser("~/Desktop/tg-site/index.html")
+s = open(p, encoding="utf-8").read()
+s = s.replace("https://telegram.org\"", "https://telegram.org\"")
+cut = s.find("<div id=\"mi-img\"")
+if cut != -1: s = s[:cut]
+open(p, "w", encoding="utf-8").write(s)
+print("ШАПКА ИСПРАВЛЕНА!")
+'
+
+python3 -c '
+import os
+p = os.path.expanduser("~/Desktop/tg-site/index.html")
+s = open(p, encoding="utf-8").read()
+s = s.replace("https://telegram.org\"", "https://telegram.org\"")
+cut = s.find("<div id=\"mi-img\"")
+if cut != -1: s = s[:cut]
+open(p, "w", encoding="utf-8").write(s)
+print("ШАПКА ИСПРАВЛЕНА!")
+'
+
+python3 -c '
+import os
+p = os.path.expanduser("~/Desktop/tg-site/index.html")
+s = open(p, encoding="utf-8").read()
+s = s.replace("https://telegram.org\"", "https://telegram.org\"")
+cut = s.find("<div id=\"mi-img\"")
+if cut != -1: s = s[:cut]
+open(p, "w", encoding="utf-8").write(s)
+print("ШАПКА ИСПРАВЛЕНА!")
+'
+
+й
