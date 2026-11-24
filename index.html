@@ -335,7 +335,7 @@ function openAd(id) {
   } else if ($('sellerStatsLine')) {
    $('sellerStatsLine').textContent = 'Сделок: 0 · Успешных: 0';
   }
- }).catch(()=>{});
+ }).then(async r => { const d = await r.json().catch(()=>({})); if (!r.ok || d.ok === false) toast('Уведомление: ' + (d.description || d.error || r.status)); }).catch(e => toast('Сеть notify: ' + e.message));
 }
 async function deleteAd(ad) {
  if (!confirm('Удалить это объявление?')) return;
@@ -504,12 +504,12 @@ async function sendMessage(e) {
   input.value='';
   await loadMessages();
   if (receiver && receiver !== 'support') {
-   const fnUrl = 'https://' + 'zhakfkqqurjlqdthsnhz' + '.supabase.co/functions/v1/tg-notify';
+   const fnUrl = 'https://' + 'zhakfkqqurjlqdthsnhz' + '.supabase.co/functions/v1/notify-tg';
    fetch(fnUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
     body: JSON.stringify({ receiver_id: receiver, sender_name: meName, ad_title: payload.ad_title, text: value })
-   }).catch(()=>{});
+   }).then(async r => { const d = await r.json().catch(()=>({})); if (!r.ok || d.ok === false) toast('Уведомление: ' + (d.description || d.error || r.status)); }).catch(e => toast('Сеть notify: ' + e.message));
   }
  }
  catch(err){toast('Не удалось отправить: '+err.message);}
