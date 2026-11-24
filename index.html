@@ -349,7 +349,7 @@ function openSellModal() {
   const photoFiles = $('adPhotoInput') && $('adPhotoInput').files ? Array.from($('adPhotoInput').files).slice(0, 5) : [];
   if (photoFiles.length > 0) {
    const urls = [];
-   const sbUrl = 'https://supabase.co';
+   const sbUrl = 'https://zhakfkqqurjlqdthsnhz.supabase.co';
    const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
    for (let i = 0; i < photoFiles.length; i++) {
     submit.textContent = 'Загружаем фото (' + (i + 1) + '/' + photoFiles.length + ')…';
