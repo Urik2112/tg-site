@@ -21,7 +21,14 @@
       <input id="searchInput" class="search" placeholder="⌕  Поиск объявлений..." autocomplete="off">
       <div id="categories" class="categories"></div>
       <div id="dealFilters" class="filters"></div>
-      <div id="marketStatus" class="small muted" style="margin:0 0 10px">Свежие объявления</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px">
+        <div id="marketStatus" class="small muted">Свежие объявления</div>
+        <select id="sortSelect" style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:var(--text);font-size:12px;outline:none">
+          <option value="new">Сначала новые</option>
+          <option value="cheap">Сначала дешевле</option>
+          <option value="expensive">Сначала дороже</option>
+        </select>
+      </div>
       <div id="adsGrid" class="grid"><div class="loading">Загружаем объявления…</div></div>
     </section>
 
@@ -146,6 +153,10 @@ function formatPrice(price,type) {
  if (type==='Обмен') return 'Обмен';
  const n=Number(price); return Number.isFinite(n) && n>0 ? n.toLocaleString('ru-RU')+' $' : (price ? escapeHTML(price) : 'Договорная');
 }
+function parseNumericPrice(val) {
+ const digits = String(val || '').replace(/[^\d]/g, '');
+ return digits ? Number(digits) : null;
+}
 function renderAds() {
  const q=$('searchInput').value.trim().toLowerCase();
  const list=ads.filter(a=>{
@@ -154,6 +165,17 @@ function renderAds() {
   const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q);
   return cat&&deal&&search;
  });
+ const sortMode = $('sortSelect') ? $('sortSelect').value : 'new';
+ if (sortMode === 'cheap' || sortMode === 'expensive') {
+  list.sort((a, b) => {
+   const pa = parseNumericPrice(a.price);
+   const pb = parseNumericPrice(b.price);
+   if (pa === null && pb === null) return 0;
+   if (pa === null) return 1;
+   if (pb === null) return -1;
+   return sortMode === 'cheap' ? pa - pb : pb - pa;
+  });
+ }
  $('marketStatus').textContent='Найдено объявлений: '+list.length;
  if (!list.length) { $('adsGrid').innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:8px">🪹</div>Объявлений пока нет.<br>Попробуйте изменить фильтры или создайте первое!</div>'; return; }
  $('adsGrid').innerHTML=list.map(a=>{
@@ -382,6 +404,7 @@ function showPage(pageId) {
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 $('sellNav').addEventListener('click',openSellModal);
 $('searchInput').addEventListener('input',renderAds);
+if ($('sortSelect')) $('sortSelect').addEventListener('change',renderAds);
 
 
 function compressImage(file, maxW = 1280, quality = 0.82) {
@@ -476,7 +499,19 @@ async function sendMessage(e) {
  const chat=activeChat; const staffReply=chat.support&&myRank.level>=7&&chat.staffView;
  const receiver=chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id;
  const payload={room_id:chat.room_id,ad_title:chat.ad_title||'Личный чат',sender_id:meId,sender_name:meName,receiver_id:receiver,text:value};
- try { await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});input.value='';await loadMessages(); }
+ try {
+  await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});
+  input.value='';
+  await loadMessages();
+  if (receiver && receiver !== 'support') {
+   const fnUrl = 'https://' + 'zhakfkqqurjlqdthsnhz' + '.supabase.co/functions/v1/tg-notify';
+   fetch(fnUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+    body: JSON.stringify({ receiver_id: receiver, sender_name: meName, ad_title: payload.ad_title, text: value })
+   }).catch(()=>{});
+  }
+ }
  catch(err){toast('Не удалось отправить: '+err.message);}
 }
 async function loadReportsAdmin() {
