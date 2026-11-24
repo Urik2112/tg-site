@@ -196,6 +196,10 @@
           <div class="stat"><b id="profileDealsTotal">0</b><span>Проведено сделок</span></div>
           <div class="stat"><b id="profileDealsSuccess" style="color:var(--green)">0</b><span>Успешных сделок</span></div>
         </div>
+        <div class="admin-stat" style="margin-top:10px">
+          <div class="stat"><b id="profileLikesCount" style="color:#ff657a">0</b><span>❤️ Лайки</span></div>
+          <div class="stat"><b id="profileGamePhone" style="font-size:15px">Не указан</b><span>📱 Игровой номер</span></div>
+        </div>
         <button class="btn secondary" id="editProfileBtn" style="margin-top:12px">✏️ Редактировать профиль</button>
         <div style="height:1px;background:var(--line);margin:16px 0"></div>
         <div class="small muted">Telegram ID</div><div id="profileId" style="font-weight:800;margin:4px 0 12px;overflow-wrap:anywhere"></div>
@@ -423,6 +427,12 @@ function renderProfile() {
  $('profileBio').textContent = (myRole && myRole.bio) ? myRole.bio : 'Описание профиля не заполнено.';
  $('profileDealsTotal').textContent = (myRole && myRole.deals_total) || 0;
  $('profileDealsSuccess').textContent = (myRole && myRole.deals_success) || 0;
+ if ($('profileGamePhone')) $('profileGamePhone').textContent = (myRole && myRole.game_phone) ? myRole.game_phone : 'Не указан';
+ if ($('profileLikesCount')) {
+  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(meId) })
+   .then(rows => { if ($('profileLikesCount')) $('profileLikesCount').textContent = Array.isArray(rows) ? rows.length : 0; })
+   .catch(() => {});
+ }
  $('profileId').textContent = meId;
  $('profileLevel').textContent = myRank.level + '/10';
  setRankBadge($('profileRank'), myRole && myRole.rank);
@@ -455,6 +465,8 @@ function openEditProfile() {
    <div class="frame-picker" id="framePicker">
     ${AVATAR_FRAMES.map(fr => '<div class="frame-opt '+(((myRole && myRole.avatar_frame) || 'default')===fr.id?'selected':'')+'" data-fr="'+fr.id+'"><div class="frame-preview-dot av-frame-'+fr.id+'"></div>'+escapeHTML(fr.name)+'</div>').join('')}
    </div>
+   <label class="field-label">📱 Игровой номер телефона</label>
+   <input class="field" name="game_phone" maxlength="25" value="${escapeHTML((myRole && myRole.game_phone) || '')}" placeholder="Например: 12-34-56 или 777-888">
    <label class="field-label">О себе / Описание профиля</label>
    <textarea class="field textarea" name="bio" maxlength="300" placeholder="Например: Продаю авто и дома на 01 сервере, быстрые сделки...">${escapeHTML((myRole && myRole.bio) || '')}</textarea>
    <button class="btn" type="submit">Сохранить профиль</button>
@@ -513,12 +525,14 @@ function openEditProfile() {
    btn.textContent = 'Сохраняем…';
   }
   const newFrame = String(f.get('avatar_frame') || 'default');
+  const newPhone = String(f.get('game_phone') || '').trim() || null;
   const patchBody = {
    display_name: newName,
    bio: newBio,
    avatar_url: newAvatarUrl,
    avatar_frame: newFrame,
-   banner_url: newBannerUrl
+   banner_url: newBannerUrl,
+   game_phone: newPhone
   };
   try {
    const saved = await api('rpc/update_own_profile', {
@@ -529,7 +543,8 @@ function openEditProfile() {
      p_bio: newBio,
      p_avatar_url: newAvatarUrl,
      p_avatar_frame: newFrame,
-     p_banner_url: newBannerUrl
+     p_banner_url: newBannerUrl,
+     p_game_phone: newPhone
     }
    });
    myRole = (Array.isArray(saved) && saved.length > 0) ? saved.at(0) : Object.assign({}, myRole, patchBody);
@@ -1126,10 +1141,45 @@ async function openPublicProfile(uid) {
      <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px">${Number(pr.deals_total||0)}</div><div class="small muted">Всего сделок</div></div>
      <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px;color:#10b981">${Number(pr.deals_success||0)}</div><div class="small muted">Успешных</div></div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:2px">
+     <button type="button" id="pubLikeBoxBtn" style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;cursor:pointer">
+      <div id="pubLikesNum" style="font-weight:900;font-size:16px;color:#ff657a">…</div>
+      <div id="pubLikesSub" class="small muted">❤️ Лайкнуть</div>
+     </button>
+     <div id="pubPhoneBox" style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer" title="Нажмите, чтобы скопировать">
+      <div style="font-weight:900;font-size:15px">${escapeHTML(pr.game_phone || 'Не указан')}</div>
+      <div class="small muted">📱 Игровой номер</div>
+     </div>
+    </div>
     <button type="button" class="btn" id="msgFromProfileBtn" style="margin-top:8px">💬 Написать в ЛС</button>
    </div>
   `);
   $('modalWrap').classList.add('profile-fullscreen');
+  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId) })
+   .then(lRows => {
+    const arr = Array.isArray(lRows) ? lRows : [];
+    const isLiked = arr.some(x => String(x.from_user_id) === String(meId));
+    if ($('pubLikesNum')) $('pubLikesNum').textContent = arr.length;
+    if ($('pubLikesSub')) $('pubLikesSub').textContent = isLiked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
+   }).catch(() => { if ($('pubLikesNum')) $('pubLikesNum').textContent = '0'; });
+  if ($('pubLikeBoxBtn')) {
+   $('pubLikeBoxBtn').onclick = async () => {
+    try {
+     const res = await api('rpc/toggle_profile_like', { method: 'POST', body: { p_from_id: String(meId), p_to_id: String(targetId) } });
+     if (res && typeof res.count === 'number') {
+      if ($('pubLikesNum')) $('pubLikesNum').textContent = res.count;
+      if ($('pubLikesSub')) $('pubLikesSub').textContent = res.liked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
+      toast(res.liked ? 'Лайк поставлен ❤️' : 'Лайк убран');
+     }
+    } catch (err) { toast('Ошибка лайка: ' + err.message); }
+   };
+  }
+  if ($('pubPhoneBox') && pr.game_phone) {
+   $('pubPhoneBox').onclick = () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(pr.game_phone).catch(()=>{});
+    toast('Номер скопирован: ' + pr.game_phone);
+   };
+  }
   if ($('msgFromProfileBtn')) {
    $('msgFromProfileBtn').onclick = () => {
     activeChat = { room_id: roomIdFor(meId, targetId), receiver_id: targetId, ad_title: 'Личный чат', display_name: name, support: false };
