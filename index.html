@@ -901,18 +901,91 @@ async function openAdminCenter() {
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
  let count=ads.length;
  const rankOptions=RANKS.filter(r=>r.level<myRank.level || myRank.level===10).map(r=>'<option value="'+r.level+'">'+escapeHTML(r.name)+' ('+r.level+')</option>').join('');
+ const adminsOnly = rolesCache
+  .filter(p => rankLevel(p.rank) >= 7)
+  .sort((a, b) => rankLevel(b.rank) - rankLevel(a.rank));
+
+ const adminStaffHtml = adminsOnly.map(p => {
+  const level = rankLevel(p.rank), r = rankFor(p.rank);
+  const canManage = level < myRank.level || myRank.level === 10;
+  const nick = p.display_name ? escapeHTML(p.display_name) + ' · ' : '';
+  return `<div class="admin-player" style="align-items:center">
+   <div style="min-width:0">
+    <div style="font-weight:750;font-size:13px;overflow-wrap:anywhere">${nick}<span class="muted">${escapeHTML(p.user_id)}</span></div>
+    <div style="margin-top:3px"><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${level}/10)</span></div>
+   </div>
+   <div style="display:flex;gap:6px;flex-shrink:0">
+    ${canManage ? `<button type="button" class="inline-btn" data-pick-admin="${escapeHTML(p.user_id)}" data-pick-level="${level}">✏️ Изм.</button>` : '<span class="muted">—</span>'}
+   </div>
+  </div>`;
+ }).join('') || '<div class="small muted">Администрация 7+ уровня не найдена.</div>';
+
  const players=rolesCache.map(p=>{
   const level=rankLevel(p.rank),r=rankFor(p.rank);
   const canManage=level<myRank.level;
-  return '<div class="admin-player"><div><b>'+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div></div><div>'+(canManage?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button>':'<span class="muted">—</span>')+'</div></div>';
+  const nick = p.display_name ? escapeHTML(p.display_name) + ' · ' : '';
+  return '<div class="admin-player"><div><b>'+nick+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div></div><div>'+(canManage?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button>':'<span class="muted">—</span>')+'</div></div>';
  }).join('')||'<div class="small muted">Пока нет записей о ролях.</div>';
+ const adminsOnly = rolesCache.filter(p => rankLevel(p.rank) >= 7)
+  .sort((a, b) => rankLevel(b.rank) - rankLevel(a.rank));
+ const adminStaffHtml = adminsOnly.map(p => {
+  const lv = rankLevel(p.rank), r = rankFor(p.rank);
+  const ok = lv < myRank.level || myRank.level === 10;
+  const nick = p.display_name ? escapeHTML(p.display_name) + ' · ' : '';
+  const btn = ok ? '<button type="button" class="inline-btn" data-pick-admin="' + escapeHTML(p.user_id) + '" data-pick-level="' + lv + '">✏️ Изм.</button>' : '<span class="muted">—</span>';
+  return '<div class="admin-player" style="align-items:center"><div style="min-width:0"><div style="font-weight:750;font-size:13px;overflow-wrap:anywhere">' + nick + '<span class="muted">' + escapeHTML(p.user_id) + '</span></div><div style="margin-top:3px"><span class="rank" style="color:' + r.color + ';background:' + r.bg + '">' + escapeHTML(r.name) + ' (' + lv + '/10)</span></div></div><div style="flex-shrink:0">' + btn + '</div></div>';
+ }).join('') || '<div class="small muted">Админов 7+ ур. нет.</div>';
+ const adminsOnly = rolesCache.filter(p => rankLevel(p.rank) >= 7)
+  .sort((a, b) => rankLevel(b.rank) - rankLevel(a.rank));
+ const adminStaffHtml = adminsOnly.map(p => {
+  const lv = rankLevel(p.rank), r = rankFor(p.rank);
+  const ok = lv < myRank.level || myRank.level === 10;
+  const nick = p.display_name ? escapeHTML(p.display_name) + ' · ' : '';
+  const btn = ok ? '<button type="button" class="inline-btn" data-pick-admin="' + escapeHTML(p.user_id) + '" data-pick-level="' + lv + '">✏️ Изм.</button>' : '<span class="muted">—</span>';
+  return '<div class="admin-player" style="align-items:center"><div style="min-width:0"><div style="font-weight:750;font-size:13px;overflow-wrap:anywhere">' + nick + '<span class="muted">' + escapeHTML(p.user_id) + '</span></div><div style="margin-top:3px"><span class="rank" style="color:' + r.color + ';background:' + r.bg + '">' + escapeHTML(r.name) + ' (' + lv + '/10)</span></div></div><div style="flex-shrink:0">' + btn + '</div></div>';
+ }).join('') || '<div class="small muted">Админов 7+ ур. нет.</div>';
  showModal('👑 Админ-центр',`
-  <div class="admin-stat"><div class="stat"><b>${count}</b><span>Объявлений на площадке</span></div><div class="stat"><b>${myRank.level}/10</b><span>Ваш уровень прав</span></div></div>
+  <div class="admin-stat"><div class="stat"><b>${count}</b><span>Объявлений на площадке</span></div><div class="stat"><b>${adminsOnly.length}</b><span>Админов (7–10 ур.)</span></div></div>
+  <div class="panel" style="margin:12px 0">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <b>🛡️ Действующая администрация</b>
+    <span class="small muted">7–10 уровень</span>
+   </div>
+   <div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div>
+  </div>
+  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛡️ Действующая администрация (${adminsOnly.length})</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
+  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛡️ Действующая администрация (${adminsOnly.length})</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
   <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
   <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
   <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Причина (для бана)</label><input class="field" name="reason" maxlength="300" placeholder="Причина блокировки"><div style="display:flex;gap:8px"><button class="btn danger" type="submit" style="flex:1">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="flex:1">Разбанить</button></div></form></div>
   <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
  `);
+ document.querySelectorAll('[data-pick-admin]').forEach(btn => {
+  btn.addEventListener('click', () => {
+   const form = $('rankForm');
+   if (!form) return;
+   const idInput = form.querySelector('[name="user_id"]');
+   const rankSelect = form.querySelector('[name="rank"]');
+   if (idInput) idInput.value = btn.dataset.pickAdmin || '';
+   if (rankSelect && btn.dataset.pickLevel) rankSelect.value = btn.dataset.pickLevel;
+   form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+   toast('ID админа подставлен в форму');
+  });
+ });
+ document.querySelectorAll('[data-pick-admin]').forEach(b => b.addEventListener('click', () => {
+  const f = $('rankForm'); if (!f) return;
+  f.querySelector('[name="user_id"]').value = b.dataset.pickAdmin || '';
+  if (b.dataset.pickLevel) f.querySelector('[name="rank"]').value = b.dataset.pickLevel;
+  f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast('ID админа подставлен в форму');
+ }));
+ document.querySelectorAll('[data-pick-admin]').forEach(b => b.addEventListener('click', () => {
+  const f = $('rankForm'); if (!f) return;
+  f.querySelector('[name="user_id"]').value = b.dataset.pickAdmin || '';
+  if (b.dataset.pickLevel) f.querySelector('[name="rank"]').value = b.dataset.pickLevel;
+  f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast('ID админа подставлен в форму');
+ }));
  $('rankForm').addEventListener('submit',async e=>{
   e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),level=Number(e.currentTarget.elements.rank.value);
   if(!id||!(level<myRank.level||myRank.level===10)){toast('Недостаточно прав для назначения');return;}
