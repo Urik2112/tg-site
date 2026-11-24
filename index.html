@@ -295,26 +295,12 @@ function openAd(id) {
   <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
   <button class="btn secondary" id="modalFavBtn">${favIds.has(String(ad.id))?'❤️ В избранном (убрать)':'🤍 Добавить в избранное'}</button>
-  ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button><button class="btn secondary" id="confirmDealBtn">✅ Подтвердить успешную сделку</button><button class="btn secondary" id="reportAdBtn" style="color:var(--danger);border-color:#5a2638">⚠️ Пожаловаться на объявление</button>':''}
+  ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button>':''}
   ${canDelete?'<button class="btn danger" id="deleteAd">Удалить объявление</button>':''}
  `);
  if ($('modalFavBtn')) $('modalFavBtn').addEventListener('click',()=>{
   toggleFav(ad.id);
   $('modalFavBtn').textContent = favIds.has(String(ad.id)) ? '❤️ В избранном (убрать)' : '🤍 Добавить в избранное';
- });
- if ($('reportAdBtn')) $('reportAdBtn').addEventListener('click', async ()=>{
-  const rsn = prompt('Укажите причину жалобы (например: обман, неадекватная цена, запрещённый товар):');
-  if (!rsn || !rsn.trim()) return;
-  const rb = $('reportAdBtn'); rb.disabled = true; rb.textContent = 'Отправляем жалобу…';
-  try {
-   await api('reports', {
-    method: 'POST',
-    headers: { 'Prefer': 'return=representation' },
-    body: { ad_id: String(ad.id), ad_title: String(ad.title||''), seller_id: String(ad.seller_id||''), reporter_id: String(meId), reason: rsn.trim() }
-   });
-   rb.textContent = '✅ Жалоба отправлена модераторам';
-   toast('Жалоба отправлена в Админ-центр');
-  } catch (e) { toast('Ошибка отправки: ' + e.message); rb.disabled = false; rb.textContent = '⚠️ Пожаловаться на объявление'; }
  });
  if ($('messageSeller')) $('messageSeller').addEventListener('click',()=>startPrivateChat(ad));
  if ($('deleteAd')) $('deleteAd').addEventListener('click',()=>deleteAd(ad));
@@ -328,34 +314,6 @@ function openAd(id) {
    $('sellerStatsLine').textContent = 'Сделок: 0 · Успешных: 0';
   }
  }).catch(()=>{});
-if ($('confirmDealBtn')) $('confirmDealBtn').addEventListener('click', async ()=>{
- if (!confirm('Подтвердить, что сделка с этим продавцом прошла успешно? (Засчитывается 1 раз на объявление)')) return;
- const b = $('confirmDealBtn'); b.disabled = true; b.textContent = 'Записываем сделку…';
- try {
-  await api('deals', {
-   method: 'POST',
-   headers: { 'Prefer': 'return=representation' },
-   body: { ad_id: String(ad.id), seller_id: String(ad.seller_id), buyer_id: String(meId) }
-  });
-  if (myRole) {
-   myRole.deals_total = (myRole.deals_total || 0) + 1;
-   myRole.deals_success = (myRole.deals_success || 0) + 1;
-   renderProfile();
-  }
-  b.textContent = '✅ Сделка засчитана!';
-  toast('Успешная сделка добавлена в статистику!');
- } catch (e) {
-  const msg = String(e.message || '');
-  if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505')) {
-   b.textContent = '✅ Сделка уже подтверждена';
-   toast('Вы уже подтверждали сделку по этому объявлению');
-  } else {
-   toast('Ошибка: ' + msg);
-   b.disabled = false;
-   b.textContent = '✅ Подтвердить успешную сделку';
-  }
- }
-});
 }
 async function deleteAd(ad) {
  if (!confirm('Удалить это объявление?')) return;
