@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#130e24">
-<title>MT Market</title>
+<title>RP Маркет 08</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#130e24;--card:#1f1938;--card2:#292248;--accent:#7b42f6;--yellow:#f5d061;--text:#fff;--muted:#aaa2c5;--line:#3a3157;--danger:#ff657a;--green:#52d6a0}
@@ -78,7 +78,7 @@
         <div style="font-weight:800;margin-bottom:10px">🎨 Оформление приложения</div>
         <div id="themePicker" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
       </div>
-      <div class="panel"><div style="font-weight:800;margin-bottom:6px">MT Market</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
+      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
     </section>
     <section id="pricesPage" class="page">
       <div class="section-title">📊 Справочник цен</div>
@@ -658,7 +658,7 @@ async function startPrivateChat(ad) {
  closeModal();showPage('chatsPage');openChat(activeChat);
 }
 async function startSupportChat() {
- activeChat={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка MT Market',support:true};
+ activeChat={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка RP Маркет 08',support:true};
  openChat(activeChat);
 }
 let allChatsData = [], chatFilterTab = 'all', chatSearchQuery = '';
@@ -699,7 +699,7 @@ function renderChatList() {
       ? '<img src="'+escapeHTML(c.avatarUrl)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">'
       : '<div style="width:48px;height:48px;border-radius:50%;background:'+color+';display:grid;place-items:center;font-size:18px;font-weight:850;color:#fff;flex-shrink:0">'+escapeHTML((c.display_name||'И').slice(0,1).toUpperCase())+'</div>');
   const subLine = c.support && !c.staffView
-   ? '<span class="muted">Свяжитесь с поддержкой MT Market</span>'
+   ? '<span class="muted">Свяжитесь с поддержкой RP Маркет 08</span>'
    : '<span style="color:#a78bfa;font-weight:700">'+escapeHTML(c.ad_title)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : '');
   const rightMeta = c.support && !c.staffView
    ? '<span style="font-size:13px;color:var(--muted)">📌</span>'
