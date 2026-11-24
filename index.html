@@ -142,7 +142,7 @@ function renderAds() {
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art"><span class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">${ad.image_url ? `<img src="${escapeHTML(ad.image_url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : ""}<span class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
  }).join('');
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
@@ -190,7 +190,7 @@ function openAd(id) {
  const sellerCanBeMessaged=String(ad.seller_id)!==meId;
  const canDelete=canDeleteAd(ad);
  showModal('Объявление',`
-  <div class="detail-emoji">${escapeHTML(ad.emoji||CATEGORY_EMOJI[ad.category]||'📦')}</div>
+  ${ad.image_url ? `<div style="margin-bottom:13px;border-radius:16px;overflow:hidden;background:var(--card2)"><img src="${escapeHTML(ad.image_url)}" style="width:100%;max-height:260px;object-fit:cover;display:block"></div>` : `<div class="detail-emoji">${escapeHTML(ad.emoji||CATEGORY_EMOJI[ad.category]||'📦')}</div>`}
   <div class="small muted">${escapeHTML(ad.category||'Категория')} · ${escapeHTML(ad.type||'Продам')}</div>
   <div class="detail-price">${formatPrice(ad.price,ad.type)}</div>
   <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
@@ -217,6 +217,11 @@ function openSellModal() {
    <label class="field-label">Название</label><input class="field" name="title" maxlength="80" required placeholder="Например, BMW M5 F90">
    <label class="field-label">Цена (игровая валюта)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
    <label class="field-label">Описание <span class="muted">(необязательно)</span></label><textarea class="field textarea" name="description" maxlength="1500" placeholder="Подробности предложения..."></textarea>
+   <label style="display:block;margin:8px 0 12px;padding:12px;background:#17112b;border:1px dashed #7b42f6;border-radius:11px;text-align:center;cursor:pointer;font-size:13px;color:#fff">
+    📷 Прикрепить фото <span class="muted">(необязательно)</span>
+    <input type="file" id="adPhotoInput" accept="image/*" style="display:none" onchange="document.getElementById('adPhotoName').textContent = this.files[0] ? '✅ ' + this.files[0].name : ''">
+    <div id="adPhotoName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
+   </label>
    <button class="btn" type="submit">Опубликовать объявление</button>
   </form>`);
  $('sellForm').addEventListener('submit',async e=>{
@@ -224,6 +229,27 @@ function openSellModal() {
   const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:'',description:String(f.get('description')||'').trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
   if(!payload.title){toast('Укажите название объявления');return;}
   const submit=e.currentTarget.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Публикуем…';
+  const photoFile = $('adPhotoInput') && $('adPhotoInput').files ? $('adPhotoInput').files[0] : null;
+  if (photoFile) {
+   submit.textContent = 'Загружаем фото…';
+   try {
+    const ext = (photoFile.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+    const fileName = Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const sbUrl = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://supabase.co';
+    const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
+    const upRes = await fetch(sbUrl + '/storage/v1/object/ad-images/' + fileName, {
+     method: 'POST',
+     headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': photoFile.type || 'image/jpeg' },
+     body: photoFile
+    });
+    if (upRes.ok) {
+     payload.image_url = sbUrl + '/storage/v1/object/public/ad-images/' + fileName;
+    } else {
+     toast('Фото не загрузилось, публикуем без него');
+    }
+   } catch (_) {}
+   submit.textContent = 'Публикуем…';
+  }
   try { await api('ads',{method:'POST',headers:{'Prefer':'return=representation'},body:payload}); closeModal();toast('Объявление опубликовано');await loadAds();showPage('marketPage'); }
   catch(err){toast('Ошибка публикации: '+err.message);submit.disabled=false;submit.textContent='Опубликовать объявление';}
  });
