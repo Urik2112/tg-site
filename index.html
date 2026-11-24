@@ -52,6 +52,45 @@
 .msg-av img { width:100%; height:100%; object-fit:cover; display:block; }
 .msg-row .bubble { margin-bottom:0 !important; max-width:78%; }
 .msg-author-link { cursor:pointer; text-decoration:underline dotted rgba(255,255,255,.35); }
+
+.av-frame-default { border: 2px solid var(--line) !important; }
+.av-frame-neon { border: 2px solid #a855f7 !important; box-shadow: 0 0 12px rgba(168,85,247,.75), inset 0 0 6px rgba(236,72,153,.45) !important; }
+.av-frame-gold { border: 2px solid #facc15 !important; box-shadow: 0 0 12px rgba(250,204,21,.75), inset 0 0 6px rgba(245,158,11,.45) !important; }
+.av-frame-emerald { border: 2px solid #10b981 !important; box-shadow: 0 0 12px rgba(16,185,129,.75), inset 0 0 6px rgba(52,211,153,.45) !important; }
+.av-frame-fire { border: 2px solid #f97316 !important; box-shadow: 0 0 12px rgba(239,68,68,.8), inset 0 0 6px rgba(249,115,22,.5) !important; }
+.av-frame-cyber { border: 2px solid #38bdf8 !important; box-shadow: 0 0 12px rgba(14,165,233,.8), inset 0 0 6px rgba(56,189,248,.5) !important; }
+.frame-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.frame-opt { background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:8px 6px; text-align:center; cursor:pointer; font-size:12px; font-weight:700; color:var(--text); }
+.frame-opt.selected { border-color:var(--accent); background:rgba(123,66,246,.18); }
+.frame-preview-dot { width:26px; height:26px; border-radius:50%; margin:0 auto 5px; background:var(--card); }
+
+#modalClose {
+ width: 40px !important;
+ height: 40px !important;
+ min-width: 40px !important;
+ min-height: 40px !important;
+ font-size: 22px !important;
+ display: inline-flex !important;
+ align-items: center !important;
+ justify-content: center !important;
+ border-radius: 12px !important;
+ background: var(--card2) !important;
+ border: 1px solid var(--line) !important;
+ cursor: pointer !important;
+}
+#modalWrap.chat-fullscreen #modalClose {
+ width: 44px !important;
+ height: 44px !important;
+ min-width: 44px !important;
+ min-height: 44px !important;
+ font-size: 24px !important;
+ margin-bottom: 6px !important;
+}
+#modalWrap.chat-fullscreen #deleteChatBtn {
+ margin-top: 6px !important;
+ padding: 6px 10px !important;
+ font-size: 12px !important;
+}
 </style>
 </head>
 <body>
@@ -289,13 +328,33 @@ function showBanned(reason) {
  $('banReason').textContent=reason||'Причина блокировки не указана.';
  $('banId').textContent='ID пользователя: '+meId;
 }
+const AVATAR_FRAMES = [
+ { id: 'default', name: 'Обычная' },
+ { id: 'neon', name: 'Неон' },
+ { id: 'gold', name: 'Золото' },
+ { id: 'emerald', name: 'Изумруд' },
+ { id: 'fire', name: 'Огонь' },
+ { id: 'cyber', name: 'Киберпанк' }
+];
+function frameClassFor(id) {
+ const found = AVATAR_FRAMES.find(f => f.id === id);
+ return 'av-frame-' + (found ? found.id : 'default');
+}
+function applyAvatarFrame(el, frameId) {
+ if (!el) return;
+ AVATAR_FRAMES.forEach(f => el.classList.remove('av-frame-' + f.id));
+ el.classList.add(frameClassFor(frameId));
+}
 function renderProfile() {
  if (myRole && myRole.display_name) meName = myRole.display_name;
  const avUrl = myRole && myRole.avatar_url;
- const letter = (meName[0]||'M').toUpperCase();
+ const avFrame = (myRole && myRole.avatar_frame) || 'default';
+ const letter = (meName.charAt(0)||'M').toUpperCase();
  $('topAvatar').style.overflow = 'hidden';
  $('topAvatar').innerHTML = avUrl ? '<img src="'+escapeHTML(avUrl)+'" style="width:100%;height:100%;object-fit:cover">' : letter;
  $('profileAvatar').innerHTML = avUrl ? '<img src="'+escapeHTML(avUrl)+'" style="width:100%;height:100%;object-fit:cover">' : letter;
+ applyAvatarFrame($('topAvatar'), avFrame);
+ applyAvatarFrame($('profileAvatar'), avFrame);
  $('profileName').textContent = meName;
  $('profileBio').textContent = (myRole && myRole.bio) ? myRole.bio : 'Описание профиля не заполнено.';
  $('profileDealsTotal').textContent = (myRole && myRole.deals_total) || 0;
@@ -318,11 +377,23 @@ function openEditProfile() {
    </label>
    <label class="field-label">Имя / Игровой ник</label>
    <input class="field" name="display_name" maxlength="40" required value="${escapeHTML(meName)}" placeholder="Ваш ник в игре">
+   <label class="field-label">Рамка аватарки</label>
+   <input type="hidden" name="avatar_frame" id="avatarFrameInput" value="${escapeHTML((myRole && myRole.avatar_frame) || 'default')}">
+   <div class="frame-picker" id="framePicker">
+    ${AVATAR_FRAMES.map(fr => '<div class="frame-opt '+(((myRole && myRole.avatar_frame) || 'default')===fr.id?'selected':'')+'" data-fr="'+fr.id+'"><div class="frame-preview-dot av-frame-'+fr.id+'"></div>'+escapeHTML(fr.name)+'</div>').join('')}
+   </div>
    <label class="field-label">О себе / Описание профиля</label>
    <textarea class="field textarea" name="bio" maxlength="300" placeholder="Например: Продаю авто и дома на 01 сервере, быстрые сделки...">${escapeHTML((myRole && myRole.bio) || '')}</textarea>
    <button class="btn" type="submit">Сохранить профиль</button>
   </form>
  `);
+ document.querySelectorAll('#framePicker .frame-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+   document.querySelectorAll('#framePicker .frame-opt').forEach(o => o.classList.remove('selected'));
+   opt.classList.add('selected');
+   if ($('avatarFrameInput')) $('avatarFrameInput').value = opt.dataset.fr;
+  });
+ });
  $('editProfileForm').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.currentTarget);
@@ -348,10 +419,12 @@ function openEditProfile() {
    } catch (_) {}
    btn.textContent = 'Сохраняем…';
   }
+  const newFrame = String(f.get('avatar_frame') || 'default');
   const patchBody = {
    display_name: newName,
    bio: newBio,
-   avatar_url: newAvatarUrl
+   avatar_url: newAvatarUrl,
+   avatar_frame: newFrame
   };
   try {
    let saved;
@@ -941,6 +1014,7 @@ async function openPublicProfile(uid) {
   chatProfilesCache.set(targetId, pr);
   const name = pr.display_name || ('Игрок #' + targetId);
   const r = rankFor(pr.rank);
+  const frCls = frameClassFor(pr.avatar_frame);
   const letter = (name.charAt(0) || 'И').toUpperCase();
   const avInner = pr.avatar_url
    ? '<img src="' + escapeHTML(pr.avatar_url) + '" style="width:100%;height:100%;object-fit:cover">'
@@ -948,7 +1022,7 @@ async function openPublicProfile(uid) {
   const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
   showModal('Профиль игрока', `
    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:6px 0 12px">
-    <div style="width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};border:2px solid var(--line)">${avInner}</div>
+    <div class="${frCls}" style="width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)}">${avInner}</div>
     <div style="font-size:18px;font-weight:900">${escapeHTML(name)}</div>
     <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${r.level}/10)</span></div>
     <div class="small muted">ID: ${escapeHTML(targetId)}</div>
@@ -990,7 +1064,7 @@ async function loadMessages() {
    }
    const missingIds = Array.from(new Set(rows.map(r => String(r.sender_id)).filter(id => id && id !== 'support' && id !== 'global' && !chatProfilesCache.has(id))));
    if (missingIds.length > 0) {
-    const profs = await api('roles', { query: '?select=user_id,display_name,avatar_url,rank,bio,deals_total,deals_success&user_id=in.(' + missingIds.map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
+    const profs = await api('roles', { query: '?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,deals_total,deals_success&user_id=in.(' + missingIds.map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
     (profs || []).forEach(pr => chatProfilesCache.set(String(pr.user_id), pr));
     missingIds.forEach(id => { if (!chatProfilesCache.has(id)) chatProfilesCache.set(id, { user_id: id }); });
    }
@@ -1003,7 +1077,7 @@ async function loadMessages() {
    const dispName = pr.display_name || m.sender_name || sid || 'Игрок';
    const letter = (dispName.charAt(0) || 'И').toUpperCase();
    const avInner = pr.avatar_url ? '<img src="'+escapeHTML(pr.avatar_url)+'" alt="">' : escapeHTML(letter);
-   const avHtml = '<div class="msg-av" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
+   const avHtml = '<div class="msg-av '+frameClassFor(pr.avatar_frame)+'" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
    return '<div class="msg-row '+(isMine?'mine':'')+'">'
     + avHtml
     + '<div class="bubble '+(isMine?'mine':'')+'"><small><span class="msg-author-link" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(dispName)+'</span></small>'+escapeHTML(m.text)+'</div>'
