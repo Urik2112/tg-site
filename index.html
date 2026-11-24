@@ -730,10 +730,18 @@ function renderChatList() {
 }
 async function loadChats() {
  const container = $('chatList');
+ const globalChat = { room_id: 'global_chat', receiver_id: 'global', ad_title: 'Общение игроков маркетплейса', display_name: '💬 Общий чат', global: true, pinned: true };
  const support = { room_id: 'support_'+meId, receiver_id: 'support', ad_title: 'Техподдержка', display_name: 'Техподдержка', support: true, pinned: true };
- let chats = [support];
+ let chats = [globalChat, support];
  const myAdTitles = new Set(ads.filter(a => String(a.seller_id) === meId).map(a => String(a.title || '').trim()));
  try {
+  const lastGlobal = await api('messages', { query: '?select=*&room_id=eq.global_chat&order=id.desc&limit=1' }).catch(()=>[]);
+  if (lastGlobal && lastGlobal.at(0)) {
+   const lg = lastGlobal.at(0);
+   globalChat.timeStr = formatChatTime(lg.created_at);
+   globalChat.lastText = (lg.sender_name || 'Игрок') + ': ' + (lg.text || '');
+   globalChat.lastId = lg.id;
+  }
   const mine = await api('messages', { query: '?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500' });
   const map = new Map();
   const otherIds = new Set();
@@ -857,10 +865,13 @@ async function deleteCurrentChat() {
 function openChat(chat) {
  activeChat=chat;
  const staffReply=chat.support && myRank.level>=7 && chat.staffView;
+ const canDelete = !chat.global || myRank.level >= 7;
+ const delLabel = chat.global ? '🧹 Очистить чат' : '🗑️ Удалить чат';
+ const delBtnHtml = canDelete ? '<button type="button" id="deleteChatBtn" class="inline-btn" style="color:#f87171;border-color:rgba(248,113,113,.35);flex-shrink:0">'+delLabel+'</button>' : '';
  showModal(chat.display_name,`
   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
    <div class="small muted" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(chat.ad_title||'Личный чат')}</div>
-   <button type="button" id="deleteChatBtn" class="inline-btn" style="color:#f87171;border-color:rgba(248,113,113,.35);flex-shrink:0">🗑️ Удалить чат</button>
+   ${delBtnHtml}
   </div>
   <div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div>
   <form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="1500" autocomplete="off" placeholder="Сообщение..." required><button type="submit">➤</button></form>
@@ -886,13 +897,13 @@ async function sendMessage(e) {
  e.preventDefault(); if(!activeChat)return;
  const form=e.currentTarget;const input=form.elements.text;const value=input.value.trim();if(!value)return;
  const chat=activeChat; const staffReply=chat.support&&myRank.level>=7&&chat.staffView;
- const receiver=chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id;
+ const receiver=chat.global?'global':(chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id);
  const payload={room_id:chat.room_id,ad_title:chat.ad_title||'Личный чат',sender_id:meId,sender_name:meName,receiver_id:receiver,text:value};
  try {
   await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});
   input.value='';
   await loadMessages();
-  if (receiver && receiver !== 'support') {
+  if (receiver && receiver !== 'support' && receiver !== 'global') {
    const fnUrl = 'https://' + 'zhakfkqqurjlqdthsnhz' + '.supabase.co/functions/v1/notify-tg';
    fetch(fnUrl, {
     method: 'POST',
