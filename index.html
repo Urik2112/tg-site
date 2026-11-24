@@ -33,9 +33,19 @@
     </section>
 
     <section id="chatsPage" class="page">
-      <div class="section-title">💬 Чаты</div>
-      <div class="small muted" style="margin-bottom:13px">Общение с продавцами и техподдержкой</div>
-      <div id="chatList" class="chat-list"><div class="loading">Загружаем чаты…</div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-title" style="margin:0;font-size:24px">Чаты</div>
+        <button type="button" id="toggleChatSearch" style="width:36px;height:36px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:16px">🔍</button>
+      </div>
+      <div id="chatSearchWrap" style="display:none;margin-bottom:12px">
+        <input id="chatSearchInput" class="search" style="margin:0" placeholder="Поиск по имени или объявлению..." autocomplete="off">
+      </div>
+      <div id="chatTabs" style="display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:8px;overflow-x:auto">
+        <button type="button" class="chat-tab active" data-ctab="all" style="padding:8px 2px;font-size:14px;font-weight:800;color:#fff;border-bottom:2.5px solid var(--accent)">Все</button>
+        <button type="button" class="chat-tab" data-ctab="sell" style="padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Продаю</button>
+        <button type="button" class="chat-tab" data-ctab="buy" style="padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Покупаю</button>
+      </div>
+      <div id="chatList" style="display:flex;flex-direction:column"><div class="loading">Загружаем чаты…</div></div>
     </section>
 
     <section id="profilePage" class="page">
@@ -445,29 +455,155 @@ async function startSupportChat() {
  activeChat={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка MT Market',support:true};
  openChat(activeChat);
 }
-async function loadChats() {
- const container=$('chatList');
- const support={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка MT Market',support:true};
- let chats=[support];
- try {
-  const mine=await api('messages',{query:'?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500'});
-  const map=new Map();
-  (mine||[]).forEach(m=>{
-   if(m.room_id===support.room_id)return;
-   const other=String(m.sender_id)===meId?String(m.receiver_id):String(m.sender_id);
-   if(other==='support')return;
-   if(!map.has(m.room_id))map.set(m.room_id,{room_id:m.room_id,receiver_id:other,ad_title:m.ad_title||'Личный чат',display_name:String(m.sender_id)===meId?(m.receiver_name||'Игрок'):(m.sender_name||'Игрок'),support:false,lastText:m.text||''});
-  });
-  chats=chats.concat([...map.values()]);
-  if(myRank.level>=7) {
-   const supportMessages=await api('messages',{query:'?select=*&receiver_id=eq.support&order=id.desc&limit=500'});
-   const tickets=new Map();
-   (supportMessages||[]).forEach(m=>{if(!tickets.has(m.room_id))tickets.set(m.room_id,{room_id:m.room_id,receiver_id:'support',ad_title:'Обращение в поддержку',display_name:m.sender_name||m.sender_id,support:true,staffView:true,lastText:m.text||''});});
-   chats=chats.concat([...tickets.values()]);
+let allChatsData = [], chatFilterTab = 'all', chatSearchQuery = '';
+const AVATAR_COLORS = ['#7b42f6','#0ea5e9','#10b981','#f59e0b','#ec4899','#6366f1'];
+function formatChatTime(iso) {
+ if (!iso) return '';
+ const d = new Date(iso);
+ if (isNaN(d.getTime())) return '';
+ const now = new Date();
+ if (d.toDateString() === now.toDateString()) {
+  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+ }
+ return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+}
+function renderChatList() {
+ const container = $('chatList');
+ if (!container) return;
+ const q = chatSearchQuery.trim().toLowerCase();
+ const filtered = allChatsData.filter(c => {
+  if (chatFilterTab === 'sell' && !c.isSelling && !c.support) return false;
+  if (chatFilterTab === 'buy' && (c.isSelling || c.support)) return false;
+  if (q && !String(c.display_name||'').toLowerCase().includes(q) && !String(c.ad_title||'').toLowerCase().includes(q) && !String(c.lastText||'').toLowerCase().includes(q)) return false;
+  return true;
+ });
+ if (!filtered.length) {
+  container.innerHTML = '<div class="empty" style="margin-top:16px">Диалогов в этом разделе пока нет 💬</div>';
+  return;
+ }
+ const seenRooms = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+ container.innerHTML = filtered.map((c, idx) => {
+  const isUnread = c.lastId && !c.support && String(c.lastSenderId) !== meId && Number(seenRooms[c.room_id] || 0) < Number(c.lastId);
+  const color = AVATAR_COLORS[Math.abs(String(c.receiver_id || idx).split('').reduce((a,ch)=>a+ch.charCodeAt(0),0)) % AVATAR_COLORS.length];
+  const avHtml = c.support
+   ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4f46e5);display:grid;place-items:center;font-size:21px;flex-shrink:0">🎧</div>'
+   : (c.avatarUrl
+      ? '<img src="'+escapeHTML(c.avatarUrl)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">'
+      : '<div style="width:48px;height:48px;border-radius:50%;background:'+color+';display:grid;place-items:center;font-size:18px;font-weight:850;color:#fff;flex-shrink:0">'+escapeHTML((c.display_name||'И').slice(0,1).toUpperCase())+'</div>');
+  const subLine = c.support && !c.staffView
+   ? '<span class="muted">Свяжитесь с поддержкой MT Market</span>'
+   : '<span style="color:#a78bfa;font-weight:700">'+escapeHTML(c.ad_title)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : '');
+  const rightMeta = c.support && !c.staffView
+   ? '<span style="font-size:13px;color:var(--muted)">📌</span>'
+   : (isUnread ? '<span style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center">1</span>' : (c.pinned ? '<span style="font-size:12px;color:var(--muted)">📌</span>' : ''));
+  return '<button type="button" data-fchat="'+idx+'" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:left;background:transparent">'
+   + avHtml
+   + '<div style="min-width:0;flex:1">'
+   +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">'
+   +     '<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(c.display_name)+(c.verified?' <span style="color:#60a5fa;font-size:13px">✔</span>':'')+'</div>'
+   +     '<div class="small muted" style="flex-shrink:0;font-size:11px">'+escapeHTML(c.timeStr || '')+'</div>'
+   +   '</div>'
+   +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+   +     '<div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+subLine+'</div>'
+   +     rightMeta
+   +   '</div>'
+   + '</div>'
+   + '</button>';
+ }).join('');
+ container.querySelectorAll('[data-fchat]').forEach(b => b.addEventListener('click', () => {
+  const ch = filtered.at(Number(b.dataset.fchat));
+  if (ch && ch.lastId) {
+   const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+   seen[ch.room_id] = ch.lastId;
+   localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
   }
- } catch(e) { console.warn('Чаты:',e); }
- container.innerHTML=chats.map((c,i)=>'<button class="chat-item" data-chat-index="'+i+'"><div class="chat-icon">'+(c.support?'🛟':'💬')+'</div><div class="chat-meta"><strong>'+escapeHTML(c.display_name)+'</strong><span>'+escapeHTML(c.ad_title)+(c.lastText?' · '+escapeHTML(c.lastText.slice(0,48)):'')+'</span></div><span>›</span></button>').join('');
- container.querySelectorAll('[data-chat-index]').forEach(b=>b.addEventListener('click',()=>openChat(chats[Number(b.dataset.chatIndex)])));
+  openChat(ch);
+ }));
+}
+async function loadChats() {
+ const container = $('chatList');
+ const support = { room_id: 'support_'+meId, receiver_id: 'support', ad_title: 'Техподдержка', display_name: 'Техподдержка', support: true, pinned: true };
+ let chats = [support];
+ const myAdTitles = new Set(ads.filter(a => String(a.seller_id) === meId).map(a => String(a.title || '').trim()));
+ try {
+  const mine = await api('messages', { query: '?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500' });
+  const map = new Map();
+  const otherIds = new Set();
+  (mine || []).forEach(m => {
+   if (m.room_id === support.room_id) {
+    if (!support.timeStr) { support.timeStr = formatChatTime(m.created_at); support.lastText = m.text || ''; }
+    return;
+   }
+   const other = String(m.sender_id) === meId ? String(m.receiver_id) : String(m.sender_id);
+   if (other === 'support') return;
+   otherIds.add(other);
+   if (!map.has(m.room_id)) {
+    const title = m.ad_title || 'Личный чат';
+    map.set(m.room_id, {
+     room_id: m.room_id,
+     receiver_id: other,
+     ad_title: title,
+     display_name: String(m.sender_id) === meId ? (m.receiver_name || 'Игрок') : (m.sender_name || 'Игрок'),
+     support: false,
+     isSelling: myAdTitles.has(String(title).trim()),
+     lastText: m.text || '',
+     lastId: m.id,
+     lastSenderId: m.sender_id,
+     timeStr: formatChatTime(m.created_at)
+    });
+   }
+  });
+  if (otherIds.size > 0) {
+   const profiles = await api('roles', { query: '?select=user_id,display_name,avatar_url,rank&user_id=in.(' + Array.from(otherIds).map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
+   const pMap = new Map((profiles || []).map(pr => [String(pr.user_id), pr]));
+   map.forEach(c => {
+    const pr = pMap.get(String(c.receiver_id));
+    if (pr) {
+     if (pr.display_name) c.display_name = pr.display_name;
+     if (pr.avatar_url) c.avatarUrl = pr.avatar_url;
+     if (rankLevel(pr.rank) >= 3) c.verified = true;
+    }
+   });
+  }
+  chats = chats.concat([...map.values()]);
+  if (myRank.level >= 7) {
+   const supportMessages = await api('messages', { query: '?select=*&receiver_id=eq.support&order=id.desc&limit=500' });
+   const tickets = new Map();
+   (supportMessages || []).forEach(m => {
+    if (!tickets.has(m.room_id)) {
+     tickets.set(m.room_id, {
+      room_id: m.room_id,
+      receiver_id: 'support',
+      ad_title: 'Обращение в поддержку',
+      display_name: m.sender_name || m.sender_id,
+      support: true,
+      staffView: true,
+      pinned: true,
+      lastText: m.text || '',
+      timeStr: formatChatTime(m.created_at)
+     });
+    }
+   });
+   chats = chats.concat([...tickets.values()]);
+  }
+ } catch (e) { console.warn('Чаты:', e); }
+ allChatsData = chats;
+ if ($('toggleChatSearch')) $('toggleChatSearch').onclick = () => {
+  const w = $('chatSearchWrap');
+  w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  if (w.style.display === 'block') $('chatSearchInput').focus();
+ };
+ if ($('chatSearchInput')) $('chatSearchInput').oninput = e => { chatSearchQuery = e.target.value; renderChatList(); };
+ document.querySelectorAll('.chat-tab').forEach(tab => tab.onclick = () => {
+  chatFilterTab = tab.dataset.ctab;
+document.querySelectorAll('.chat-tab').forEach(t => {
+const act = t.dataset.ctab === chatFilterTab;
+t.style.color = act ? '#fff' : 'var(--muted)';
+t.style.borderBottomColor = act ? 'var(--accent)' : 'transparent';
+});
+renderChatList();
+});
+renderChatList();
 }
 function openChat(chat) {
  activeChat=chat;
