@@ -13,6 +13,38 @@
 #bottomNav{display:grid !important;grid-template-columns:repeat(5,minmax(0,1fr)) !important;gap:2px !important;padding-left:6px !important;padding-right:6px !important}
 #bottomNav .nav-item{min-width:0 !important;width:100% !important;padding:6px 2px !important;font-size:10px !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
 #bottomNav .nav-item.sell{width:46px !important;height:46px !important;margin:0 auto !important;padding:0 !important}
+
+#modalWrap.chat-fullscreen { padding: 0; align-items: stretch; }
+#modalWrap.chat-fullscreen > div {
+ width: 100% !important;
+ max-width: 100% !important;
+ height: 100dvh !important;
+ max-height: 100dvh !important;
+ border-radius: 0 !important;
+ margin: 0 !important;
+ display: flex !important;
+ flex-direction: column !important;
+ padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+#modalWrap.chat-fullscreen #modalBody {
+ flex: 1 1 auto !important;
+ display: flex !important;
+ flex-direction: column !important;
+ min-height: 0 !important;
+ overflow: hidden !important;
+}
+#modalWrap.chat-fullscreen .messages {
+ flex: 1 1 auto !important;
+ height: auto !important;
+ max-height: none !important;
+ min-height: 0 !important;
+ overflow-y: auto !important;
+}
+#modalWrap.chat-fullscreen .send-row {
+ flex-shrink: 0 !important;
+ margin-top: 8px !important;
+ padding-bottom: 6px !important;
+}
 </style>
 </head>
 <body>
@@ -165,8 +197,8 @@ const rankFor = rank => {
 };
 const rankLevel = rank => rankFor(rank).level;
 function toast(message) { $('toast').textContent=message; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2600); }
-function showModal(title, body) { $('modalTitle').textContent=title; $('modalBody').innerHTML=body; $('modalWrap').classList.add('open'); }
-function closeModal() { $('modalWrap').classList.remove('open'); }
+function showModal(title, body) { $('modalWrap').classList.remove('chat-fullscreen'); $('modalTitle').textContent=title; $('modalBody').innerHTML=body; $('modalWrap').classList.add('open'); }
+function closeModal() { $('modalWrap').classList.remove('open','chat-fullscreen'); }
 $('modalClose').addEventListener('click',closeModal);
 $('modalWrap').addEventListener('click',e=>{if(e.target===$('modalWrap'))closeModal();});
 function headers(extra={}) { return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...extra}; }
@@ -881,6 +913,7 @@ function openChat(chat) {
  loadMessages();
  chatTimer=setInterval(()=>{if(activeChat&&activeChat.room_id===chat.room_id)loadMessages();},3000);
  $('sendMessageForm').addEventListener('submit',sendMessage);
+ $('modalWrap').classList.add('chat-fullscreen');
  if($('deleteChatBtn')) $('deleteChatBtn').addEventListener('click',deleteCurrentChat);
 }
 async function loadMessages() {
