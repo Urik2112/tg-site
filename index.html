@@ -1155,7 +1155,7 @@ async function openPublicProfile(uid) {
    </div>
   `);
   $('modalWrap').classList.add('profile-fullscreen');
-  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId) + '&_t=' + Date.now() })
+  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId)  })
    .then(lRows => {
     const arr = Array.isArray(lRows) ? lRows : [];
     const isLiked = arr.some(x => String(x.from_user_id) === String(meId));
