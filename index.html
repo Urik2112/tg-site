@@ -239,7 +239,7 @@ function openEditProfile() {
      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': avFile.type || 'image/jpeg' },
      body: avFile
     });
-    if (up.ok) newAvatarUrl = sbBase + '/storage/v1/object/public/avatars/' + fn;
+    if (up.ok) { newAvatarUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; } else { const t = await up.text(); toast('Ошибка аватара (' + up.status + '): ' + t.slice(0, 50)); }
    } catch (_) {}
    btn.textContent = 'Сохраняем…';
   }
