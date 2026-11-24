@@ -44,6 +44,7 @@
         <button type="button" class="chat-tab active" data-ctab="all" style="padding:8px 2px;font-size:14px;font-weight:800;color:#fff;border-bottom:2.5px solid var(--accent)">Все</button>
         <button type="button" class="chat-tab" data-ctab="sell" style="padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Продаю</button>
         <button type="button" class="chat-tab" data-ctab="buy" style="padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Покупаю</button>
+        <button type="button" class="chat-tab" data-ctab="support" id="supportTabBtn" style="display:none;padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent;white-space:nowrap">🛟 Поддержка</button>
       </div>
       <div id="chatList" style="display:flex;flex-direction:column"><div class="loading">Загружаем чаты…</div></div>
     </section>
@@ -472,6 +473,8 @@ function renderChatList() {
  if (!container) return;
  const q = chatSearchQuery.trim().toLowerCase();
  const filtered = allChatsData.filter(c => {
+  if (chatFilterTab === 'support') return Boolean(c.staffView);
+  if (c.staffView) return false;
   if (chatFilterTab === 'sell' && !c.isSelling && !c.support) return false;
   if (chatFilterTab === 'buy' && (c.isSelling || c.support)) return false;
   if (q && !String(c.display_name||'').toLowerCase().includes(q) && !String(c.ad_title||'').toLowerCase().includes(q) && !String(c.lastText||'').toLowerCase().includes(q)) return false;
@@ -567,24 +570,49 @@ async function loadChats() {
   }
   chats = chats.concat([...map.values()]);
   if (myRank.level >= 7) {
-   const supportMessages = await api('messages', { query: '?select=*&receiver_id=eq.support&order=id.desc&limit=500' });
+   if ($('supportTabBtn')) $('supportTabBtn').style.display = 'inline-block';
+   const supportMessages = await api('messages', { query: '?select=*&room_id=like.support_%25&order=id.desc&limit=500' });
    const tickets = new Map();
+   const ticketUserIds = new Set();
    (supportMessages || []).forEach(m => {
+    if (m.room_id === support.room_id) return;
+    const uid = String(m.room_id).replace('support_', '');
+    ticketUserIds.add(uid);
     if (!tickets.has(m.room_id)) {
+     const needsReply = String(m.receiver_id) === 'support';
      tickets.set(m.room_id, {
       room_id: m.room_id,
-      receiver_id: 'support',
-      ad_title: 'Обращение в поддержку',
-      display_name: m.sender_name || m.sender_id,
+      receiver_id: uid,
+      ad_title: needsReply ? '🟡 Ждёт ответа' : '✅ Отвечено',
+      display_name: needsReply ? (m.sender_name || uid) : ('Игрок #' + uid),
       support: true,
       staffView: true,
-      pinned: true,
+      needsReply: needsReply,
+      pinned: needsReply,
       lastText: m.text || '',
+      lastId: m.id,
+      lastSenderId: m.sender_id,
       timeStr: formatChatTime(m.created_at)
      });
     }
    });
-   chats = chats.concat([...tickets.values()]);
+   if (ticketUserIds.size > 0) {
+    const tProfiles = await api('roles', { query: '?select=user_id,display_name,avatar_url&user_id=in.(' + Array.from(ticketUserIds).map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
+    const tpMap = new Map((tProfiles || []).map(pr => [String(pr.user_id), pr]));
+    tickets.forEach(t => {
+     const pr = tpMap.get(String(t.receiver_id));
+     if (pr) {
+      if (pr.display_name) t.display_name = pr.display_name;
+      if (pr.avatar_url) t.avatarUrl = pr.avatar_url;
+     }
+    });
+   }
+   const sortedTickets = [...tickets.values()].sort((a, b) => Number(b.needsReply) - Number(a.needsReply));
+   const unansweredCount = sortedTickets.filter(t => t.needsReply).length;
+   if ($('supportTabBtn')) {
+    $('supportTabBtn').textContent = unansweredCount > 0 ? '🛟 Поддержка (' + unansweredCount + ')' : '🛟 Поддержка';
+   }
+   chats = chats.concat(sortedTickets);
   }
  } catch (e) { console.warn('Чаты:', e); }
  allChatsData = chats;
