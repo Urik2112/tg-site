@@ -45,6 +45,13 @@
  margin-top: 8px !important;
  padding-bottom: 6px !important;
 }
+
+.msg-row { display:flex; align-items:flex-end; gap:8px; margin-bottom:10px; }
+.msg-row.mine { flex-direction:row-reverse; }
+.msg-av { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff; overflow:hidden; cursor:pointer; border:1px solid rgba(255,255,255,.14); }
+.msg-av img { width:100%; height:100%; object-fit:cover; display:block; }
+.msg-row .bubble { margin-bottom:0 !important; max-width:78%; }
+.msg-author-link { cursor:pointer; text-decoration:underline dotted rgba(255,255,255,.35); }
 </style>
 </head>
 <body>
@@ -916,6 +923,55 @@ function openChat(chat) {
  $('modalWrap').classList.add('chat-fullscreen');
  if($('deleteChatBtn')) $('deleteChatBtn').addEventListener('click',deleteCurrentChat);
 }
+const chatProfilesCache = new Map();
+function avatarColorFor(id) {
+ const s = String(id || '0');
+ let h = 0;
+ for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+ return AVATAR_COLORS.at(h % AVATAR_COLORS.length);
+}
+async function openPublicProfile(uid) {
+ const targetId = String(uid || '').trim();
+ if (!targetId || targetId === 'support' || targetId === 'global') return;
+ if (targetId === meId) { closeModal(); showPage('profilePage'); return; }
+ showModal('Профиль игрока', '<div class="loading">Загружаем профиль…</div>');
+ try {
+  const rows = await api('roles', { query: '?select=*&user_id=eq.' + encodeURIComponent(targetId) + '&limit=1' });
+  const pr = (rows && rows.at(0)) ? rows.at(0) : { user_id: targetId, display_name: 'Игрок #' + targetId, rank: RANKS.at(0).name };
+  chatProfilesCache.set(targetId, pr);
+  const name = pr.display_name || ('Игрок #' + targetId);
+  const r = rankFor(pr.rank);
+  const letter = (name.charAt(0) || 'И').toUpperCase();
+  const avInner = pr.avatar_url
+   ? '<img src="' + escapeHTML(pr.avatar_url) + '" style="width:100%;height:100%;object-fit:cover">'
+   : escapeHTML(letter);
+  const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
+  showModal('Профиль игрока', `
+   <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:6px 0 12px">
+    <div style="width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};border:2px solid var(--line)">${avInner}</div>
+    <div style="font-size:18px;font-weight:900">${escapeHTML(name)}</div>
+    <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${r.level}/10)</span></div>
+    <div class="small muted">ID: ${escapeHTML(targetId)}</div>
+    <div style="width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;text-align:left;margin-top:4px">${bioText}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:4px">
+     <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px">${Number(pr.deals_total||0)}</div><div class="small muted">Всего сделок</div></div>
+     <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px;color:#10b981">${Number(pr.deals_success||0)}</div><div class="small muted">Успешных</div></div>
+    </div>
+    <button type="button" class="btn" id="msgFromProfileBtn" style="margin-top:8px">💬 Написать в ЛС</button>
+   </div>
+  `);
+  if ($('msgFromProfileBtn')) {
+   $('msgFromProfileBtn').onclick = () => {
+    activeChat = { room_id: roomIdFor(meId, targetId), receiver_id: targetId, ad_title: 'Личный чат', display_name: name, support: false };
+    closeModal();
+    showPage('chatsPage');
+    openChat(activeChat);
+   };
+  }
+ } catch (e) {
+  showModal('Профиль игрока', '<div class="loading">Не удалось загрузить профиль: ' + escapeHTML(e.message) + '</div>');
+ }
+}
 async function loadMessages() {
  if(!activeChat)return;
  const chat=activeChat;
@@ -932,9 +988,30 @@ async function loadMessages() {
      renderChatList();
     }
    }
+   const missingIds = Array.from(new Set(rows.map(r => String(r.sender_id)).filter(id => id && id !== 'support' && id !== 'global' && !chatProfilesCache.has(id))));
+   if (missingIds.length > 0) {
+    const profs = await api('roles', { query: '?select=user_id,display_name,avatar_url,rank,bio,deals_total,deals_success&user_id=in.(' + missingIds.map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
+    (profs || []).forEach(pr => chatProfilesCache.set(String(pr.user_id), pr));
+    missingIds.forEach(id => { if (!chatProfilesCache.has(id)) chatProfilesCache.set(id, { user_id: id }); });
+   }
   }
   const box=$('messagesBox'); if(!box)return;
-  box.innerHTML=(rows||[]).map(m=>'<div class="bubble '+(String(m.sender_id)===meId?'mine':'')+'"><small>'+escapeHTML(m.sender_name||m.sender_id)+'</small>'+escapeHTML(m.text)+'</div>').join('')||'<div class="loading">Начните общение первым 👋</div>';
+  box.innerHTML=(rows||[]).map(m=>{
+   const sid = String(m.sender_id || '');
+   const isMine = sid === meId;
+   const pr = isMine ? (myRole || {}) : (chatProfilesCache.get(sid) || {});
+   const dispName = pr.display_name || m.sender_name || sid || 'Игрок';
+   const letter = (dispName.charAt(0) || 'И').toUpperCase();
+   const avInner = pr.avatar_url ? '<img src="'+escapeHTML(pr.avatar_url)+'" alt="">' : escapeHTML(letter);
+   const avHtml = '<div class="msg-av" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
+   return '<div class="msg-row '+(isMine?'mine':'')+'">'
+    + avHtml
+    + '<div class="bubble '+(isMine?'mine':'')+'"><small><span class="msg-author-link" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(dispName)+'</span></small>'+escapeHTML(m.text)+'</div>'
+    + '</div>';
+  }).join('')||'<div class="loading">Начните общение первым 👋</div>';
+  box.querySelectorAll('[data-uid]').forEach(el => {
+   el.addEventListener('click', () => openPublicProfile(el.dataset.uid));
+  });
   box.scrollTop=box.scrollHeight;
  } catch(e) { const box=$('messagesBox');if(box)box.innerHTML='<div class="loading">Ошибка загрузки: '+escapeHTML(e.message)+'</div>'; }
 }
