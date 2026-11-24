@@ -96,7 +96,7 @@ const CATEGORIES = [
  {name:'Все',emoji:'🌐'},{name:'Недвижимость',emoji:'🏠'},{name:'Автомобили',emoji:'🚘'},
  {name:'Одежда',emoji:'🧥'},{name:'Аксессуары',emoji:'🎒'},{name:'Предприятие',emoji:'🏢'}
 ];
-const DEALS = ['Все','Продам','Куплю','Обмен'];
+const DEALS = ['Все','Продам','Куплю','Обмен','❤️ Избранное'];
 const CATEGORY_EMOJI = Object.fromEntries(CATEGORIES.map(x=>[x.name,x.emoji]));
 const u = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
 let meId, meName;
@@ -158,8 +158,9 @@ function renderAds() {
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span><button type="button" data-fav-id="'+escapeHTML(a.id)+'" style="position:absolute;top:8px;right:8px;z-index:3;width:28px;height:28px;border-radius:9px;background:#090611bb;font-size:14px;display:grid;place-items:center">'+(favIds.has(String(a.id))?'❤️':'🤍')+'</button>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
  }).join('');
+ $('adsGrid').querySelectorAll('[data-fav-id]').forEach(b=>b.addEventListener('click',e=>toggleFav(b.dataset.favId,e)));
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
 async function loadAds() {
@@ -241,7 +242,7 @@ function openEditProfile() {
     const up = await fetch(sbBase + '/storage/v1/object/avatars/' + fn, {
      method: 'POST',
      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': avFile.type || 'image/jpeg' },
-     body: avFile
+     body: await compressImage(avFile, 512, 0.85)
     });
     if (up.ok) { newAvatarUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; } else { const t = await up.text(); toast('Ошибка аватара (' + up.status + '): ' + t.slice(0, 50)); }
    } catch (_) {}
@@ -292,9 +293,28 @@ function openAd(id) {
   <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.description||'Продавец не добавил описание.')}</div>
   <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
-  ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button><button class="btn secondary" id="confirmDealBtn">✅ Подтвердить успешную сделку</button>':''}
+  <button class="btn secondary" id="modalFavBtn">${favIds.has(String(ad.id))?'❤️ В избранном (убрать)':'🤍 Добавить в избранное'}</button>
+  ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button><button class="btn secondary" id="confirmDealBtn">✅ Подтвердить успешную сделку</button><button class="btn secondary" id="reportAdBtn" style="color:var(--danger);border-color:#5a2638">⚠️ Пожаловаться на объявление</button>':''}
   ${canDelete?'<button class="btn danger" id="deleteAd">Удалить объявление</button>':''}
  `);
+ if ($('modalFavBtn')) $('modalFavBtn').addEventListener('click',()=>{
+  toggleFav(ad.id);
+  $('modalFavBtn').textContent = favIds.has(String(ad.id)) ? '❤️ В избранном (убрать)' : '🤍 Добавить в избранное';
+ });
+ if ($('reportAdBtn')) $('reportAdBtn').addEventListener('click', async ()=>{
+  const rsn = prompt('Укажите причину жалобы (например: обман, неадекватная цена, запрещённый товар):');
+  if (!rsn || !rsn.trim()) return;
+  const rb = $('reportAdBtn'); rb.disabled = true; rb.textContent = 'Отправляем жалобу…';
+  try {
+   await api('reports', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: { ad_id: Number(ad.id), ad_title: String(ad.title||''), seller_id: String(ad.seller_id||''), reporter_id: String(meId), reason: rsn.trim() }
+   });
+   rb.textContent = '✅ Жалоба отправлена модераторам';
+   toast('Жалоба отправлена в Админ-центр');
+  } catch (e) { toast('Ошибка отправки: ' + e.message); rb.disabled = false; rb.textContent = '⚠️ Пожаловаться на объявление'; }
+ });
  if ($('messageSeller')) $('messageSeller').addEventListener('click',()=>startPrivateChat(ad));
  if ($('deleteAd')) $('deleteAd').addEventListener('click',()=>deleteAd(ad));
  api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
@@ -369,9 +389,9 @@ function openSellModal() {
    const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
    for (let i = 0; i < photoFiles.length; i++) {
     submit.textContent = 'Загружаем фото (' + (i + 1) + '/' + photoFiles.length + ')…';
-    const pf = photoFiles[i];
+    const pf = await compressImage(photoFiles.at(i), 1280, 0.82);
     try {
-     const ext = (pf.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+     const ext = 'jpg';
      const fileName = Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
      const upRes = await fetch(sbUrl + '/storage/v1/object/ad-images/' + fileName, {
       method: 'POST',
@@ -403,6 +423,35 @@ function showPage(pageId) {
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 $('sellNav').addEventListener('click',openSellModal);
 $('searchInput').addEventListener('input',renderAds);
+
+
+function compressImage(file, maxW = 1280, quality = 0.82) {
+ return new Promise(resolve => {
+  if (!file || !file.type || !file.type.startsWith('image/')) return resolve(file);
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+   URL.revokeObjectURL(url);
+   let w = img.width, h = img.height;
+   if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+   const canvas = document.createElement('canvas');
+   canvas.width = w; canvas.height = h;
+   canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+   canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', quality);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+  img.src = url;
+ });
+}
+let favIds = new Set(JSON.parse(localStorage.getItem('mt_market_favs') || '[]').map(String));
+function toggleFav(id, ev) {
+ if (ev) ev.stopPropagation();
+ const key = String(id);
+ if (favIds.has(key)) { favIds.delete(key); toast('Удалено из избранного'); }
+ else { favIds.add(key); toast('Добавлено в избранное ❤️'); }
+ localStorage.setItem('mt_market_favs', JSON.stringify(Array.from(favIds)));
+ renderAds();
+}
 
 function roomIdFor(a,b) { return [String(a),String(b)].sort().join('_'); }
 async function startPrivateChat(ad) {
@@ -471,7 +520,19 @@ async function sendMessage(e) {
  try { await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});input.value='';await loadMessages(); }
  catch(err){toast('Не удалось отправить: '+err.message);}
 }
-async function openAdminCenter() {
+async async function loadReportsAdmin() {
+ const box = $('adminReportsBox'); if (!box) return;
+ try {
+  const reps = await api('reports', { query: '?select=*&order=id.desc&limit=30' }) || [];
+  if (!reps.length) { box.innerHTML = '<div class="small muted">Активных жалоб нет ✅</div>'; return; }
+  box.innerHTML = reps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>Лот #'+escapeHTML(r.ad_id)+': '+escapeHTML(r.ad_title||'Без названия')+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div><div class="small muted">Продавец: '+escapeHTML(r.seller_id)+' · От: '+escapeHTML(r.reporter_id)+'</div></div>').join('');
+  box.querySelectorAll('[data-del-rep]').forEach(b => b.addEventListener('click', async () => {
+   await api('reports', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(b.dataset.delRep) });
+   toast('Жалоба закрыта'); loadReportsAdmin();
+  }));
+ } catch (e) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; }
+}
+function openAdminCenter() {
  if(myRank.level<8)return;
  try { rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[]; }
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
