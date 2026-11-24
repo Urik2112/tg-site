@@ -277,8 +277,8 @@ const CATEGORIES = [
  {name:'Бизнесы',emoji:'🏢'},
  {name:'Одежда',emoji:'🧥'},
  {name:'Аксессуары',emoji:'🎒'},
- {name:'Номерные знаки',emoji:'🔢'},
- {name:'Оружие',emoji:'🔫'}
+ {name:'Номерные знаки',emoji:'🔢',iconHtml:'<svg viewBox="0 0 64 24" style="width:42px;height:18px;display:block"><rect x="1" y="1" width="62" height="22" rx="3.5" fill="#f8fafc" stroke="#1e293b" stroke-width="2"/><line x1="44" y1="1" x2="44" y2="23" stroke="#1e293b" stroke-width="1.6"/><text x="22.5" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="10.5" fill="#0f172a">А777АА</text><text x="53.5" y="11" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="7.5" fill="#0f172a">777</text><text x="51" y="18.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="4.8" fill="#0f172a">RUS</text><rect x="56.5" y="14.5" width="4.5" height="1.3" fill="#ffffff"/><rect x="56.5" y="15.8" width="4.5" height="1.3" fill="#2563eb"/><rect x="56.5" y="17.1" width="4.5" height="1.3" fill="#dc2626"/></svg>'},
+ {name:'Оружие',emoji:'🔫',iconHtml:'<svg viewBox="0 0 64 44" style="width:36px;height:26px;display:block"><path d="M8 10h44l2 4v6H35l-2 4h-7l-4 15H13l5-19H8V10z" fill="#334155" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><rect x="11" y="13" width="38" height="3" rx="1" fill="#64748b"/><path d="M25 20h7l-2 6h-6z" fill="none" stroke="#cbd5e1" stroke-width="1.6"/></svg>'}
 ];
 const DEALS = ['Все','Продам','Куплю','Обмен','❤️ Избранное'];
 const CATEGORY_EMOJI = Object.fromEntries(CATEGORIES.map(x=>[x.name,x.emoji]));
@@ -318,7 +318,7 @@ async function api(table, options={}) {
 }
 function setRankBadge(target, rank) { const r=rankFor(rank); target.innerHTML='<span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'; }
 function renderCategories() {
- $('categories').innerHTML=CATEGORIES.map(c=>'<button class="cat '+(selectedCategory===c.name?'selected':'')+'" data-category="'+escapeHTML(c.name)+'"><span class="cat-icon">'+c.emoji+'</span>'+escapeHTML(c.name)+'</button>').join('');
+ $('categories').innerHTML=CATEGORIES.map(c=>'<button class="cat '+(selectedCategory===c.name?'selected':'')+'" data-category="'+escapeHTML(c.name)+'"><span class="cat-icon">'+(c.iconHtml || c.emoji)+'</span>'+escapeHTML(c.name)+'</button>').join('');
  $('categories').querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{selectedCategory=b.dataset.category;renderCategories();renderAds();}));
 }
 function renderDealFilters() {
