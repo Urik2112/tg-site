@@ -111,17 +111,17 @@
 #profilePage .panel > *:not(.profile-banner-bg) { position: relative; z-index: 1; }
 #profilePage .panel.has-banner #profileName { text-shadow: 0 2px 6px rgba(0,0,0,.85); }
 
-#modalWrap.profile-fullscreen { padding: calc(52px + env(safe-area-inset-top, 0px)) 10px 10px; align-items: stretch; }
+#modalWrap.profile-fullscreen { padding: 0; align-items: stretch; }
 #modalWrap.profile-fullscreen > div {
  width: 100% !important;
- max-width: 680px !important;
- height: 100% !important;
- max-height: 100% !important;
- border-radius: 22px !important;
- margin: 0 auto !important;
+ max-width: 100% !important;
+ height: 100dvh !important;
+ max-height: 100dvh !important;
+ border-radius: 0 !important;
+ margin: 0 !important;
  display: flex !important;
  flex-direction: column !important;
- padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+ padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 #modalWrap.profile-fullscreen #modalBody {
  flex: 1 1 auto !important;
@@ -1097,16 +1097,16 @@ async function openPublicProfile(uid) {
    ? '<img src="' + escapeHTML(pr.avatar_url) + '" style="width:100%;height:100%;object-fit:cover">'
    : escapeHTML(letter);
   const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
-  const heroBgStyle = pr.banner_url
-   ? 'background:linear-gradient(180deg,rgba(15,11,28,0.10) 0%,rgba(15,11,28,0.52) 65%,var(--card) 100%),url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;border-radius:16px;'
+  const pubBannerBg = pr.banner_url
+   ? '<div style="position:absolute;top:0;left:0;right:0;height:365px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;z-index:0;pointer-events:none"><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(27,21,49,0.08) 0%,rgba(27,21,49,0.55) 72%,#1b1531 100%)"></div></div>'
    : '';
   showModal('Профиль игрока', `
-   <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:6px 0 18px">
-    <div style="width:100%;padding:${pr.banner_url ? '36px 12px 16px' : '12px 12px 6px'};display:flex;flex-direction:column;align-items:center;gap:8px;${heroBgStyle}">
-     <div class="${frCls}" style="width:82px;height:82px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};box-shadow:0 6px 18px rgba(0,0,0,.55)">${avInner}</div>
-     <div style="font-size:19px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.85)">${escapeHTML(name)}</div>
-     <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)}</span></div>
-    </div>
+   <div style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:0 0 18px">
+    ${pubBannerBg}
+    <div style="position:relative;z-index:1;height:${pr.banner_url ? '210px' : '12px'};width:100%"></div>
+    <div class="${frCls}" style="position:relative;z-index:1;width:88px;height:88px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};box-shadow:0 8px 22px rgba(0,0,0,.6)">${avInner}</div>
+    <div style="position:relative;z-index:1;font-size:18px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.8)">${escapeHTML(name)}</div>
+    <div style="position:relative;z-index:1"><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)}</span></div>
     <div class="small muted">ID: ${escapeHTML(targetId)}</div>
     <div style="width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;text-align:left;margin-top:4px">${bioText}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:4px">
