@@ -96,7 +96,7 @@
 .profile-banner-bg {
  position: absolute;
  top: 0; left: 0; right: 0;
- height: 112px;
+ height: 245px;
  background-size: cover;
  background-position: center;
  z-index: 0;
@@ -106,10 +106,23 @@
  content: '';
  position: absolute;
  inset: 0;
- background: linear-gradient(180deg, rgba(19,14,36,0.18) 0%, rgba(19,14,36,0.55) 65%, var(--card) 100%);
+ background: linear-gradient(180deg, rgba(18,38,33,0.08) 0%, rgba(18,38,33,0.52) 68%, var(--card) 100%);
 }
 #profilePage .panel > *:not(.profile-banner-bg) { position: relative; z-index: 1; }
-#profilePage .panel.has-banner #profileName { text-shadow: 0 2px 6px rgba(0,0,0,.85); }
+#profilePage .panel.has-banner .profile-head {
+ padding-top: 138px;
+ padding-bottom: 6px;
+}
+#profilePage .panel.has-banner #profileAvatar {
+ width: 74px;
+ height: 74px;
+ border-radius: 50%;
+ box-shadow: 0 6px 18px rgba(0,0,0,.55);
+}
+#profilePage .panel.has-banner #profileName {
+ font-size: 19px;
+ text-shadow: 0 2px 8px rgba(0,0,0,.85);
+}
 
 #modalWrap.profile-fullscreen { padding: 0; align-items: stretch; }
 #modalWrap.profile-fullscreen > div {
