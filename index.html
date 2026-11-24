@@ -472,14 +472,14 @@ function openEditProfile() {
    try {
     const ext = (banFile.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
     const fn = 'banner_' + meId + '_' + Date.now() + '.' + ext;
-    const sbBase = 'https://supabase.co';
+    const sbBase = 'https://zhakfkqqurjlqdthsnhz.supabase.co';
     const up = await fetch(sbBase + '/storage/v1/object/avatars/' + fn, {
      method: 'POST',
      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': banFile.type || 'image/jpeg' },
      body: await compressImage(banFile, 1024, 0.85)
     });
-    if (up.ok) { newBannerUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; } else { const t = await up.text(); toast('Ошибка фона (' + up.status + '): ' + t.slice(0, 50)); }
-   } catch (_) {}
+    if (up.ok) { newBannerUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; toast('Фон загружен в облако ✅'); } else { const t = await up.text(); alert('Ошибка Storage фона (' + up.status + '): ' + t); }
+   } catch (err) { alert('Сбой загрузки фона: ' + (err && err.message ? err.message : err)); }
    btn.textContent = 'Сохраняем…';
   }
   const newFrame = String(f.get('avatar_frame') || 'default');
