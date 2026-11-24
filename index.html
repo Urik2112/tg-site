@@ -96,7 +96,7 @@
 .profile-banner-bg {
  position: absolute;
  top: 0; left: 0; right: 0;
- height: 128px;
+ height: 185px;
  background-size: cover;
  background-position: center;
  z-index: 0;
@@ -105,11 +105,31 @@
 .profile-banner-bg::after {
  content: '';
  position: absolute;
- inset: 0;
- background: linear-gradient(180deg, rgba(19,14,36,.25) 0%, var(--card) 100%);
+ left: 0; right: 0; bottom: 0;
+ height: 70px;
+ background: linear-gradient(180deg, rgba(19,14,36,0) 0%, var(--card) 100%);
 }
 #profilePage .panel > *:not(.profile-banner-bg) { position: relative; z-index: 1; }
-#profilePage .panel.has-banner .profile-head { padding-top: 44px; }
+#profilePage .panel.has-banner .profile-head { padding-top: 112px; }
+#profilePage .panel.has-banner #profileAvatar { width: 74px; height: 74px; box-shadow: 0 6px 18px rgba(0,0,0,.55); }
+
+#modalWrap.profile-fullscreen { padding: 0; align-items: stretch; }
+#modalWrap.profile-fullscreen > div {
+ width: 100% !important;
+ max-width: 100% !important;
+ height: 100dvh !important;
+ max-height: 100dvh !important;
+ border-radius: 0 !important;
+ margin: 0 !important;
+ display: flex !important;
+ flex-direction: column !important;
+ padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+#modalWrap.profile-fullscreen #modalBody {
+ flex: 1 1 auto !important;
+ overflow-y: auto !important;
+ padding-top: 0 !important;
+}
 </style>
 </head>
 <body>
@@ -263,8 +283,8 @@ const rankFor = rank => {
 };
 const rankLevel = rank => rankFor(rank).level;
 function toast(message) { $('toast').textContent=message; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2600); }
-function showModal(title, body) { $('modalWrap').classList.remove('chat-fullscreen'); $('modalTitle').textContent=title; $('modalBody').innerHTML=body; $('modalWrap').classList.add('open'); }
-function closeModal() { $('modalWrap').classList.remove('open','chat-fullscreen'); }
+function showModal(title, body) { $('modalWrap').classList.remove('chat-fullscreen','profile-fullscreen'); $('modalTitle').textContent=title; $('modalBody').innerHTML=body; $('modalWrap').classList.add('open'); }
+function closeModal() { $('modalWrap').classList.remove('open','chat-fullscreen','profile-fullscreen'); }
 $('modalClose').addEventListener('click',closeModal);
 $('modalWrap').addEventListener('click',e=>{if(e.target===$('modalWrap'))closeModal();});
 function headers(extra={}) { return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...extra}; }
@@ -1081,12 +1101,12 @@ async function openPublicProfile(uid) {
    : escapeHTML(letter);
   const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
   const pubBannerHtml = pr.banner_url
-   ? '<div style="width:100%;height:105px;border-radius:14px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;margin-bottom:-42px;border:1px solid var(--line)"></div>'
-   : '';
+   ? '<div style="position:relative;width:calc(100% + 28px);margin-left:-14px;height:210px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;margin-bottom:-48px"><div style="position:absolute;left:0;right:0;bottom:0;height:75px;background:linear-gradient(180deg,rgba(19,14,36,0) 0%,var(--card) 100%)"></div></div>'
+   : '<div style="height:12px"></div>';
   showModal('Профиль игрока', `
-   <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:6px 0 12px">
+   <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:0 0 18px">
     ${pubBannerHtml}
-    <div class="${frCls}" style="position:relative;z-index:1;width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)}">${avInner}</div>
+    <div class="${frCls}" style="position:relative;z-index:1;width:88px;height:88px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};box-shadow:0 8px 22px rgba(0,0,0,.6)">${avInner}</div>
     <div style="font-size:18px;font-weight:900">${escapeHTML(name)}</div>
     <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${r.level}/10)</span></div>
     <div class="small muted">ID: ${escapeHTML(targetId)}</div>
@@ -1098,6 +1118,7 @@ async function openPublicProfile(uid) {
     <button type="button" class="btn" id="msgFromProfileBtn" style="margin-top:8px">💬 Написать в ЛС</button>
    </div>
   `);
+  $('modalWrap').classList.add('profile-fullscreen');
   if ($('msgFromProfileBtn')) {
    $('msgFromProfileBtn').onclick = () => {
     activeChat = { room_id: roomIdFor(meId, targetId), receiver_id: targetId, ad_title: 'Личный чат', display_name: name, support: false };
