@@ -741,6 +741,7 @@ async function loadChats() {
    globalChat.timeStr = formatChatTime(lg.created_at);
    globalChat.lastText = (lg.sender_name || 'Игрок') + ': ' + (lg.text || '');
    globalChat.lastId = lg.id;
+   globalChat.lastSenderId = lg.sender_id;
   }
   const mine = await api('messages', { query: '?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500' });
   const map = new Map();
@@ -888,6 +889,17 @@ async function loadMessages() {
  try {
   const rows=await api('messages',{query:'?select=*&room_id=eq.'+encodeURIComponent(chat.room_id)+'&order=id.asc&limit=300'});
   if(!activeChat||activeChat.room_id!==chat.room_id)return;
+  if (rows && rows.length) {
+   const lastRow = rows.at(rows.length - 1);
+   if (lastRow && lastRow.id) {
+    const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+    if (seen[chat.room_id] !== lastRow.id) {
+     seen[chat.room_id] = lastRow.id;
+     localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
+     renderChatList();
+    }
+   }
+  }
   const box=$('messagesBox'); if(!box)return;
   box.innerHTML=(rows||[]).map(m=>'<div class="bubble '+(String(m.sender_id)===meId?'mine':'')+'"><small>'+escapeHTML(m.sender_name||m.sender_id)+'</small>'+escapeHTML(m.text)+'</div>').join('')||'<div class="loading">Начните общение первым 👋</div>';
   box.scrollTop=box.scrollHeight;
