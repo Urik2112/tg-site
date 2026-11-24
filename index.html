@@ -142,7 +142,7 @@ function renderAds() {
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">${ad.image_url ? `<img src="${escapeHTML(ad.image_url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : ""}<span class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + (a.image_url ? '<img src="' + escapeHTML(a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
  }).join('');
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
