@@ -14,17 +14,17 @@
 #bottomNav .nav-item{min-width:0 !important;width:100% !important;padding:6px 2px !important;font-size:10px !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
 #bottomNav .nav-item.sell{width:46px !important;height:46px !important;margin:0 auto !important;padding:0 !important}
 
-#modalWrap.chat-fullscreen { padding: 0; align-items: stretch; }
+#modalWrap.chat-fullscreen { padding: calc(52px + env(safe-area-inset-top, 0px)) 10px 10px; align-items: stretch; }
 #modalWrap.chat-fullscreen > div {
  width: 100% !important;
- max-width: 100% !important;
- height: 100dvh !important;
- max-height: 100dvh !important;
- border-radius: 0 !important;
- margin: 0 !important;
+ max-width: 680px !important;
+ height: 100% !important;
+ max-height: 100% !important;
+ border-radius: 22px !important;
+ margin: 0 auto !important;
  display: flex !important;
  flex-direction: column !important;
- padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+ padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
 }
 #modalWrap.chat-fullscreen #modalBody {
  flex: 1 1 auto !important;
@@ -96,7 +96,7 @@
 .profile-banner-bg {
  position: absolute;
  top: 0; left: 0; right: 0;
- height: 165px;
+ height: 112px;
  background-size: cover;
  background-position: center;
  z-index: 0;
@@ -106,23 +106,22 @@
  content: '';
  position: absolute;
  inset: 0;
- background: linear-gradient(180deg, rgba(15,11,28,0.10) 0%, rgba(15,11,28,0.45) 60%, var(--card) 100%);
+ background: linear-gradient(180deg, rgba(19,14,36,0.18) 0%, rgba(19,14,36,0.55) 65%, var(--card) 100%);
 }
 #profilePage .panel > *:not(.profile-banner-bg) { position: relative; z-index: 1; }
-#profilePage .panel.has-banner .profile-head { padding-top: 52px; padding-bottom: 10px; }
-#profilePage .panel.has-banner #profileName { text-shadow: 0 2px 8px rgba(0,0,0,.85); }
+#profilePage .panel.has-banner #profileName { text-shadow: 0 2px 6px rgba(0,0,0,.85); }
 
-#modalWrap.profile-fullscreen { padding: 0; align-items: stretch; }
+#modalWrap.profile-fullscreen { padding: calc(52px + env(safe-area-inset-top, 0px)) 10px 10px; align-items: stretch; }
 #modalWrap.profile-fullscreen > div {
  width: 100% !important;
- max-width: 100% !important;
- height: 100dvh !important;
- max-height: 100dvh !important;
- border-radius: 0 !important;
- margin: 0 !important;
+ max-width: 680px !important;
+ height: 100% !important;
+ max-height: 100% !important;
+ border-radius: 22px !important;
+ margin: 0 auto !important;
  display: flex !important;
  flex-direction: column !important;
- padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+ padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
 }
 #modalWrap.profile-fullscreen #modalBody {
  flex: 1 1 auto !important;
