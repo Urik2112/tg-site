@@ -52,6 +52,10 @@
         <div class="small muted">Уровень доступа</div><div id="profileLevel" style="font-weight:850;margin-top:4px">1/10</div>
       </div>
       <div id="adminButtonWrap"></div>
+      <div class="panel">
+        <div style="font-weight:800;margin-bottom:10px">🎨 Оформление приложения</div>
+        <div id="themePicker" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
+      </div>
       <div class="panel"><div style="font-weight:800;margin-bottom:6px">MT Market</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
     </section>
   </main>
@@ -513,6 +517,29 @@ async function changeBan(id,ban,reason) {
   toast(ban?'Игрок заблокирован':'Игрок разблокирован');openAdminCenter();
  } catch(e){toast('Ошибка изменения бана: '+e.message);}
 }
+
+const THEMES = [
+ {id:'purple', name:'Фиолетовый', dot:'#7b42f6', vars:{'--bg':'#130e24','--card':'#1f1938','--card2':'#292248','--accent':'#7b42f6','--line':'#3a3157'}},
+ {id:'blue',   name:'Голубой',    dot:'#0ea5e9', vars:{'--bg':'#09131f','--card':'#112136','--card2':'#182d47','--accent':'#0ea5e9','--line':'#253f61'}},
+ {id:'green',  name:'Изумрудный', dot:'#10b981', vars:{'--bg':'#0a1714','--card':'#122621','--card2':'#19342d','--accent':'#10b981','--line':'#264a40'}},
+ {id:'red',    name:'Красный',    dot:'#f43f5e', vars:{'--bg':'#1a0c12','--card':'#2b141e','--card2':'#3a1b28','--accent':'#f43f5e','--line':'#522638'}},
+ {id:'gold',   name:'Золотой',    dot:'#eab308', vars:{'--bg':'#14120c','--card':'#221f15','--card2':'#2f2b1d','--accent':'#eab308','--line':'#47412b'}}
+];
+function applyTheme(id) {
+ const t = THEMES.find(x => x.id === id) || THEMES.at(0);
+ Object.entries(t.vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+ localStorage.setItem('mt_market_theme', t.id);
+ if (tg && tg.setHeaderColor) { try { tg.setHeaderColor(t.vars['--bg']); tg.setBackgroundColor(t.vars['--bg']); } catch (_) {} }
+ renderThemePicker();
+}
+function renderThemePicker() {
+ const box = $('themePicker'); if (!box) return;
+ const cur = localStorage.getItem('mt_market_theme') || 'purple';
+ box.innerHTML = THEMES.map(t => `<button type="button" data-theme="${t.id}" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1.5px solid ${cur===t.id?t.dot:'var(--line)'};font-size:12px;font-weight:750;text-align:left"><span style="width:14px;height:14px;border-radius:50%;background:${t.dot};flex-shrink:0"></span><span>${t.name}</span></button>`).join('');
+ box.querySelectorAll('[data-theme]').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+}
+applyTheme(localStorage.getItem('mt_market_theme') || 'purple');
+
 async function init() {
  renderCategories();renderDealFilters();
  const allowed=await loadRole();
