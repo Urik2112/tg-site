@@ -75,6 +75,7 @@
 <script>
 (() => {
 'use strict';
+window.onerror = (m, u, l) => { alert('Ошибка JS (стр ' + l + '): ' + m); };
 const SUPABASE_URL = 'https://zhakfkqqurjlqdthsnhz.supabase.co/rest/v1';
 const SUPABASE_KEY = 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
