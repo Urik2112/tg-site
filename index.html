@@ -256,7 +256,7 @@ function openEditProfile() {
     headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
     body: updateBody
    });
-   myRole = (saved && saved) ? saved : Object.assign({}, myRole, updateBody);
+   myRole = (Array.isArray(saved) && saved.length > 0) ? saved : Object.assign({}, myRole, updateBody);
    meName = newName;
    renderProfile();
    closeModal();
