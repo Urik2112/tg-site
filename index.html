@@ -76,12 +76,35 @@
       </div>
       <div class="panel"><div style="font-weight:800;margin-bottom:6px">MT Market</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
     </section>
+    <section id="pricesPage" class="page">
+      <div class="section-title">📊 Справочник цен</div>
+      <div class="small muted" style="margin:-8px 0 10px">Реальная статистика закрытых сделок игроков</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px" id="pricePeriodChips">
+        <button type="button" data-pdays="7" style="flex:1;padding:6px 8px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700">7 дней</button>
+        <button type="button" data-pdays="30" style="flex:1;padding:6px 8px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700">30 дней</button>
+        <button type="button" data-pdays="0" style="flex:1;padding:6px 8px;border-radius:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">За всё время</button>
+      </div>
+      <input class="search" id="priceSearchInput" placeholder="Поиск товара (например: Гелик, Дом, Скин)..." style="margin-bottom:10px">
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none" id="priceCatChips">
+        <button type="button" class="chip active" data-pcat="Все" style="padding:7px 13px;border-radius:12px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;white-space:nowrap">Все</button>
+        <button type="button" class="chip" data-pcat="Недвижимость" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Недвижимость</button>
+        <button type="button" class="chip" data-pcat="Автомобили" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Автомобили</button>
+        <button type="button" class="chip" data-pcat="Одежда" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Одежда</button>
+        <button type="button" class="chip" data-pcat="Аксессуары" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Аксессуары</button>
+        <button type="button" class="chip" data-pcat="Бизнес" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Бизнес</button>
+        <button type="button" class="chip" data-pcat="Другое" style="padding:7px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap">Другое</button>
+      </div>
+      <div id="priceStatsList" style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+        <div class="loading">Загружаем аналитику цен…</div>
+      </div>
+    </section>
   </main>
 </div>
 
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-item active" data-page="marketPage"><span class="nav-icon">🏪</span><span>Рынок</span></button>
   <button class="nav-item sell" id="sellNav"><span class="nav-icon">+</span><span>Продать</span></button>
+  <button class="nav-item" data-page="pricesPage" id="pricesNavBtn"><span class="nav-icon">📊</span><span>Цены</span></button>
   <button class="nav-item" data-page="chatsPage"><span class="nav-icon">💬</span><span>Чаты</span></button>
   <button class="nav-item" data-page="profilePage"><span class="nav-icon">👤</span><span>Профиль</span></button>
 </nav>
@@ -335,6 +358,7 @@ function openAd(id) {
   <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.description||'Продавец не добавил описание.')}</div>
   <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
+  <div id="adMarketPriceHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-size:12px"></div>
   <button class="btn secondary" id="modalFavBtn">${favIds.has(String(ad.id))?'❤️ В избранном (убрать)':'🤍 Добавить в избранное'}</button>
   ${sellerCanBeMessaged?'<button class="btn" id="messageSeller">💬 Написать продавцу</button>':''}
   ${canDelete?'<button class="btn danger" id="deleteAd">Удалить объявление</button>':''}
@@ -345,6 +369,25 @@ function openAd(id) {
  });
  if ($('messageSeller')) $('messageSeller').addEventListener('click',()=>startPrivateChat(ad));
  if ($('deleteAd')) $('deleteAd').addEventListener('click',()=>deleteAd(ad));
+ api('price_history', {
+  query: '?select=price&title=ilike.' + encodeURIComponent('%' + String(ad.title || '').trim() + '%') + '&limit=50'
+ }).then(rows => {
+  const box = $('adMarketPriceHint');
+  if (!box || !Array.isArray(rows) || rows.length === 0) return;
+  const nums = rows.map(r => Number(r.price || 0)).filter(n => n > 0);
+  if (nums.length === 0) return;
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const cur = parseNumericPrice(ad.price);
+  let diffBadge = '';
+  if (cur > 0 && avg > 0) {
+   const pct = Math.round(((cur - avg) / avg) * 100);
+   if (pct <= -5) diffBadge = ` <span style="color:var(--green);font-weight:800">(выгоднее рынка на ${Math.abs(pct)}%)</span>`;
+   else if (pct >= 10) diffBadge = ` <span style="color:var(--danger);font-weight:800">(выше рынка на ${pct}%)</span>`;
+   else diffBadge = ` <span style="color:var(--yellow);font-weight:800">(в пределах рынка)</span>`;
+  }
+  box.style.display = 'block';
+  box.innerHTML = `📊 <b>Средняя цена по рынку:</b> ${formatMoneyShort(avg)} <span class="muted">(${nums.length} сдел.)</span>${diffBadge}`;
+ }).catch(() => {});
  api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
   const sr = Array.isArray(r) ? r.at(0) : r;
   if (sr) {
@@ -356,10 +399,160 @@ function openAd(id) {
   }
  }).then(async r => { const d = await r.json().catch(()=>({})); if (!r.ok || d.ok === false) toast('Уведомление: ' + (d.description || d.error || r.status)); }).catch(e => toast('Сеть notify: ' + e.message));
 }
+let priceHistoryCache = [];
+let selectedPriceCat = 'Все';
+let selectedPriceDays = 0;
+
+function parseNumericPrice(val) {
+ const digits = String(val || '').replace(/[^0-9]/g, '');
+ return digits ? Number(digits) : 0;
+}
+
+function formatMoneyShort(num) {
+ return Math.round(Number(num || 0)).toLocaleString('ru-RU') + ' $';
+}
+
+async function loadPriceHistory(force = false) {
+ const listEl = $('priceStatsList');
+ if (!force && priceHistoryCache.length > 0) {
+  renderPriceStats();
+  return;
+ }
+ if (listEl) listEl.innerHTML = '<div class="loading">Загружаем аналитику цен…</div>';
+ try {
+  const rows = await api('price_history', {
+   query: '?select=id,category,title,server,price,created_at&order=created_at.desc&limit=2000'
+  });
+  priceHistoryCache = Array.isArray(rows) ? rows : [];
+  renderPriceStats();
+ } catch (e) {
+  if (listEl) listEl.innerHTML = '<div class="panel small muted">Не удалось загрузить историю цен. Проверьте таблицу price_history.</div>';
+ }
+}
+
+function renderPriceStats() {
+ const listEl = $('priceStatsList');
+ if (!listEl) return;
+ const q = ($('priceSearchInput') ? $('priceSearchInput').value : '').trim().toLowerCase();
+ const cutoff = selectedPriceDays > 0 ? (Date.now() - selectedPriceDays * 24 * 60 * 60 * 1000) : 0;
+ const filtered = priceHistoryCache.filter(row => {
+  if (cutoff > 0 && row.created_at && new Date(row.created_at).getTime() < cutoff) return false;
+  if (selectedPriceCat !== 'Все' && row.category !== selectedPriceCat) return false;
+  if (q && !String(row.title || '').toLowerCase().includes(q)) return false;
+  return true;
+ });
+
+ if (filtered.length === 0) {
+  listEl.innerHTML = '<div class="panel" style="text-align:center;padding:24px 16px"><div style="font-size:32px;margin-bottom:8px">📉</div><div style="font-weight:800;margin-bottom:4px">Пока нет данных по сделкам</div><div class="small muted">Когда продавцы закрывают объявления с указанием цены продажи, здесь формируется статистика рынка.</div></div>';
+  return;
+ }
+
+ const groups = new Map();
+ filtered.forEach(row => {
+  const rawTitle = String(row.title || '').trim();
+  const key = rawTitle.toLowerCase();
+  if (!key) return;
+  const p = Number(row.price || 0);
+  if (p <= 0) return;
+  if (!groups.has(key)) {
+   groups.set(key, { title: rawTitle, category: row.category || 'Другое', prices: [], servers: new Set() });
+  }
+  const g = groups.get(key);
+  g.prices.push(p);
+  if (row.server) g.servers.add(row.server);
+ });
+
+ const items = Array.from(groups.values()).sort((a, b) => b.prices.length - a.prices.length);
+ listEl.innerHTML = items.map(g => {
+  const minP = Math.min(...g.prices);
+  const maxP = Math.max(...g.prices);
+  const avgP = g.prices.reduce((s, x) => s + x, 0) / g.prices.length;
+  const srv = g.servers.size > 0 ? Array.from(g.servers).slice(0, 2).join(', ') : 'Все серверы';
+  return `<div class="panel" style="margin:0;padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
+     <div><div style="font-weight:850;font-size:15px">${escapeHTML(g.title)}</div><div class="small muted">${escapeHTML(g.category)} · ${escapeHTML(srv)}</div></div>
+     <span style="background:var(--card2);border:1px solid var(--line);padding:4px 9px;border-radius:10px;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap">Сделок: ${g.prices.length}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card2);padding:10px;border-radius:12px">
+     <div><div class="small muted" style="font-size:10px">МИН. ЦЕНА</div><div style="font-weight:800;font-size:13px;color:var(--green)">${formatMoneyShort(minP)}</div></div>
+     <div><div class="small muted" style="font-size:10px">СРЕДНЯЯ</div><div style="font-weight:850;font-size:13px;color:var(--yellow)">${formatMoneyShort(avgP)}</div></div>
+     <div><div class="small muted" style="font-size:10px">МАКС. ЦЕНА</div><div style="font-weight:800;font-size:13px">${formatMoneyShort(maxP)}</div></div>
+    </div>
+   </div>`;
+ }).join('');
+}
+
+if ($('pricesNavBtn')) $('pricesNavBtn').addEventListener('click', () => loadPriceHistory(false));
+if ($('priceSearchInput')) $('priceSearchInput').addEventListener('input', () => renderPriceStats());
+
+function bindChips(wrapId, onPick) {
+ const wrap = $(wrapId);
+ if (!wrap) return;
+ wrap.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+   wrap.querySelectorAll('button').forEach(b => {
+    const active = b === btn;
+    b.style.background = active ? 'var(--accent)' : 'var(--card)';
+    b.style.color = active ? '#fff' : 'var(--muted)';
+    b.style.border = active ? 'none' : '1px solid var(--line)';
+   });
+   onPick(btn);
+   renderPriceStats();
+  });
+ });
+}
+bindChips('pricePeriodChips', btn => { selectedPriceDays = Number(btn.dataset.pdays || 0); });
+bindChips('priceCatChips', btn => { selectedPriceCat = btn.dataset.pcat || 'Все'; });
+
 async function deleteAd(ad) {
- if (!confirm('Удалить это объявление?')) return;
- try { await api('ads',{method:'DELETE',query:'?id=eq.'+encodeURIComponent(ad.id),headers:{'Prefer':'return=representation'}}); closeModal(); toast('Объявление удалено'); await loadAds(); }
- catch(e) { toast('Не удалось удалить: '+e.message); }
+ const defaultPrice = parseNumericPrice(ad.price);
+ showModal('Закрыть объявление', `
+  <div class="small muted" style="margin-bottom:12px">Укажите, удалось ли продать <b>${escapeHTML(ad.title)}</b>, чтобы обновить рыночную статистику цен для игроков.</div>
+  <label class="field-label">Итоговая цена сделки ($)</label>
+  <input class="field" id="soldFinalPrice" type="number" min="1" value="${defaultPrice || ''}" placeholder="Например: 1500000">
+  <button class="btn" id="confirmSoldBtn" style="margin-top:12px">✅ Продал — записать в базу цен</button>
+  <button class="btn danger" id="confirmJustDeleteBtn" style="margin-top:8px">🗑️ Просто снять без записи</button>
+ `);
+
+ $('confirmSoldBtn').addEventListener('click', async () => {
+  const finalPrice = Number($('soldFinalPrice').value || 0);
+  if (!finalPrice || finalPrice <= 0) { toast('Введите корректную цену сделки'); return; }
+  $('confirmSoldBtn').disabled = true;
+  try {
+   await api('price_history', {
+    method: 'POST',
+    body: {
+     ad_id: String(ad.id),
+     category: ad.category || 'Другое',
+     title: String(ad.title || '').trim(),
+     server: ad.server || '',
+     price: finalPrice,
+     seller_id: String(ad.seller_id || '')
+    }
+   });
+   await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=representation' } });
+   priceHistoryCache = [];
+   closeModal();
+   toast('Сделка записана в справочник цен!');
+   await loadAds();
+  } catch (e) {
+   $('confirmSoldBtn').disabled = false;
+   toast('Ошибка: ' + e.message);
+  }
+ });
+
+ $('confirmJustDeleteBtn').addEventListener('click', async () => {
+  $('confirmJustDeleteBtn').disabled = true;
+  try {
+   await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=representation' } });
+   closeModal();
+   toast('Объявление снято');
+   await loadAds();
+  } catch (e) {
+   $('confirmJustDeleteBtn').disabled = false;
+   toast('Не удалось удалить: ' + e.message);
+  }
+ });
 }
 function openSellModal() {
  if (myRole && myRole.is_banned) return;
