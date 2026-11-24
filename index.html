@@ -154,7 +154,7 @@ function renderAds() {
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + (a.image_url ? '<img src="' + escapeHTML(a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
  }).join('');
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
@@ -275,7 +275,12 @@ function openAd(id) {
  const sellerCanBeMessaged=String(ad.seller_id)!==meId;
  const canDelete=canDeleteAd(ad);
  showModal('Объявление',`
-  ${ad.image_url ? `<div style="margin-bottom:13px;border-radius:16px;overflow:hidden;background:var(--card2)"><img src="${escapeHTML(ad.image_url)}" style="width:100%;max-height:260px;object-fit:cover;display:block"></div>` : `<div class="detail-emoji">${escapeHTML(ad.emoji||CATEGORY_EMOJI[ad.category]||'📦')}</div>`}
+  ${(() => {
+    const imgs = (Array.isArray(ad.images) && ad.images.length > 0) ? ad.images : (ad.image_url ? [ad.image_url] : []);
+    if (!imgs.length) return `<div class="detail-emoji">${escapeHTML(ad.emoji||CATEGORY_EMOJI[ad.category]||'📦')}</div>`;
+    if (imgs.length === 1) return `<div style="margin-bottom:13px;border-radius:16px;overflow:hidden;background:var(--card2)"><img src="${escapeHTML(imgs[0])}" style="width:100%;max-height:280px;object-fit:cover;display:block"></div>`;
+    return `<div style="margin-bottom:13px"><div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;scrollbar-width:none">${imgs.map((u, idx) => `<div style="flex:0 0 88%;scroll-snap-align:start;position:relative;border-radius:14px;overflow:hidden;background:var(--card2)"><img src="${escapeHTML(u)}" style="width:100%;height:240px;object-fit:cover;display:block"><span style="position:absolute;bottom:8px;right:8px;background:#090611cc;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800">${idx+1} / ${imgs.length}</span></div>`).join('')}</div><div class="small muted" style="text-align:center;margin-top:5px">← Листайте фото вбок (${imgs.length} шт.) →</div></div>`;
+  })()}
   <div class="small muted">${escapeHTML(ad.category||'Категория')} · ${escapeHTML(ad.type||'Продам')}</div>
   <div class="detail-price">${formatPrice(ad.price,ad.type)}</div>
   <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
@@ -330,8 +335,8 @@ function openSellModal() {
    <label class="field-label">Цена (игровая валюта)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
    <label class="field-label">Описание <span class="muted">(необязательно)</span></label><textarea class="field textarea" name="description" maxlength="1500" placeholder="Подробности предложения..."></textarea>
    <label style="display:block;margin:8px 0 12px;padding:12px;background:#17112b;border:1px dashed #7b42f6;border-radius:11px;text-align:center;cursor:pointer;font-size:13px;color:#fff">
-    📷 Прикрепить фото <span class="muted">(необязательно)</span>
-    <input type="file" id="adPhotoInput" accept="image/*" style="display:none" onchange="document.getElementById('adPhotoName').textContent = this.files[0] ? '✅ ' + this.files[0].name : ''">
+    📷 Прикрепить фото <span class="muted">(до 5 шт., необязательно)</span>
+    <input type="file" id="adPhotoInput" accept="image/*" multiple style="display:none" onchange="const n=this.files?this.files.length:0;document.getElementById('adPhotoName').textContent = n ? '✅ Выбрано фото: ' + Math.min(n,5) + (n>5?' (загрузятся первые 5)':'') : ''">
     <div id="adPhotoName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
    </label>
    <button class="btn" type="submit">Опубликовать объявление</button>
@@ -341,25 +346,33 @@ function openSellModal() {
   const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:'',description:String(f.get('description')||'').trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
   if(!payload.title){toast('Укажите название объявления');return;}
   const submit=e.currentTarget.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Публикуем…';
-  const photoFile = $('adPhotoInput') && $('adPhotoInput').files ? $('adPhotoInput').files[0] : null;
-  if (photoFile) {
-   submit.textContent = 'Загружаем фото…';
-   try {
-    const ext = (photoFile.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-    const sbUrl = 'https://zhakfkqqurjlqdthsnhz.supabase.co';
-    const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
-    const upRes = await fetch(sbUrl + '/storage/v1/object/ad-images/' + fileName, {
-     method: 'POST',
-     headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': photoFile.type || 'image/jpeg' },
-     body: photoFile
-    });
-    if (upRes.ok) {
-     payload.image_url = sbUrl + '/storage/v1/object/public/ad-images/' + fileName;
-    } else {
-     const errTxt = await upRes.text(); toast('Ошибка фото (' + upRes.status + '): ' + errTxt.slice(0, 60));
-    }
-   } catch (upErr) { toast('Сбой загрузки фото: ' + upErr.message); }
+  const photoFiles = $('adPhotoInput') && $('adPhotoInput').files ? Array.from($('adPhotoInput').files).slice(0, 5) : [];
+  if (photoFiles.length > 0) {
+   const urls = [];
+   const sbUrl = 'https://supabase.co';
+   const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
+   for (let i = 0; i < photoFiles.length; i++) {
+    submit.textContent = 'Загружаем фото (' + (i + 1) + '/' + photoFiles.length + ')…';
+    const pf = photoFiles[i];
+    try {
+     const ext = (pf.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+     const fileName = Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+     const upRes = await fetch(sbUrl + '/storage/v1/object/ad-images/' + fileName, {
+      method: 'POST',
+      headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': pf.type || 'image/jpeg' },
+      body: pf
+     });
+     if (upRes.ok) {
+      urls.push(sbUrl + '/storage/v1/object/public/ad-images/' + fileName);
+     } else {
+      const errTxt = await upRes.text(); toast('Ошибка фото ' + (i+1) + ': ' + errTxt.slice(0, 50));
+     }
+    } catch (upErr) { toast('Сбой фото: ' + upErr.message); }
+   }
+   if (urls.length > 0) {
+    payload.image_url = urls[0];
+    payload.images = urls;
+   }
    submit.textContent = 'Публикуем…';
   }
   try { await api('ads',{method:'POST',headers:{'Prefer':'return=representation'},body:payload}); closeModal();toast('Объявление опубликовано');await loadAds();showPage('marketPage'); }
