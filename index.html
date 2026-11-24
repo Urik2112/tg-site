@@ -96,7 +96,7 @@
 .profile-banner-bg {
  position: absolute;
  top: 0; left: 0; right: 0;
- height: 185px;
+ height: 225px;
  background-size: cover;
  background-position: center;
  z-index: 0;
@@ -1101,14 +1101,14 @@ async function openPublicProfile(uid) {
    : escapeHTML(letter);
   const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
   const pubBannerHtml = pr.banner_url
-   ? '<div style="position:relative;width:calc(100% + 28px);margin-left:-14px;height:210px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;margin-bottom:-48px"><div style="position:absolute;left:0;right:0;bottom:0;height:75px;background:linear-gradient(180deg,rgba(19,14,36,0) 0%,var(--card) 100%)"></div></div>'
+   ? '<div style="position:relative;width:calc(100% + 28px);margin-left:-14px;height:265px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;margin-bottom:-48px"><div style="position:absolute;left:0;right:0;bottom:0;height:75px;background:linear-gradient(180deg,rgba(19,14,36,0) 0%,var(--card) 100%)"></div></div>'
    : '<div style="height:12px"></div>';
   showModal('Профиль игрока', `
    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:0 0 18px">
     ${pubBannerHtml}
     <div class="${frCls}" style="position:relative;z-index:1;width:88px;height:88px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};box-shadow:0 8px 22px rgba(0,0,0,.6)">${avInner}</div>
     <div style="font-size:18px;font-weight:900">${escapeHTML(name)}</div>
-    <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${r.level}/10)</span></div>
+    <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)}</span></div>
     <div class="small muted">ID: ${escapeHTML(targetId)}</div>
     <div style="width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;text-align:left;margin-top:4px">${bioText}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:4px">
