@@ -114,7 +114,7 @@
 </head>
 <body>
 <div id="app" class="app">
-  <header class="topbar"><div><div class="brand">MT <span>MARKET</span></div><div class="top-sub">Торговая площадка игроков</div></div><div class="avatar" id="topAvatar">M</div></header>
+  <header class="topbar"><div><div class="brand">RP <span>МАРКЕТ 08</span></div><div class="top-sub">Торговая площадка игроков</div></div><div class="avatar" id="topAvatar">M</div></header>
 
   <main>
     <section id="marketPage" class="page active">
@@ -406,13 +406,13 @@ function openEditProfile() {
   <form id="editProfileForm">
    <label style="display:block;margin:4px 0 12px;padding:12px;background:#17112b;border:1px dashed #7b42f6;border-radius:11px;text-align:center;cursor:pointer;font-size:13px">
     🖼 Загрузить новую аватарку
-    <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="document.getElementById('avatarFileName').textContent=this.files&&this.files.at(0)?'✅ '+this.files.at(0).name:''">
+    <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="document.getElementById('avatarFileName').textContent=this.files&&this.files.item(0)?'✅ '+this.files.item(0).name:''">
     <div id="avatarFileName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
    </label>
    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
     <label class="inline-btn" style="flex:1;text-align:center;cursor:pointer;padding:10px">
      🏞 Загрузить фон профиля
-     <input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="document.getElementById('bannerFileName').textContent=this.files&&this.files.at(0)?'✅ '+this.files.at(0).name:'';document.getElementById('removeBannerFlag').value='0'">
+     <input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="document.getElementById('bannerFileName').textContent=this.files&&this.files.item(0)?'✅ '+this.files.item(0).name:'';document.getElementById('removeBannerFlag').value='0'">
      <div id="bannerFileName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
     </label>
     ${(myRole && myRole.banner_url) ? '<button type="button" class="inline-btn" style="color:#f87171;padding:10px" onclick="document.getElementById(\'removeBannerFlag\').value=\'1\';document.getElementById(\'bannerFileName\').textContent=\'🗑 Фон будет удалён\'">🗑</button>' : ''}
