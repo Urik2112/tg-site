@@ -91,6 +91,25 @@
  padding: 6px 10px !important;
  font-size: 12px !important;
 }
+
+#profilePage .panel { position: relative; overflow: hidden; }
+.profile-banner-bg {
+ position: absolute;
+ top: 0; left: 0; right: 0;
+ height: 128px;
+ background-size: cover;
+ background-position: center;
+ z-index: 0;
+ pointer-events: none;
+}
+.profile-banner-bg::after {
+ content: '';
+ position: absolute;
+ inset: 0;
+ background: linear-gradient(180deg, rgba(19,14,36,.25) 0%, var(--card) 100%);
+}
+#profilePage .panel > *:not(.profile-banner-bg) { position: relative; z-index: 1; }
+#profilePage .panel.has-banner .profile-head { padding-top: 44px; }
 </style>
 </head>
 <body>
@@ -133,7 +152,8 @@
 
     <section id="profilePage" class="page">
       <div class="section-title">👤 Профиль</div>
-      <div class="panel">
+      <div class="panel" id="profileMainPanel">
+        <div class="profile-banner-bg" id="profileBannerBg" style="display:none"></div>
         <div class="profile-head">
           <div class="profile-avatar" id="profileAvatar" style="overflow:hidden">M</div>
           <div style="min-width:0;flex:1">
@@ -355,6 +375,20 @@ function renderProfile() {
  $('profileAvatar').innerHTML = avUrl ? '<img src="'+escapeHTML(avUrl)+'" style="width:100%;height:100%;object-fit:cover">' : letter;
  applyAvatarFrame($('topAvatar'), avFrame);
  applyAvatarFrame($('profileAvatar'), avFrame);
+ const banUrl = myRole && myRole.banner_url;
+ const banEl = $('profileBannerBg');
+ const panEl = $('profileMainPanel');
+ if (banEl && panEl) {
+  if (banUrl) {
+   banEl.style.backgroundImage = 'url("' + banUrl.replace(/"/g, '%22') + '")';
+   banEl.style.display = 'block';
+   panEl.classList.add('has-banner');
+  } else {
+   banEl.style.backgroundImage = '';
+   banEl.style.display = 'none';
+   panEl.classList.remove('has-banner');
+  }
+ }
  $('profileName').textContent = meName;
  $('profileBio').textContent = (myRole && myRole.bio) ? myRole.bio : 'Описание профиля не заполнено.';
  $('profileDealsTotal').textContent = (myRole && myRole.deals_total) || 0;
@@ -372,9 +406,18 @@ function openEditProfile() {
   <form id="editProfileForm">
    <label style="display:block;margin:4px 0 12px;padding:12px;background:#17112b;border:1px dashed #7b42f6;border-radius:11px;text-align:center;cursor:pointer;font-size:13px">
     🖼 Загрузить новую аватарку
-    <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="document.getElementById('avatarFileName').textContent=this.files?'✅ '+this.files.name:''">
+    <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="document.getElementById('avatarFileName').textContent=this.files&&this.files.at(0)?'✅ '+this.files.at(0).name:''">
     <div id="avatarFileName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
    </label>
+   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+    <label class="inline-btn" style="flex:1;text-align:center;cursor:pointer;padding:10px">
+     🏞 Загрузить фон профиля
+     <input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="document.getElementById('bannerFileName').textContent=this.files&&this.files.at(0)?'✅ '+this.files.at(0).name:'';document.getElementById('removeBannerFlag').value='0'">
+     <div id="bannerFileName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
+    </label>
+    ${(myRole && myRole.banner_url) ? '<button type="button" class="inline-btn" style="color:#f87171;padding:10px" onclick="document.getElementById(\'removeBannerFlag\').value=\'1\';document.getElementById(\'bannerFileName\').textContent=\'🗑 Фон будет удалён\'">🗑</button>' : ''}
+    <input type="hidden" id="removeBannerFlag" value="0">
+   </div>
    <label class="field-label">Имя / Игровой ник</label>
    <input class="field" name="display_name" maxlength="40" required value="${escapeHTML(meName)}" placeholder="Ваш ник в игре">
    <label class="field-label">Рамка аватарки</label>
@@ -419,12 +462,33 @@ function openEditProfile() {
    } catch (_) {}
    btn.textContent = 'Сохраняем…';
   }
+  let newBannerUrl = (myRole && myRole.banner_url) || null;
+  if ($('removeBannerFlag') && $('removeBannerFlag').value === '1') {
+   newBannerUrl = null;
+  }
+  const banFile = $('bannerFileInput') && $('bannerFileInput').files ? $('bannerFileInput').files.item(0) : null;
+  if (banFile) {
+   btn.textContent = 'Загружаем фон…';
+   try {
+    const ext = (banFile.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+    const fn = 'banner_' + meId + '_' + Date.now() + '.' + ext;
+    const sbBase = 'https://supabase.co';
+    const up = await fetch(sbBase + '/storage/v1/object/avatars/' + fn, {
+     method: 'POST',
+     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': banFile.type || 'image/jpeg' },
+     body: await compressImage(banFile, 1024, 0.85)
+    });
+    if (up.ok) { newBannerUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; } else { const t = await up.text(); toast('Ошибка фона (' + up.status + '): ' + t.slice(0, 50)); }
+   } catch (_) {}
+   btn.textContent = 'Сохраняем…';
+  }
   const newFrame = String(f.get('avatar_frame') || 'default');
   const patchBody = {
    display_name: newName,
    bio: newBio,
    avatar_url: newAvatarUrl,
-   avatar_frame: newFrame
+   avatar_frame: newFrame,
+   banner_url: newBannerUrl
   };
   try {
    let saved;
@@ -1020,9 +1084,13 @@ async function openPublicProfile(uid) {
    ? '<img src="' + escapeHTML(pr.avatar_url) + '" style="width:100%;height:100%;object-fit:cover">'
    : escapeHTML(letter);
   const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
+  const pubBannerHtml = pr.banner_url
+   ? '<div style="width:100%;height:105px;border-radius:14px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;margin-bottom:-42px;border:1px solid var(--line)"></div>'
+   : '';
   showModal('Профиль игрока', `
    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:6px 0 12px">
-    <div class="${frCls}" style="width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)}">${avInner}</div>
+    ${pubBannerHtml}
+    <div class="${frCls}" style="position:relative;z-index:1;width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)}">${avInner}</div>
     <div style="font-size:18px;font-weight:900">${escapeHTML(name)}</div>
     <div><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)} (${r.level}/10)</span></div>
     <div class="small muted">ID: ${escapeHTML(targetId)}</div>
