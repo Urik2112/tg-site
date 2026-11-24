@@ -1155,23 +1155,30 @@ async function openPublicProfile(uid) {
    </div>
   `);
   $('modalWrap').classList.add('profile-fullscreen');
-  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId) })
+  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId) + '&_t=' + Date.now() })
    .then(lRows => {
     const arr = Array.isArray(lRows) ? lRows : [];
     const isLiked = arr.some(x => String(x.from_user_id) === String(meId));
     if ($('pubLikesNum')) $('pubLikesNum').textContent = arr.length;
     if ($('pubLikesSub')) $('pubLikesSub').textContent = isLiked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
-   }).catch(() => { if ($('pubLikesNum')) $('pubLikesNum').textContent = '0'; });
+   }).catch(err => {
+    if ($('pubLikesNum')) $('pubLikesNum').textContent = '0';
+    console.warn('profile_likes:', err);
+   });
   if ($('pubLikeBoxBtn')) {
    $('pubLikeBoxBtn').onclick = async () => {
+    const btn = $('pubLikeBoxBtn');
+    btn.disabled = true;
     try {
      const res = await api('rpc/toggle_profile_like', { method: 'POST', body: { p_from_id: String(meId), p_to_id: String(targetId) } });
-     if (res && typeof res.count === 'number') {
-      if ($('pubLikesNum')) $('pubLikesNum').textContent = res.count;
-      if ($('pubLikesSub')) $('pubLikesSub').textContent = res.liked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
-      toast(res.liked ? 'Лайк поставлен ❤️' : 'Лайк убран');
+     const data = Array.isArray(res) ? res.at(0) : res;
+     if (data && typeof data.count === 'number') {
+      if ($('pubLikesNum')) $('pubLikesNum').textContent = data.count;
+      if ($('pubLikesSub')) $('pubLikesSub').textContent = data.liked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
+      toast(data.liked ? 'Лайк поставлен ❤️' : 'Лайк убран');
      }
     } catch (err) { toast('Ошибка лайка: ' + err.message); }
+    finally { btn.disabled = false; }
    };
   }
   if ($('pubPhoneBox') && pr.game_phone) {
