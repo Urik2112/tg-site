@@ -282,20 +282,28 @@ function openEditProfile() {
    } catch (_) {}
    btn.textContent = 'Сохраняем…';
   }
-  const updateBody = {
-   user_id: meId,
-   rank: (myRole && myRole.rank) || '🌱 Новичок',
+  const patchBody = {
    display_name: newName,
    bio: newBio,
    avatar_url: newAvatarUrl
   };
   try {
-   const saved = await api('roles', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-    body: updateBody
-   });
-   myRole = (Array.isArray(saved) && saved.length > 0) ? saved.at(0) : Object.assign({}, myRole, updateBody);
+   let saved;
+   if (myRole && myRole.user_id) {
+    saved = await api('roles', {
+     method: 'PATCH',
+     query: '?user_id=eq.' + encodeURIComponent(meId),
+     headers: { 'Prefer': 'return=representation' },
+     body: patchBody
+    });
+   } else {
+    saved = await api('roles', {
+     method: 'POST',
+     headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+     body: Object.assign({ user_id: meId, rank: '🌱 Новичок' }, patchBody)
+    });
+   }
+   myRole = (Array.isArray(saved) && saved.length > 0) ? saved.at(0) : Object.assign({}, myRole, patchBody);
    meName = newName;
    renderProfile();
    closeModal();
