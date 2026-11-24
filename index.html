@@ -310,7 +310,7 @@ function openAd(id) {
    await api('reports', {
     method: 'POST',
     headers: { 'Prefer': 'return=representation' },
-    body: { ad_id: Number(ad.id), ad_title: String(ad.title||''), seller_id: String(ad.seller_id||''), reporter_id: String(meId), reason: rsn.trim() }
+    body: { ad_id: String(ad.id), ad_title: String(ad.title||''), seller_id: String(ad.seller_id||''), reporter_id: String(meId), reason: rsn.trim() }
    });
    rb.textContent = '✅ Жалоба отправлена модераторам';
    toast('Жалоба отправлена в Админ-центр');
@@ -335,7 +335,7 @@ if ($('confirmDealBtn')) $('confirmDealBtn').addEventListener('click', async ()=
   await api('deals', {
    method: 'POST',
    headers: { 'Prefer': 'return=representation' },
-   body: { ad_id: Number(ad.id), seller_id: String(ad.seller_id), buyer_id: String(meId) }
+   body: { ad_id: String(ad.id), seller_id: String(ad.seller_id), buyer_id: String(meId) }
   });
   if (myRole) {
    myRole.deals_total = (myRole.deals_total || 0) + 1;
