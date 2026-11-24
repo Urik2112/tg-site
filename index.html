@@ -1012,8 +1012,16 @@ async function getTargetRole(id) {
  return rows&&rows[0]?rows[0]:{user_id:id,rank:RANKS[0].name,is_banned:false};
 }
 async function upsertRole(id,patch) {
- const payload={user_id:id,rank:patch.rank,is_banned:patch.is_banned,ban_reason:patch.ban_reason,updated_at:new Date().toISOString()};
- return api('roles',{method:'POST',query:'?on_conflict=user_id',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:payload});
+ return api('rpc/admin_manage_role',{
+  method:'POST',
+  body:{
+   p_admin_id:String(meId),
+   p_target_id:String(id),
+   p_rank:patch.rank!==undefined?patch.rank:null,
+   p_is_banned:patch.is_banned!==undefined?Boolean(patch.is_banned):null,
+   p_ban_reason:patch.ban_reason!==undefined?patch.ban_reason:null
+  }
+ });
 }
 async function changeBan(id,ban,reason) {
  if(!id){toast('Укажите Telegram ID');return;}
