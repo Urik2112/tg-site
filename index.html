@@ -895,7 +895,7 @@ async function loadReportsAdmin() {
   }));
  } catch (e) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; }
 }
-async async function openAdminCenter() {
+async function openAdminCenter() {
  if(myRank.level<8)return;
  try { rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[]; }
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
