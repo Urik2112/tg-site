@@ -150,7 +150,7 @@ function renderAds() {
  const q=$('searchInput').value.trim().toLowerCase();
  const list=ads.filter(a=>{
   const cat=selectedCategory==='Все'||a.category===selectedCategory;
-  const deal=selectedDeal==='Все'||a.type===selectedDeal;
+  const deal=selectedDeal==='Все'||(selectedDeal==='❤️ Избранное'?favIds.has(String(a.id)):a.type===selectedDeal);
   const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q);
   return cat&&deal&&search;
  });
