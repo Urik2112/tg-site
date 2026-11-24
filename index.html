@@ -62,7 +62,7 @@
 const SUPABASE_URL = 'https://zhakfkqqurjlqdthsnhz.supabase.co/rest/v1';
 const SUPABASE_KEY = 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) { try { tg.ready(); tg.expand(); } catch (_) {} }
+if (tg) { try { tg.ready(); tg.expand(); } catch (upErr) { toast('Сбой загрузки фото: ' + upErr.message); } }
 
 const RANKS = [
  {level:1,name:'🌱 Новичок',color:'#8c9b9a',bg:'#34413f'},
@@ -157,7 +157,7 @@ async function loadRole() {
   if (!myRole) {
    myRole={user_id:meId,rank:'🌱 Новичок',is_banned:false,ban_reason:null};
    // Создание базовой роли может быть запрещено политиками Supabase; приложение продолжит работу в ранге 1.
-   try { const created=await api('roles',{method:'POST',headers:{'Prefer':'return=representation'},body:myRole}); if(created&&created[0])myRole=created[0]; } catch (_) {}
+   try { const created=await api('roles',{method:'POST',headers:{'Prefer':'return=representation'},body:myRole}); if(created&&created[0])myRole=created[0]; } catch (upErr) { toast('Сбой загрузки фото: ' + upErr.message); }
   }
   if (myRole.is_banned===true) { showBanned(myRole.ban_reason); return false; }
   myRank=rankFor(myRole.rank);
@@ -247,7 +247,7 @@ function openSellModal() {
     } else {
      const errTxt = await upRes.text(); toast('Ошибка фото (' + upRes.status + '): ' + errTxt.slice(0, 60));
     }
-   } catch (_) {}
+   } catch (upErr) { toast('Сбой загрузки фото: ' + upErr.message); }
    submit.textContent = 'Публикуем…';
   }
   try { await api('ads',{method:'POST',headers:{'Prefer':'return=representation'},body:payload}); closeModal();toast('Объявление опубликовано');await loadAds();showPage('marketPage'); }
