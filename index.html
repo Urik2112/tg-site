@@ -227,7 +227,7 @@ function openEditProfile() {
   const btn = e.currentTarget.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Сохраняем…';
   let newAvatarUrl = (myRole && myRole.avatar_url) || null;
-  const avFile = $('avatarFileInput') && $('avatarFileInput').files ? $('avatarFileInput').files : null;
+  const avFile = $('avatarFileInput') && $('avatarFileInput').files ? $('avatarFileInput').files.item(0) : null;
   if (avFile) {
    btn.textContent = 'Загружаем аватар…';
    try {
@@ -256,7 +256,7 @@ function openEditProfile() {
     headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
     body: updateBody
    });
-   myRole = (Array.isArray(saved) && saved.length > 0) ? saved : Object.assign({}, myRole, updateBody);
+   myRole = (Array.isArray(saved) && saved.length > 0) ? saved.at(0) : Object.assign({}, myRole, updateBody);
    meName = newName;
    renderProfile();
    closeModal();
