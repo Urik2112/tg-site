@@ -210,7 +210,7 @@
         <div style="font-weight:800;margin-bottom:10px">🎨 Оформление приложения</div>
         <div id="themePicker" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
       </div>
-      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки (за что дают бан)</button></div>
+      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки</button></div>
     </section>
     <section id="pricesPage" class="page">
       <div class="section-title">📊 Справочник цен</div>
@@ -1324,8 +1324,9 @@ function openRulesModal() {
   ${termsHtml}
   <div style="font-weight:850;font-size:14px;margin:14px 0 8px;color:#fff">1.5. Нарушения и наказания</div>
   ${listHtml}
-  <button type="button" class="btn secondary" onclick="closeModal()">Понятно</button>
+  <button type="button" class="btn secondary" id="closeRulesModalBtn">Понятно</button>
  `);
+ if ($('closeRulesModalBtn')) $('closeRulesModalBtn').addEventListener('click', closeModal);
 }
 if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
 
