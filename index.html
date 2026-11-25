@@ -140,6 +140,15 @@
  flex: 1 1 auto !important;
  overflow-y: auto !important;
 }
+
+.msg-time {
+ display: block;
+ text-align: right;
+ font-size: 10px;
+ color: rgba(255, 255, 255, 0.55);
+ margin-top: 4px;
+ line-height: 1;
+}
 </style>
 </head>
 <body>
@@ -1243,10 +1252,12 @@ async function loadMessages() {
    const dispName = pr.display_name || m.sender_name || sid || 'Игрок';
    const letter = (dispName.charAt(0) || 'И').toUpperCase();
    const avInner = pr.avatar_url ? '<img src="'+escapeHTML(pr.avatar_url)+'" alt="">' : escapeHTML(letter);
+   const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
+   const timeHtml = msgTime ? '<span class="msg-time">'+escapeHTML(msgTime)+'</span>' : '';
    const avHtml = '<div class="msg-av '+frameClassFor(pr.avatar_frame)+'" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
    return '<div class="msg-row '+(isMine?'mine':'')+'">'
     + avHtml
-    + '<div class="bubble '+(isMine?'mine':'')+'"><small><span class="msg-author-link" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(dispName)+'</span></small>'+escapeHTML(m.text)+'</div>'
+    + '<div class="bubble '+(isMine?'mine':'')+'"><small><span class="msg-author-link" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(dispName)+'</span></small>'+escapeHTML(m.text)+timeHtml+'</div>'
     + '</div>';
   }).join('')||'<div class="loading">Начните общение первым 👋</div>';
   box.querySelectorAll('[data-uid]').forEach(el => {
