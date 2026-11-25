@@ -327,7 +327,7 @@ function renderDealFilters() {
 }
 function formatPrice(price,type) {
  if (type==='Обмен') return 'Обмен';
- const n=Number(price); return Number.isFinite(n) && n>0 ? n.toLocaleString('ru-RU')+' $' : (price ? escapeHTML(price) : 'Договорная');
+ const n=Number(price); return Number.isFinite(n) && n>0 ? n.toLocaleString('ru-RU')+' ₽' : (price ? escapeHTML(price) : 'Договорная');
 }
 function parseNumericPrice(val) {
  const digits = String(val || '').replace(/[^\d]/g, '');
@@ -336,7 +336,7 @@ function parseNumericPrice(val) {
 function renderAds() {
  const q=$('searchInput').value.trim().toLowerCase();
  const list=ads.filter(a=>{
-  const cat=selectedCategory==='Все'||a.category===selectedCategory;
+  const cat=selectedCategory==='Все'||a.category===selectedCategory||(selectedCategory==='Бизнесы'&&a.category==='Предприятие');
   const deal=selectedDeal==='Все'||(selectedDeal==='❤️ Избранное'?favIds.has(String(a.id)):a.type===selectedDeal);
   const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q);
   return cat&&deal&&search;
@@ -357,7 +357,7 @@ function renderAds() {
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span><button type="button" data-fav-id="'+escapeHTML(a.id)+'" style="position:absolute;top:8px;right:8px;z-index:3;width:28px;height:28px;border-radius:9px;background:#090611bb;font-size:14px;display:grid;place-items:center">'+(favIds.has(String(a.id))?'❤️':'🤍')+'</button>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">🌐 '+escapeHTML(a.server||'Сервер не указан')+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span><button type="button" data-fav-id="'+escapeHTML(a.id)+'" style="position:absolute;top:8px;right:8px;z-index:3;width:28px;height:28px;border-radius:9px;background:#090611bb;font-size:14px;display:grid;place-items:center">'+(favIds.has(String(a.id))?'❤️':'🤍')+'</button>'+escapeHTML(emoji)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">'+(a.server==='Торг возможен'?'🤝 Торг возможен':(a.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости'))+'</div></div></article>';
  }).join('');
  $('adsGrid').querySelectorAll('[data-fav-id]').forEach(b=>b.addEventListener('click',e=>toggleFav(b.dataset.favId,e)));
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
@@ -581,7 +581,7 @@ function openAd(id) {
   <div class="small muted">${escapeHTML(ad.category||'Категория')} · ${escapeHTML(ad.type||'Продам')}</div>
   <div class="detail-price">${formatPrice(ad.price,ad.type)}</div>
   <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
-  <div class="small muted">🌐 ${escapeHTML(ad.server||'Сервер не указан')}</div>
+  <div class="small muted">${ad.server==='Торг возможен'?'🤝 Торг возможен':(ad.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости')}</div>
   <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.description||'Продавец не добавил описание.')}</div>
   <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
@@ -636,7 +636,7 @@ function parseNumericPrice(val) {
 }
 
 function formatMoneyShort(num) {
- return Math.round(Number(num || 0)).toLocaleString('ru-RU') + ' $';
+ return Math.round(Number(num || 0)).toLocaleString('ru-RU') + ' ₽';
 }
 
 async function loadPriceHistory(force = false) {
@@ -735,7 +735,7 @@ async function deleteAd(ad) {
  const defaultPrice = parseNumericPrice(ad.price);
  showModal('Закрыть объявление', `
   <div class="small muted" style="margin-bottom:12px">Укажите, удалось ли продать <b>${escapeHTML(ad.title)}</b>, чтобы обновить рыночную статистику цен для игроков.</div>
-  <label class="field-label">Итоговая цена сделки ($)</label>
+  <label class="field-label">Итоговая цена сделки (₽)</label>
   <input class="field" id="soldFinalPrice" type="number" min="1" value="${defaultPrice || ''}" placeholder="Например: 1500000">
   <button class="btn" id="confirmSoldBtn" style="margin-top:12px">✅ Продал — записать в базу цен</button>
   <button class="btn danger" id="confirmJustDeleteBtn" style="margin-top:8px">🗑️ Просто снять без записи</button>
@@ -788,7 +788,8 @@ function openSellModal() {
    <label class="field-label">Тип сделки</label><select class="field" name="type"><option>Продам</option><option>Куплю</option><option>Обмен</option></select>
    <label class="field-label">Категория</label><select class="field" name="category">${CATEGORIES.slice(1).map(c=>'<option>'+c.name+'</option>').join('')}</select>
    <label class="field-label">Название</label><input class="field" name="title" maxlength="80" required placeholder="Например, BMW M5 F90">
-   <label class="field-label">Цена (игровая валюта)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
+   <label class="field-label">Цена (₽)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
+   <label class="field-label">Возможен ли торг</label><select class="field" name="bargain"><option value="Торг возможен">🤝 Торг возможен</option><option value="Без торга">🔒 Без торга</option></select>
    <label class="field-label">Описание <span class="muted">(необязательно)</span></label><textarea class="field textarea" name="description" maxlength="1500" placeholder="Подробности предложения..."></textarea>
    <label style="display:block;margin:8px 0 12px;padding:12px;background:#17112b;border:1px dashed #7b42f6;border-radius:11px;text-align:center;cursor:pointer;font-size:13px;color:#fff">
     📷 Прикрепить фото <span class="muted">(до 5 шт., необязательно)</span>
@@ -799,7 +800,7 @@ function openSellModal() {
   </form>`);
  $('sellForm').addEventListener('submit',async e=>{
   e.preventDefault(); const f=new FormData(e.currentTarget); const category=f.get('category');
-  const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:'',description:String(f.get('description')||'').trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
+  const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:String(f.get('bargain')||'Торг возможен'),description:String(f.get('description')||'').trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
   if(!payload.title){toast('Укажите название объявления');return;}
   const submit=e.currentTarget.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Публикуем…';
   const photoFiles = $('adPhotoInput') && $('adPhotoInput').files ? Array.from($('adPhotoInput').files).slice(0, 5) : [];
