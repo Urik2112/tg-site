@@ -222,8 +222,13 @@
       <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки</button></div>
     </section>
     <section id="pricesPage" class="page">
-      <div class="section-title">📊 Справочник цен</div>
-      <div class="small muted" style="margin:-8px 0 10px">Реальная статистика закрытых сделок игроков</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div>
+          <div class="section-title" style="margin-bottom:2px">📊 Справочник цен</div>
+          <div class="small muted" style="margin-bottom:10px">Реальная статистика закрытых сделок игроков</div>
+        </div>
+        <div id="priceAdminTopWrap"></div>
+      </div>
       <div style="display:flex;gap:6px;margin-bottom:10px" id="pricePeriodChips">
         <button type="button" data-pdays="7" style="flex:1;padding:6px 8px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700">7 дней</button>
         <button type="button" data-pdays="30" style="flex:1;padding:6px 8px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700">30 дней</button>
@@ -686,9 +691,19 @@ async function loadPriceHistory(force = false) {
  }
 }
 
+const PRICE_CATS = ['Недвижимость', 'Автомобили', 'Одежда', 'Аксессуары', 'Бизнес', 'Другое'];
+
 function renderPriceStats() {
  const listEl = $('priceStatsList');
  if (!listEl) return;
+ const isStaff = myRank && myRank.level >= 7;
+ if ($('priceAdminTopWrap')) {
+  $('priceAdminTopWrap').innerHTML = isStaff
+   ? '<button type="button" class="inline-btn" id="openAddPriceBtn" style="background:var(--accent);color:#fff;border:none;padding:8px 11px;font-weight:800">➕ Добавить</button>'
+   : '';
+  if ($('openAddPriceBtn')) $('openAddPriceBtn').onclick = () => openAddPriceModal();
+ }
+
  const q = ($('priceSearchInput') ? $('priceSearchInput').value : '').trim().toLowerCase();
  const cutoff = selectedPriceDays > 0 ? (Date.now() - selectedPriceDays * 24 * 60 * 60 * 1000) : 0;
  const filtered = priceHistoryCache.filter(row => {
@@ -711,33 +726,229 @@ function renderPriceStats() {
   const p = Number(row.price || 0);
   if (p <= 0) return;
   if (!groups.has(key)) {
-   groups.set(key, { title: rawTitle, category: row.category || 'Другое', prices: [], servers: new Set() });
+   groups.set(key, { key, title: rawTitle, category: row.category || 'Другое', prices: [], rows: [], servers: new Set() });
   }
   const g = groups.get(key);
   g.prices.push(p);
+  g.rows.push(row);
   if (row.server) g.servers.add(row.server);
  });
 
  const items = Array.from(groups.values()).sort((a, b) => b.prices.length - a.prices.length);
- listEl.innerHTML = items.map(g => {
+ listEl.innerHTML = items.map((g, idx) => {
   const minP = Math.min(...g.prices);
   const maxP = Math.max(...g.prices);
   const avgP = g.prices.reduce((s, x) => s + x, 0) / g.prices.length;
-  const srv = g.servers.size > 0 ? Array.from(g.servers).slice(0, 2).join(', ') : 'Все серверы';
-  return `<div class="panel" style="margin:0;padding:14px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
+  const srv = g.servers.size ? Array.from(g.servers).join(', ') : '08 сервер';
+  const adminBar = isStaff ? `
+   <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)">
+    <button type="button" class="inline-btn" data-padd="${idx}">➕ Цена</button>
+    <button type="button" class="inline-btn" data-pmerge="${idx}">🔗 Склеить</button>
+    <button type="button" class="inline-btn" data-pedit="${idx}">✏️ Изм.</button>
+   </div>` : '';
+  return `<div class="panel" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
      <div><div style="font-weight:850;font-size:15px">${escapeHTML(g.title)}</div><div class="small muted">${escapeHTML(g.category)} · ${escapeHTML(srv)}</div></div>
-     <span style="background:var(--card2);border:1px solid var(--line);padding:4px 9px;border-radius:10px;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap">Сделок: ${g.prices.length}</span>
+     <span style="background:var(--card2);border:1px solid var(--line);padding:4px 9px;border-radius:10px;font-size:11px;font-weight:700;color:var(--accent2);white-space:nowrap">Сделок: ${g.prices.length}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card2);padding:10px;border-radius:12px">
      <div><div class="small muted" style="font-size:10px">МИН. ЦЕНА</div><div style="font-weight:800;font-size:13px;color:var(--green)">${formatMoneyShort(minP)}</div></div>
      <div><div class="small muted" style="font-size:10px">СРЕДНЯЯ</div><div style="font-weight:850;font-size:13px;color:var(--yellow)">${formatMoneyShort(avgP)}</div></div>
      <div><div class="small muted" style="font-size:10px">МАКС. ЦЕНА</div><div style="font-weight:800;font-size:13px">${formatMoneyShort(maxP)}</div></div>
     </div>
+    ${adminBar}
    </div>`;
  }).join('');
+
+ if (isStaff) {
+  listEl.querySelectorAll('[data-padd]').forEach(b => b.onclick = () => openAddPriceModal(items.at(Number(b.dataset.padd))));
+  listEl.querySelectorAll('[data-pmerge]').forEach(b => b.onclick = () => openMergePriceModal(items.at(Number(b.dataset.pmerge))));
+  listEl.querySelectorAll('[data-pedit]').forEach(b => b.onclick = () => openEditPriceGroupModal(items.at(Number(b.dataset.pedit))));
+ }
 }
 
+function openAddPriceModal(presetGroup = null) {
+ const catOpts = PRICE_CATS.map(c => `<option value="${escapeHTML(c)}" ${presetGroup && presetGroup.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
+ showModal(presetGroup ? '➕ Добавить цену в товар' : '➕ Добавить товар в справочник', `
+  <form id="adminAddPriceForm">
+   <label class="field-label">Название товара</label>
+   <input class="field" name="title" required value="${presetGroup ? escapeHTML(presetGroup.title) : ''}" placeholder="Например: BMW M5 F90">
+   <label class="field-label">Категория</label>
+   <select class="field" name="category">${catOpts}</select>
+   <label class="field-label">Цена сделки (₽)</label>
+   <input class="field" name="price" type="number" min="1" required placeholder="Например: 14500000">
+   <button class="btn" type="submit">Сохранить в справочник</button>
+  </form>
+ `);
+ $('adminAddPriceForm').onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(e.currentTarget);
+  const title = String(f.get('title') || '').trim();
+  const category = String(f.get('category') || 'Другое');
+  const price = Number(f.get('price') || 0);
+  if (!title || price <= 0) { toast('Укажите название и цену'); return; }
+  const btn = e.currentTarget.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Сохраняем…';
+  try {
+   await api('rpc/admin_manage_price', {
+    method: 'POST',
+    body: { p_admin_id: String(meId), p_action: 'add', p_title: title, p_category: category, p_price: price }
+   });
+   toast('✅ Цена добавлена в справочник');
+   closeModal();
+   await loadPriceHistory(true);
+  } catch (err) {
+   toast('Ошибка: ' + err.message);
+   btn.disabled = false; btn.textContent = 'Сохранить в справочник';
+  }
+ };
+}
+
+function openMergePriceModal(targetGroup) {
+ if (!targetGroup) return;
+ const allGroups = new Map();
+ priceHistoryCache.forEach(r => {
+  const t = String(r.title || '').trim();
+  const k = t.toLowerCase();
+  if (!k || k === targetGroup.key) return;
+  if (!allGroups.has(k)) allGroups.set(k, { title: t, count: 0 });
+  allGroups.get(k).count++;
+ });
+ const others = Array.from(allGroups.values()).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+ const checksHtml = others.length ? others.map(o => `
+  <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer">
+   <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700">
+    <input type="checkbox" name="mergeItem" value="${escapeHTML(o.title)}">
+    <span>${escapeHTML(o.title)}</span>
+   </span>
+   <span class="small muted">Сделок: ${o.count}</span>
+  </label>
+ `).join('') : '<div class="small muted">Других позиций для объединения пока нет.</div>';
+
+ showModal('🔗 Объединить названия (RU/EN)', `
+  <div class="notice" style="margin-bottom:10px">Выберите русские/английские варианты названия, которые нужно приклеить к карточке <b>${escapeHTML(targetGroup.title)}</b>. Все их цены объединятся в одну статистику.</div>
+  <input class="field" id="mergeFilterInput" placeholder="Быстрый поиск по списку (например: бмв, m5)..." style="margin-bottom:8px">
+  <form id="mergePriceForm">
+   <div id="mergeChecksWrap" style="max-height:240px;overflow:auto;margin-bottom:10px">${checksHtml}</div>
+   <button class="btn" type="submit" ${others.length ? '' : 'disabled'}>🔗 Объединить выбранные в «${escapeHTML(targetGroup.title)}»</button>
+  </form>
+ `);
+
+ if ($('mergeFilterInput')) {
+  $('mergeFilterInput').oninput = e => {
+   const q = e.target.value.trim().toLowerCase();
+   $('mergeChecksWrap').querySelectorAll('label').forEach(lbl => {
+    lbl.style.display = !q || lbl.textContent.toLowerCase().includes(q) ? 'flex' : 'none';
+   });
+  };
+ }
+
+ $('mergePriceForm').onsubmit = async e => {
+  e.preventDefault();
+  const picked = Array.from(e.currentTarget.querySelectorAll('input[name="mergeItem"]:checked')).map(el => el.value);
+  if (!picked.length) { toast('Отметьте хотя бы один вариант'); return; }
+  const btn = e.currentTarget.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Объединяем…';
+  try {
+   await api('rpc/admin_manage_price', {
+    method: 'POST',
+    body: {
+     p_admin_id: String(meId),
+     p_action: 'merge',
+p_new_title: targetGroup.title,
+p_category: targetGroup.category,
+p_merge_titles: picked
+}
+});
+toast('✅ Объединено позиций: ' + picked.length);
+closeModal();
+await loadPriceHistory(true);
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false; btn.textContent = '🔗 Объединить выбранные';
+}
+};
+}
+function openEditPriceGroupModal(group) {
+if (!group) return;
+const catOpts = PRICE_CATS.map(c => <option value="${escapeHTML(c)}" ${group.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>).join('');
+const rowsHtml = group.rows.map(r => <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;margin-bottom:5px;font-size:12px"> <div><b>${formatMoneyShort(r.price)}</b> <span class="muted">· ${r.created_at ? formatChatTime(r.created_at) : ''}</span></div> <button type="button" class="inline-btn" data-del-prow="${escapeHTML(r.id)}" style="color:#ff657a;padding:4px 8px">🗑</button> </div>).join('');
+showModal('✏️ Управление ценой товара', `
+Эталонное название товара
+Категория
+${catOpts}
+Установить единую новую цену (необязательно)
+💾 Сохранить изменения
+
+Отдельные записи сделок (${group.rows.length})
+${rowsHtml}
+🗑 Удалить весь товар из справочника
+`);
+$('editPriceGroupForm').onsubmit = async e => {
+e.preventDefault();
+const f = new FormData(e.currentTarget);
+const newTitle = String(f.get('newTitle') || '').trim();
+const category = String(f.get('category') || group.category);
+const replacePrice = Number(f.get('replacePrice') || 0);
+if (!newTitle) { toast('Укажите название'); return; }
+const btn = e.currentTarget.querySelector('button[type=submit]');
+btn.disabled = true; btn.textContent = 'Сохраняем…';
+try {
+await api('rpc/admin_manage_price', {
+method: 'POST',
+body: {
+p_admin_id: String(meId),
+p_action: replacePrice > 0 ? 'replace_price' : 'rename_group',
+p_title: group.title,
+p_new_title: newTitle,
+p_category: category,
+p_price: replacePrice > 0 ? replacePrice : null
+}
+});
+toast('✅ Данные товара обновлены');
+closeModal();
+await loadPriceHistory(true);
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false; btn.textContent = '💾 Сохранить изменения';
+}
+};
+$('modalBody').querySelectorAll('[data-del-prow]').forEach(btn => {
+btn.onclick = async () => {
+const rowId = Number(btn.dataset.delProw);
+btn.disabled = true;
+try {
+await api('rpc/admin_manage_price', {
+method: 'POST',
+body: { p_admin_id: String(meId), p_action: 'delete_row', p_row_id: rowId }
+});
+toast('🗑 Запись цены удалена');
+closeModal();
+await loadPriceHistory(true);
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false;
+}
+};
+});
+$('deleteWholePriceGroupBtn').onclick = async () => {
+if (!confirm('Удалить все записи цен для «' + group.title + '»?')) return;
+const btn = $('deleteWholePriceGroupBtn');
+btn.disabled = true; btn.textContent = 'Удаляем…';
+try {
+await api('rpc/admin_manage_price', {
+method: 'POST',
+body: { p_admin_id: String(meId), p_action: 'delete_group', p_title: group.title }
+});
+toast('🗑 Товар удалён из справочника');
+closeModal();
+await loadPriceHistory(true);
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false; btn.textContent = '🗑 Удалить весь товар из справочника';
+}
+};
+}
 if ($('pricesNavBtn')) $('pricesNavBtn').addEventListener('click', () => loadPriceHistory(false));
 if ($('priceSearchInput')) $('priceSearchInput').addEventListener('input', () => renderPriceStats());
 
