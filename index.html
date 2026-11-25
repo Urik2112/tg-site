@@ -202,7 +202,7 @@
         </div>
         <div id="profileBio" class="small" style="margin-top:12px;color:#ded8f1;white-space:pre-wrap;line-height:1.45"></div>
         <div class="admin-stat" style="margin-top:14px">
-          <div class="stat"><b id="profileDealsTotal">0</b><span>Проведено сделок</span></div>
+          <div class="stat"><b id="profileDealsTotal">0</b><span>Выложено объявлений</span></div>
           <div class="stat"><b id="profileDealsSuccess" style="color:var(--green)">0</b><span>Успешных сделок</span></div>
         </div>
         <div class="admin-stat" style="margin-top:10px">
@@ -368,6 +368,9 @@ function parseNumericPrice(val) {
  return digits ? Number(digits) : null;
 }
 function renderAds() {
+ if ($('profileDealsTotal') && typeof meId !== 'undefined') {
+  $('profileDealsTotal').textContent = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
+ }
  const q=$('searchInput').value.trim().toLowerCase();
  const list=ads.filter(a=>{
   const cat=selectedCategory==='Все'||a.category===selectedCategory||(selectedCategory==='Бизнесы'&&a.category==='Предприятие');
@@ -465,7 +468,7 @@ function renderProfile() {
  }
  $('profileName').textContent = meName;
  $('profileBio').textContent = (myRole && myRole.bio) ? myRole.bio : 'Описание профиля не заполнено.';
- $('profileDealsTotal').textContent = (myRole && myRole.deals_total) || 0;
+ $('profileDealsTotal').textContent = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
  $('profileDealsSuccess').textContent = (myRole && myRole.deals_success) || 0;
  if ($('profileGamePhone')) $('profileGamePhone').textContent = (myRole && myRole.game_phone) ? myRole.game_phone : 'Не указан';
  if ($('profileLikesCount')) {
@@ -653,10 +656,10 @@ function openAd(id) {
   const sr = Array.isArray(r) ? r.at(0) : r;
   if (sr) {
    if (sr.avatar_url && $('sellerAvatarBox')) $('sellerAvatarBox').innerHTML = '<img src="'+escapeHTML(sr.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">';
-   if ($('sellerStatsLine')) $('sellerStatsLine').textContent = 'Сделок: '+(sr.deals_total||0)+' · Успешных: '+(sr.deals_success||0);
+   if ($('sellerStatsLine')) $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: '+(sr.deals_success||0);
    if (sr.bio && $('sellerBioBox')) $('sellerBioBox').textContent = 'О продавце: ' + sr.bio;
   } else if ($('sellerStatsLine')) {
-   $('sellerStatsLine').textContent = 'Сделок: 0 · Успешных: 0';
+   $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: 0';
   }
  }).then(async r => { const d = await r.json().catch(()=>({})); if (!r.ok || d.ok === false) toast('Уведомление: ' + (d.description || d.error || r.status)); }).catch(e => toast('Сеть notify: ' + e.message));
 }
