@@ -697,11 +697,18 @@ function renderPriceStats() {
  const listEl = $('priceStatsList');
  if (!listEl) return;
  const isStaff = myRank && myRank.level >= 7;
- if ($('priceAdminTopWrap')) {
-  $('priceAdminTopWrap').innerHTML = isStaff
-   ? '<button type="button" class="inline-btn" id="openAddPriceBtn" style="background:var(--accent);color:#fff;border:none;padding:8px 11px;font-weight:800">➕ Добавить</button>'
-   : '';
-  if ($('openAddPriceBtn')) $('openAddPriceBtn').onclick = () => openAddPriceModal();
+ const topWrap = $('priceAdminTopWrap');
+ if (topWrap) {
+  topWrap.innerHTML = '';
+  if (isStaff) {
+   const addBtn = document.createElement('button');
+   addBtn.type = 'button';
+   addBtn.className = 'inline-btn';
+   addBtn.style.cssText = 'background:var(--accent);color:#fff;border:none;padding:8px 11px;font-weight:800';
+   addBtn.textContent = '➕ Добавить';
+   addBtn.onclick = () => openAddPriceModal();
+   topWrap.appendChild(addBtn);
+  }
  }
 
  const q = ($('priceSearchInput') ? $('priceSearchInput').value : '').trim().toLowerCase();
@@ -714,7 +721,15 @@ function renderPriceStats() {
  });
 
  if (filtered.length === 0) {
-  listEl.innerHTML = '<div class="panel" style="text-align:center;padding:24px 16px"><div style="font-size:32px;margin-bottom:8px">📉</div><div style="font-weight:800;margin-bottom:4px">Пока нет данных по сделкам</div><div class="small muted">Когда продавцы закрывают объявления с указанием цены продажи, здесь формируется статистика рынка.</div></div>';
+  listEl.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'panel';
+  box.style.cssText = 'text-align:center;padding:24px 16px';
+  const ic = document.createElement('div'); ic.style.cssText = 'font-size:32px;margin-bottom:8px'; ic.textContent = '📉';
+  const tt = document.createElement('div'); tt.style.cssText = 'font-weight:800;margin-bottom:4px'; tt.textContent = 'Пока нет данных по сделкам';
+  const sb = document.createElement('div'); sb.className = 'small muted'; sb.textContent = 'Когда продавцы закрывают объявления с указанием цены продажи, здесь формируется статистика рынка.';
+  box.append(ic, tt, sb);
+  listEl.appendChild(box);
   return;
  }
 
@@ -735,59 +750,86 @@ function renderPriceStats() {
  });
 
  const items = Array.from(groups.values()).sort((a, b) => b.prices.length - a.prices.length);
- listEl.innerHTML = items.map((g, idx) => {
+ listEl.innerHTML = '';
+ items.forEach(g => {
   const minP = Math.min(...g.prices);
   const maxP = Math.max(...g.prices);
   const avgP = g.prices.reduce((s, x) => s + x, 0) / g.prices.length;
   const srv = g.servers.size ? Array.from(g.servers).join(', ') : '08 сервер';
-  const adminBar = isStaff ? `
-   <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)">
-    <button type="button" class="inline-btn" data-padd="${idx}">➕ Цена</button>
-    <button type="button" class="inline-btn" data-pmerge="${idx}">🔗 Склеить</button>
-    <button type="button" class="inline-btn" data-pedit="${idx}">✏️ Изм.</button>
-   </div>` : '';
-  return `<div class="panel" style="padding:14px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
-     <div><div style="font-weight:850;font-size:15px">${escapeHTML(g.title)}</div><div class="small muted">${escapeHTML(g.category)} · ${escapeHTML(srv)}</div></div>
-     <span style="background:var(--card2);border:1px solid var(--line);padding:4px 9px;border-radius:10px;font-size:11px;font-weight:700;color:var(--accent2);white-space:nowrap">Сделок: ${g.prices.length}</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card2);padding:10px;border-radius:12px">
-     <div><div class="small muted" style="font-size:10px">МИН. ЦЕНА</div><div style="font-weight:800;font-size:13px;color:var(--green)">${formatMoneyShort(minP)}</div></div>
-     <div><div class="small muted" style="font-size:10px">СРЕДНЯЯ</div><div style="font-weight:850;font-size:13px;color:var(--yellow)">${formatMoneyShort(avgP)}</div></div>
-     <div><div class="small muted" style="font-size:10px">МАКС. ЦЕНА</div><div style="font-weight:800;font-size:13px">${formatMoneyShort(maxP)}</div></div>
-    </div>
-    ${adminBar}
-   </div>`;
- }).join('');
 
- if (isStaff) {
-  listEl.querySelectorAll('[data-padd]').forEach(b => b.onclick = () => openAddPriceModal(items.at(Number(b.dataset.padd))));
-  listEl.querySelectorAll('[data-pmerge]').forEach(b => b.onclick = () => openMergePriceModal(items.at(Number(b.dataset.pmerge))));
-  listEl.querySelectorAll('[data-pedit]').forEach(b => b.onclick = () => openEditPriceGroupModal(items.at(Number(b.dataset.pedit))));
- }
+  const card = document.createElement('div');
+  card.className = 'panel';
+  card.style.padding = '14px';
+
+  const top = document.createElement('div');
+  top.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px';
+  const left = document.createElement('div');
+  const titleEl = document.createElement('div'); titleEl.style.cssText = 'font-weight:850;font-size:15px'; titleEl.textContent = g.title;
+  const subEl = document.createElement('div'); subEl.className = 'small muted'; subEl.textContent = g.category + ' · ' + srv;
+  left.append(titleEl, subEl);
+
+  const badge = document.createElement('span');
+  badge.style.cssText = 'background:var(--card2);border:1px solid var(--line);padding:4px 9px;border-radius:10px;font-size:11px;font-weight:700;color:var(--accent2);white-space:nowrap';
+  badge.textContent = 'Сделок: ' + g.prices.length;
+  top.append(left, badge);
+
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card2);padding:10px;border-radius:12px';
+
+  const mkStat = (lbl, val, col) => {
+   const d = document.createElement('div');
+   const l = document.createElement('div'); l.className = 'small muted'; l.style.fontSize = '10px'; l.textContent = lbl;
+   const v = document.createElement('div'); v.style.cssText = 'font-weight:850;font-size:13px' + (col ? ';color:' + col : ''); v.textContent = val;
+   d.append(l, v);
+   return d;
+  };
+  grid.append(
+   mkStat('МИН. ЦЕНА', formatMoneyShort(minP), 'var(--green)'),
+   mkStat('СРЕДНЯЯ', formatMoneyShort(avgP), 'var(--yellow)'),
+   mkStat('МАКС. ЦЕНА', formatMoneyShort(maxP), '')
+  );
+
+  card.append(top, grid);
+
+  if (isStaff) {
+   const bar = document.createElement('div');
+   bar.style.cssText = 'display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)';
+   const bAdd = document.createElement('button'); bAdd.type = 'button'; bAdd.className = 'inline-btn'; bAdd.textContent = '➕ Цена'; bAdd.onclick = () => openAddPriceModal(g);
+   const bMerge = document.createElement('button'); bMerge.type = 'button'; bMerge.className = 'inline-btn'; bMerge.textContent = '🔗 Склеить'; bMerge.onclick = () => openMergePriceModal(g);
+   const bEdit = document.createElement('button'); bEdit.type = 'button'; bEdit.className = 'inline-btn'; bEdit.textContent = '✏️ Изм.'; bEdit.onclick = () => openEditPriceGroupModal(g);
+   bar.append(bAdd, bMerge, bEdit);
+   card.appendChild(bar);
+  }
+
+  listEl.appendChild(card);
+ });
 }
 
 function openAddPriceModal(presetGroup = null) {
- const catOpts = PRICE_CATS.map(c => `<option value="${escapeHTML(c)}" ${presetGroup && presetGroup.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
- showModal(presetGroup ? '➕ Добавить цену в товар' : '➕ Добавить товар в справочник', `
-  <form id="adminAddPriceForm">
-   <label class="field-label">Название товара</label>
-   <input class="field" name="title" required value="${presetGroup ? escapeHTML(presetGroup.title) : ''}" placeholder="Например: BMW M5 F90">
-   <label class="field-label">Категория</label>
-   <select class="field" name="category">${catOpts}</select>
-   <label class="field-label">Цена сделки (₽)</label>
-   <input class="field" name="price" type="number" min="1" required placeholder="Например: 14500000">
-   <button class="btn" type="submit">Сохранить в справочник</button>
-  </form>
- `);
- $('adminAddPriceForm').onsubmit = async e => {
+ showModal(presetGroup ? '➕ Добавить цену в товар' : '➕ Добавить товар в справочник', '');
+ const body = $('modalBody');
+ const form = document.createElement('form');
+
+ const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
+ const inpTitle = document.createElement('input'); inpTitle.className = 'field'; inpTitle.required = true; inpTitle.placeholder = 'Например: BMW M5 F90'; inpTitle.value = presetGroup ? presetGroup.title : '';
+ const selCat = document.createElement('select'); selCat.className = 'field';
+ PRICE_CATS.forEach(c => {
+  const o = document.createElement('option'); o.value = c; o.textContent = c;
+  if (presetGroup && presetGroup.category === c) o.selected = true;
+  selCat.appendChild(o);
+ });
+ const inpPrice = document.createElement('input'); inpPrice.className = 'field'; inpPrice.type = 'number'; inpPrice.min = '1'; inpPrice.required = true; inpPrice.placeholder = 'Например: 14500000';
+ const btn = document.createElement('button'); btn.className = 'btn'; btn.type = 'submit'; btn.textContent = 'Сохранить в справочник';
+
+ form.append(mkLbl('Название товара'), inpTitle, mkLbl('Категория'), selCat, mkLbl('Цена сделки (₽)'), inpPrice, btn);
+ body.appendChild(form);
+
+ form.onsubmit = async e => {
   e.preventDefault();
-  const f = new FormData(e.currentTarget);
-  const title = String(f.get('title') || '').trim();
-  const category = String(f.get('category') || 'Другое');
-  const price = Number(f.get('price') || 0);
+  const title = inpTitle.value.trim();
+  const category = selCat.value || 'Другое';
+  const price = Number(inpPrice.value || 0);
   if (!title || price <= 0) { toast('Укажите название и цену'); return; }
-  const btn = e.currentTarget.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Сохраняем…';
   try {
    await api('rpc/admin_manage_price', {
@@ -815,46 +857,64 @@ function openMergePriceModal(targetGroup) {
   allGroups.get(k).count++;
  });
  const others = Array.from(allGroups.values()).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
- const checksHtml = others.length ? others.map(o => `
-  <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer">
-   <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700">
-    <input type="checkbox" name="mergeItem" value="${escapeHTML(o.title)}">
-    <span>${escapeHTML(o.title)}</span>
-   </span>
-   <span class="small muted">Сделок: ${o.count}</span>
-  </label>
- `).join('') : '<div class="small muted">Других позиций для объединения пока нет.</div>';
 
- showModal('🔗 Объединить названия (RU/EN)', `
-  <div class="notice" style="margin-bottom:10px">Выберите русские/английские варианты названия, которые нужно приклеить к карточке <b>${escapeHTML(targetGroup.title)}</b>. Все их цены объединятся в одну статистику.</div>
-  <input class="field" id="mergeFilterInput" placeholder="Быстрый поиск по списку (например: бмв, m5)..." style="margin-bottom:8px">
-  <form id="mergePriceForm">
-   <div id="mergeChecksWrap" style="max-height:240px;overflow:auto;margin-bottom:10px">${checksHtml}</div>
-   <button class="btn" type="submit" ${others.length ? '' : 'disabled'}>🔗 Объединить выбранные в «${escapeHTML(targetGroup.title)}»</button>
-  </form>
- `);
+ showModal('🔗 Объединить названия (RU/EN)', '');
+ const body = $('modalBody');
+ const note = document.createElement('div');
+ note.className = 'notice';
+ note.style.marginBottom = '10px';
+ note.textContent = 'Выберите русские или английские названия, которые нужно приклеить к карточке «' + targetGroup.title + '». Все их цены объединятся в одну статистику.';
+ body.appendChild(note);
 
- if ($('mergeFilterInput')) {
-  $('mergeFilterInput').oninput = e => {
-   const q = e.target.value.trim().toLowerCase();
-   $('mergeChecksWrap').querySelectorAll('label').forEach(lbl => {
-    lbl.style.display = !q || lbl.textContent.toLowerCase().includes(q) ? 'flex' : 'none';
-   });
-  };
- }
+ const searchInp = document.createElement('input');
+ searchInp.className = 'field';
+ searchInp.placeholder = 'Быстрый поиск по списку (например: бмв, m5)...';
+ searchInp.style.marginBottom = '8px';
+ body.appendChild(searchInp);
 
- $('mergePriceForm').onsubmit = async e => {
-  e.preventDefault();
-  const picked = Array.from(e.currentTarget.querySelectorAll('input[name="mergeItem"]:checked')).map(el => el.value);
-  if (!picked.length) { toast('Отметьте хотя бы один вариант'); return; }
-  const btn = e.currentTarget.querySelector('button[type=submit]');
-  btn.disabled = true; btn.textContent = 'Объединяем…';
-  try {
-   await api('rpc/admin_manage_price', {
-    method: 'POST',
-    body: {
-     p_admin_id: String(meId),
-     p_action: 'merge',
+ const wrap = document.createElement('div');
+wrap.style.cssText = 'max-height:240px;overflow:auto;margin-bottom:10px';
+const checkboxes = [];
+if (!others.length) {
+const emp = document.createElement('div'); emp.className = 'small muted'; emp.textContent = 'Других позиций для объединения пока нет.';
+wrap.appendChild(emp);
+} else {
+others.forEach(o => {
+const lbl = document.createElement('label');
+lbl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer';
+const left = document.createElement('span'); left.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700';
+const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = o.title;
+const sp = document.createElement('span'); sp.textContent = o.title;
+left.append(cb, sp);
+const cnt = document.createElement('span'); cnt.className = 'small muted'; cnt.textContent = 'Сделок: ' + o.count;
+lbl.append(left, cnt);
+wrap.appendChild(lbl);
+checkboxes.push({ cb, lbl, title: o.title });
+});
+}
+body.appendChild(wrap);
+searchInp.oninput = () => {
+const q = searchInp.value.trim().toLowerCase();
+checkboxes.forEach(item => {
+item.lbl.style.display = !q || item.title.toLowerCase().includes(q) ? 'flex' : 'none';
+});
+};
+const subBtn = document.createElement('button');
+subBtn.type = 'button';
+subBtn.className = 'btn';
+subBtn.disabled = !others.length;
+subBtn.textContent = '🔗 Объединить выбранные в «' + targetGroup.title + '»';
+body.appendChild(subBtn);
+subBtn.onclick = async () => {
+const picked = checkboxes.filter(x => x.cb.checked).map(x => x.title);
+if (!picked.length) { toast('Отметьте хотя бы один вариант'); return; }
+subBtn.disabled = true; subBtn.textContent = 'Объединяем…';
+try {
+await api('rpc/admin_manage_price', {
+method: 'POST',
+body: {
+p_admin_id: String(meId),
+p_action: 'merge',
 p_new_title: targetGroup.title,
 p_category: targetGroup.category,
 p_merge_titles: picked
@@ -865,34 +925,34 @@ closeModal();
 await loadPriceHistory(true);
 } catch (err) {
 toast('Ошибка: ' + err.message);
-btn.disabled = false; btn.textContent = '🔗 Объединить выбранные';
+subBtn.disabled = false; subBtn.textContent = '🔗 Объединить выбранные';
 }
 };
 }
 function openEditPriceGroupModal(group) {
 if (!group) return;
-const catOpts = PRICE_CATS.map(c => <option value="${escapeHTML(c)}" ${group.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>).join('');
-const rowsHtml = group.rows.map(r => <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;margin-bottom:5px;font-size:12px"> <div><b>${formatMoneyShort(r.price)}</b> <span class="muted">· ${r.created_at ? formatChatTime(r.created_at) : ''}</span></div> <button type="button" class="inline-btn" data-del-prow="${escapeHTML(r.id)}" style="color:#ff657a;padding:4px 8px">🗑</button> </div>).join('');
-showModal('✏️ Управление ценой товара', `
-Эталонное название товара
-Категория
-${catOpts}
-Установить единую новую цену (необязательно)
-💾 Сохранить изменения
-
-Отдельные записи сделок (${group.rows.length})
-${rowsHtml}
-🗑 Удалить весь товар из справочника
-`);
-$('editPriceGroupForm').onsubmit = async e => {
+showModal('✏️ Управление ценой товара', '');
+const body = $('modalBody');
+const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
+const form = document.createElement('form');
+const inpTitle = document.createElement('input'); inpTitle.className = 'field'; inpTitle.required = true; inpTitle.value = group.title;
+const selCat = document.createElement('select'); selCat.className = 'field';
+PRICE_CATS.forEach(c => {
+const o = document.createElement('option'); o.value = c; o.textContent = c;
+if (group.category === c) o.selected = true;
+selCat.appendChild(o);
+});
+const inpReplace = document.createElement('input'); inpReplace.className = 'field'; inpReplace.type = 'number'; inpReplace.min = '1'; inpReplace.placeholder = 'Оставьте пустым, чтобы только переименовать';
+const saveBtn = document.createElement('button'); saveBtn.className = 'btn'; saveBtn.type = 'submit'; saveBtn.textContent = '💾 Сохранить изменения';
+form.append(mkLbl('Эталонное название товара'), inpTitle, mkLbl('Категория'), selCat, mkLbl('Установить единую новую цену (необязательно)'), inpReplace, saveBtn);
+body.appendChild(form);
+form.onsubmit = async e => {
 e.preventDefault();
-const f = new FormData(e.currentTarget);
-const newTitle = String(f.get('newTitle') || '').trim();
-const category = String(f.get('category') || group.category);
-const replacePrice = Number(f.get('replacePrice') || 0);
+const newTitle = inpTitle.value.trim();
+const category = selCat.value || group.category;
+const replacePrice = Number(inpReplace.value || 0);
 if (!newTitle) { toast('Укажите название'); return; }
-const btn = e.currentTarget.querySelector('button[type=submit]');
-btn.disabled = true; btn.textContent = 'Сохраняем…';
+saveBtn.disabled = true; saveBtn.textContent = 'Сохраняем…';
 try {
 await api('rpc/admin_manage_price', {
 method: 'POST',
@@ -910,31 +970,48 @@ closeModal();
 await loadPriceHistory(true);
 } catch (err) {
 toast('Ошибка: ' + err.message);
-btn.disabled = false; btn.textContent = '💾 Сохранить изменения';
+saveBtn.disabled = false; saveBtn.textContent = '💾 Сохранить изменения';
 }
 };
-$('modalBody').querySelectorAll('[data-del-prow]').forEach(btn => {
-btn.onclick = async () => {
-const rowId = Number(btn.dataset.delProw);
-btn.disabled = true;
+const subHeader = document.createElement('div');
+subHeader.style.cssText = 'margin-top:14px;font-weight:800;font-size:13px;margin-bottom:6px';
+subHeader.textContent = 'Отдельные записи сделок (' + group.rows.length + ')';
+body.appendChild(subHeader);
+const rowsBox = document.createElement('div');
+rowsBox.style.cssText = 'max-height:170px;overflow:auto;margin-bottom:10px';
+group.rows.forEach(r => {
+const rowDiv = document.createElement('div');
+rowDiv.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;margin-bottom:5px;font-size:12px';
+const info = document.createElement('div');
+info.textContent = formatMoneyShort(r.price) + (r.created_at ? ' · ' + formatChatTime(r.created_at) : '');
+const delBtn = document.createElement('button');
+delBtn.type = 'button'; delBtn.className = 'inline-btn'; delBtn.style.cssText = 'color:#ff657a;padding:4px 8px'; delBtn.textContent = '🗑';
+delBtn.onclick = async () => {
+delBtn.disabled = true;
 try {
 await api('rpc/admin_manage_price', {
 method: 'POST',
-body: { p_admin_id: String(meId), p_action: 'delete_row', p_row_id: rowId }
+body: { p_admin_id: String(meId), p_action: 'delete_row', p_row_id: Number(r.id) }
 });
 toast('🗑 Запись цены удалена');
 closeModal();
 await loadPriceHistory(true);
 } catch (err) {
 toast('Ошибка: ' + err.message);
-btn.disabled = false;
+delBtn.disabled = false;
 }
 };
+rowDiv.append(info, delBtn);
+rowsBox.appendChild(rowDiv);
 });
-$('deleteWholePriceGroupBtn').onclick = async () => {
+body.appendChild(rowsBox);
+const delGroupBtn = document.createElement('button');
+delGroupBtn.type = 'button';
+delGroupBtn.className = 'btn danger';
+delGroupBtn.textContent = '🗑 Удалить весь товар из справочника';
+delGroupBtn.onclick = async () => {
 if (!confirm('Удалить все записи цен для «' + group.title + '»?')) return;
-const btn = $('deleteWholePriceGroupBtn');
-btn.disabled = true; btn.textContent = 'Удаляем…';
+delGroupBtn.disabled = true; delGroupBtn.textContent = 'Удаляем…';
 try {
 await api('rpc/admin_manage_price', {
 method: 'POST',
@@ -945,9 +1022,10 @@ closeModal();
 await loadPriceHistory(true);
 } catch (err) {
 toast('Ошибка: ' + err.message);
-btn.disabled = false; btn.textContent = '🗑 Удалить весь товар из справочника';
+delGroupBtn.disabled = false; delGroupBtn.textContent = '🗑 Удалить весь товар из справочника';
 }
 };
+body.appendChild(delGroupBtn);
 }
 if ($('pricesNavBtn')) $('pricesNavBtn').addEventListener('click', () => loadPriceHistory(false));
 if ($('priceSearchInput')) $('priceSearchInput').addEventListener('input', () => renderPriceStats());
