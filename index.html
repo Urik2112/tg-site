@@ -917,14 +917,20 @@ function renderChatList() {
  container.innerHTML = filtered.map((c, idx) => {
   const isUnread = c.lastId && !c.support && String(c.lastSenderId) !== meId && Number(seenRooms[c.room_id] || 0) < Number(c.lastId);
   const color = AVATAR_COLORS[Math.abs(String(c.receiver_id || idx).split('').reduce((a,ch)=>a+ch.charCodeAt(0),0)) % AVATAR_COLORS.length];
-  const avHtml = c.support
-   ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4f46e5);display:grid;place-items:center;font-size:21px;flex-shrink:0">🎧</div>'
-   : (c.avatarUrl
-      ? '<img src="'+escapeHTML(c.avatarUrl)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">'
-      : '<div style="width:48px;height:48px;border-radius:50%;background:'+color+';display:grid;place-items:center;font-size:18px;font-weight:850;color:#fff;flex-shrink:0">'+escapeHTML((c.display_name||'И').slice(0,1).toUpperCase())+'</div>');
+  const isDealChat = !c.support && !c.global && !c.staffView && c.ad_title && c.ad_title !== 'Личный чат';
+  const mainTitle = isDealChat ? c.ad_title : c.display_name;
+  const avHtml = c.global
+   ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#7b42f6);display:grid;place-items:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 12px rgba(14,165,233,.35)">💬</div>'
+   : (c.support
+      ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4f46e5);display:grid;place-items:center;font-size:21px;flex-shrink:0">🎧</div>'
+      : (c.avatarUrl
+         ? '<img src="'+escapeHTML(c.avatarUrl)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">'
+         : '<div style="width:48px;height:48px;border-radius:50%;background:'+color+';display:grid;place-items:center;font-size:18px;font-weight:850;color:#fff;flex-shrink:0">'+escapeHTML(Array.from(String(c.display_name||'И')).at(0).toUpperCase())+'</div>'));
   const subLine = c.support && !c.staffView
    ? '<span class="muted">Свяжитесь с поддержкой RP Маркет 08</span>'
-   : '<span style="color:#a78bfa;font-weight:700">'+escapeHTML(c.ad_title)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : '');
+   : (isDealChat
+      ? '<span style="color:#a78bfa;font-weight:700">👤 '+escapeHTML(c.display_name)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : '')
+      : '<span style="color:#a78bfa;font-weight:700">'+escapeHTML(c.ad_title)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : ''));
   const rightMeta = c.support && !c.staffView
    ? '<span style="font-size:13px;color:var(--muted)">📌</span>'
    : (isUnread ? '<span style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center">1</span>' : (c.pinned ? '<span style="font-size:12px;color:var(--muted)">📌</span>' : ''));
@@ -932,7 +938,7 @@ function renderChatList() {
    + avHtml
    + '<div style="min-width:0;flex:1">'
    +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">'
-   +     '<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(c.display_name)+(c.verified?' <span style="color:#60a5fa;font-size:13px">✔</span>':'')+'</div>'
+   +     '<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(mainTitle)+(!isDealChat && c.verified?' <span style="color:#60a5fa;font-size:13px">✔</span>':'')+'</div>'
    +     '<div class="small muted" style="flex-shrink:0;font-size:11px">'+escapeHTML(c.timeStr || '')+'</div>'
    +   '</div>'
    +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
@@ -954,7 +960,7 @@ function renderChatList() {
 }
 async function loadChats() {
  const container = $('chatList');
- const globalChat = { room_id: 'global_chat', receiver_id: 'global', ad_title: 'Общение игроков маркетплейса', display_name: '💬 Общий чат', global: true, pinned: true };
+ const globalChat = { room_id: 'global_chat', receiver_id: 'global', ad_title: 'Общение игроков маркетплейса', display_name: 'Общий чат', global: true, pinned: true };
  const support = { room_id: 'support_'+meId, receiver_id: 'support', ad_title: 'Техподдержка', display_name: 'Техподдержка', support: true, pinned: true };
  let chats = [globalChat, support];
  const myAdTitles = new Set(ads.filter(a => String(a.seller_id) === meId).map(a => String(a.title || '').trim()));
