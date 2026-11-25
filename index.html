@@ -210,7 +210,7 @@
         <div style="font-weight:800;margin-bottom:10px">🎨 Оформление приложения</div>
         <div id="themePicker" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
       </div>
-      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div></div>
+      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки (за что дают бан)</button></div>
     </section>
     <section id="pricesPage" class="page">
       <div class="section-title">📊 Справочник цен</div>
@@ -1282,6 +1282,47 @@ async function loadReportsAdmin() {
   }));
  } catch (e) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; }
 }
+const DEAL_TERMS = [
+ { code: 'п. 1.2', text: 'Сервис RP Маркет 08 не предоставляет гарантий успешности обмена или сделки между игроками — площадка служит только для коммуникации.' },
+ { code: 'п. 1.3', text: 'Администрация не может заранее защитить от обмана. Никогда не передавайте имущество или деньги первым незнакомому игроку — все сделки проводятся на ваш страх и риск.' },
+ { code: 'п. 1.4', text: 'Если против вас всё же был совершён Non-RP обман, обратитесь в Техподдержку и приложите доказательства. При их подтверждении к нарушителю будут применены санкции.' }
+];
+const BAN_RULES = [
+ { code: 'п. 1.6', title: 'Обман при сделке (Non-RP скам)', desc: 'Обман игрока во время сделки, договорённость о которой была достигнута через RP Маркет 08.', punish: 'До 1.000.000 ₽ — блок на 1 мес.; 1–5 млн ₽ — полная блокировка на 1 мес.; 5–10 млн ₽ — на 3 мес.; от 10.000.000 ₽ — на 1 год.' },
+ { code: 'п. 1.7', title: 'Реклама посторонних и скам-ресурсов', desc: 'Реклама несвязанных с игрой услуг, скам-сервисов, продажи виртов, аккаунтов или шаблонов (в нике, описании, аватарке, фоне профиля, объявлениях или чатах).', punish: 'Блокировка аккаунта от 1 дня до навсегда.' },
+ { code: 'п. 1.8', title: 'Продажа виртов, аккаунтов и шаблонов', desc: 'В RP Маркет 08 строго запрещено продавать любыми способами игровую валюту, аккаунты, обзвоны или шаблоны.', punish: 'Полная блокировка аккаунта навсегда.' },
+ { code: 'п. 1.9', title: 'Запрещённый никнейм или описание профиля', desc: 'Использование нецензурной лексики и запрещённых выражений в игровом имени или описании профиля.', punish: 'Предупреждение или блокировка до 7 дней.' },
+ { code: 'п. 2.0', title: 'Оскорбления игроков в чатах', desc: 'Использование оскорблений в адрес игроков при общении в общем или личных чатах.', punish: 'Ограничение чата / блокировка от 1 часа до 3 дней.' },
+ { code: 'п. 2.1', title: 'Запрещённые изображения (18+, треш, насилие)', desc: 'Загрузка в аватарку, фон профиля или объявления изображений 18+, треша, насилия, экстремистской символики и политики.', punish: 'Блокировка на усмотрение администрации.' },
+ { code: 'п. 2.2', title: 'Политические дискуссии в чатах', desc: 'Разведение политических споров и провокаций в чатах площадки.', punish: 'Блокировка от 1 до 7 дней.' },
+ { code: 'п. 2.3', title: 'Попытка продажи имущества за реальные деньги', desc: 'Предложение купить или продать игровое имущество за реальные средства (RMT).', punish: 'Блокировка аккаунта от 1 до 7 дней.' },
+ { code: 'п. 2.4', title: 'Оскорбление или упоминание родных', desc: 'Оскорбление родственников или их упоминание в чате, описании профиля, объявлении или имени.', punish: 'Блокировка аккаунта на 7 дней.' },
+ { code: 'п. 2.5', title: 'Фейковые объявления, спам и накрутка', desc: 'Массовое дублирование лотов, ложные цены, чужие фото, накрутка сделок и лайков.', punish: 'Блокировка от 1 до 14 дней.' },
+ { code: 'п. 2.6', title: 'Обход блокировки (твинк-аккаунты)', desc: 'Использование дополнительных аккаунтов для обхода активного бана.', punish: 'Полная блокировка аккаунта навсегда.' }
+];
+function openRulesModal() {
+ const termsHtml = DEAL_TERMS.map(t => `
+  <div style="background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.45;color:#ded8f1">
+   <b style="color:var(--yellow)">${escapeHTML(t.code)}:</b> ${escapeHTML(t.text)}
+  </div>
+ `).join('');
+ const listHtml = BAN_RULES.map(r => `
+  <div style="background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+   <div style="font-weight:850;font-size:13px;color:#ff657a;margin-bottom:4px">🚫 ${escapeHTML(r.code)} — ${escapeHTML(r.title)}</div>
+   <div class="small" style="color:#ded8f1;line-height:1.4;margin-bottom:5px">${escapeHTML(r.desc)}</div>
+   <div style="font-size:11px;color:var(--yellow);font-weight:700">⚖️ Наказание: ${escapeHTML(r.punish)}</div>
+  </div>
+ `).join('');
+ showModal('📜 Правила RP Маркет 08', `
+  <div style="font-weight:850;font-size:14px;margin-bottom:8px;color:#fff">1.1. Положение о сделках</div>
+  ${termsHtml}
+  <div style="font-weight:850;font-size:14px;margin:14px 0 8px;color:#fff">1.5. Нарушения и наказания</div>
+  ${listHtml}
+  <button type="button" class="btn secondary" onclick="closeModal()">Понятно</button>
+ `);
+}
+if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
+
 async function openAdminCenter() {
  if(myRank.level<8)return;
  try { rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[]; }
@@ -1307,7 +1348,7 @@ async function openAdminCenter() {
   <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛡️ Действующая администрация</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
   <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
   <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
-  <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Причина блокировки</label><input class="field" name="reason" placeholder="Причина (для бана)"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn danger" type="submit" style="margin:0">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="margin:0">Разбанить</button></div></form></div>
+  <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Пункт правил (быстрый выбор)</label><select class="field" id="banRuleSelect"><option value="">— Выберите нарушение или введите вручную —</option>${BAN_RULES.map(r=>'<option value="'+escapeHTML(r.code+' — '+r.title)+'">'+escapeHTML(r.code+' — '+r.title)+'</option>').join('')}</select><label class="field-label">Причина блокировки</label><input class="field" name="reason" placeholder="Причина (для бана)"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn danger" type="submit" style="margin:0">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="margin:0">Разбанить</button></div></form></div>
   <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
  `);
  document.querySelectorAll('[data-pick-admin]').forEach(b=>b.addEventListener('click',()=>{
@@ -1322,6 +1363,9 @@ async function openAdminCenter() {
   if(!id||!(level<myRank.level||myRank.level===10)){toast('Недостаточно прав для назначения');return;}
   try {await upsertRole(id,{rank:RANKS[level-1].name,is_banned:false,ban_reason:null});toast('Ранг обновлён');openAdminCenter();}
   catch(err){toast('Ошибка: '+err.message);}
+ });
+ if($('banRuleSelect')) $('banRuleSelect').addEventListener('change',e=>{
+  if(e.target.value && $('banForm')) $('banForm').elements.reason.value=e.target.value;
  });
  $('banForm').addEventListener('submit',async e=>{
   e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),reason=e.currentTarget.elements.reason.value.trim();
