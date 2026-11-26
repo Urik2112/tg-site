@@ -1273,394 +1273,101 @@ bindChips('priceCatChips', btn => { selectedPriceCat = btn.dataset.pcat || 'Вс
 
 async function deleteAd(ad) {
  const defaultPrice = parseNumericPrice(ad.price);
- showModal('Закрыть объявление', `
-  <div class="small muted" style="margin-bottom:12px">Укажите, удалось ли продать <b>${escapeHTML(ad.title)}</b>, чтобы обновить рыночную статистику цен для игроков.</div>
-  <label class="field-label">Итоговая цена сделки (₽)</label>
-  <input class="field" id="soldFinalPrice" type="number" min="1" value="${defaultPrice || ''}" placeholder="Например: 1500000">
-  <button class="btn" id="confirmSoldBtn" style="margin-top:12px">✅ Продал — записать в базу цен</button>
-  <button class="btn danger" id="confirmJustDeleteBtn" style="margin-top:8px">🗑️ Просто снять без записи</button>
- `);
+ showModal('Закрыть объявление', '');
+ const body = $('modalBody');
 
- $('confirmSoldBtn').addEventListener('click', async () => {
-  const finalPrice = Number($('soldFinalPrice').value || 0);
+ const desc = document.createElement('div');
+ desc.className = 'small muted';
+ desc.style.marginBottom = '12px';
+ desc.textContent = 'Укажите, удалось ли продать «' + (ad.title || 'товар') + '», чтобы обновить рыночную статистику цен для игроков.';
+
+ const lbl = document.createElement('label');
+ lbl.className = 'field-label';
+ lbl.textContent = 'Итоговая цена сделки (₽)';
+
+ const inp = document.createElement('input');
+ inp.className = 'field';
+ inp.type = 'number';
+ inp.min = '1';
+ inp.placeholder = 'Например: 1500000';
+ if (defaultPrice > 0) inp.value = String(defaultPrice);
+
+ const btnSold = document.createElement('button');
+ btnSold.type = 'button';
+ btnSold.className = 'btn';
+ btnSold.style.marginTop = '12px';
+ btnSold.textContent = '✅ Продал — записать в базу цен';
+
+ const btnDel = document.createElement('button');
+ btnDel.type = 'button';
+ btnDel.className = 'btn danger';
+ btnDel.style.marginTop = '8px';
+ btnDel.textContent = '🗑️ Просто снять без записи';
+
+ body.append(desc, lbl, inp, btnSold, btnDel);
+
+ const finishRemoveLocally = () => {
+  ads = (ads || []).filter(x => String(x.id) !== String(ad.id));
+  renderAds();
+  if ($('profileDealsTotal')) {
+   $('profileDealsTotal').textContent = ads.filter(a => String(a.seller_id) === String(meId)).length;
+  }
+ };
+
+ btnSold.onclick = async () => {
+  const finalPrice = Number(inp.value || 0);
   if (!finalPrice || finalPrice <= 0) { toast('Введите корректную цену сделки'); return; }
-  $('confirmSoldBtn').disabled = true;
+  btnSold.disabled = true; btnDel.disabled = true;
+  btnSold.textContent = 'Сохраняем…';
   try {
    await api('price_history', {
     method: 'POST',
+    headers: { 'Prefer': 'return=minimal' },
     body: {
      ad_id: String(ad.id),
      category: ad.category || 'Другое',
      title: String(ad.title || '').trim(),
-     server: ad.server || '',
+     server: ad.server || '08 сервер',
      price: finalPrice,
-     seller_id: String(ad.seller_id || '')
+     seller_id: String(ad.seller_id || meId)
     }
    });
-   await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=representation' } });
+   await api('ads', {
+    method: 'DELETE',
+    query: '?id=eq.' + encodeURIComponent(ad.id),
+    headers: { 'Prefer': 'return=minimal' }
+   });
    priceHistoryCache = [];
+   finishRemoveLocally();
    closeModal();
-   toast('Сделка записана в справочник цен!');
-   await loadAds();
+   toast('✅ Сделка записана в справочник цен!');
   } catch (e) {
-   $('confirmSoldBtn').disabled = false;
+   btnSold.disabled = false; btnDel.disabled = false;
+   btnSold.textContent = '✅ Продал — записать в базу цен';
    toast('Ошибка: ' + e.message);
   }
- });
-
- $('confirmJustDeleteBtn').addEventListener('click', async () => {
-  $('confirmJustDeleteBtn').disabled = true;
-  try {
-   await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=representation' } });
-   closeModal();
-   toast('Объявление снято');
-   await loadAds();
-  } catch (e) {
-   $('confirmJustDeleteBtn').disabled = false;
-   toast('Не удалось удалить: ' + e.message);
-  }
- });
-}
-function openSellModal() {
- if (myRole && myRole.is_banned) return;
- showModal('Новое объявление',`
-  <form id="sellForm">
-   <label class="field-label">Тип сделки</label><select class="field" name="type"><option>Продам</option><option>Куплю</option><option>Обмен</option></select>
-   <label class="field-label">Категория</label><select class="field" name="category">${CATEGORIES.slice(1).map(c=>'<option>'+c.name+'</option>').join('')}</select>
-   <label class="field-label">Название</label><input class="field" name="title" maxlength="80" required placeholder="Например, BMW M5 F90">
-   <label class="field-label">Цена (₽)</label><input class="field" name="price" maxlength="30" placeholder="Например, 15 000 000 или договорная">
-   <label class="field-label">Возможен ли торг</label><select class="field" name="bargain"><option value="Торг возможен">🤝 Торг возможен</option><option value="Без торга">🔒 Без торга</option></select>
-   <label class="field-label">Описание <span class="muted">(необязательно)</span></label><textarea class="field textarea" name="description" maxlength="1500" placeholder="Подробности предложения..."></textarea>
-   <label style="display:block;margin:8px 0 12px;padding:12px;background:var(--bg);border:1px dashed var(--accent);border-radius:11px;text-align:center;cursor:pointer;font-size:13px;color:#fff">
-    📷 Прикрепить фото <span class="muted">(до 5 шт., необязательно)</span>
-    <input type="file" id="adPhotoInput" accept="image/*" multiple style="display:none" onchange="const n=this.files?this.files.length:0;document.getElementById('adPhotoName').textContent = n ? '✅ Выбрано фото: ' + Math.min(n,5) + (n>5?' (загрузятся первые 5)':'') : ''">
-    <div id="adPhotoName" style="font-size:11px;color:#aaa2c5;margin-top:4px"></div>
-   </label>
-   <button class="btn" type="submit">Опубликовать объявление</button>
-  </form>`);
- $('sellForm').addEventListener('submit',async e=>{
-  e.preventDefault(); const f=new FormData(e.currentTarget); const category=f.get('category');
-  const payload={type:f.get('type'),category,title:String(f.get('title')).trim(),price:String(f.get('price')).trim()||'Договорная',server:String(f.get('bargain')||'Торг возможен'),description:String(f.get('description')||'').trim(),emoji:CATEGORY_EMOJI[category]||'📦',seller_id:meId,seller_name:meName,seller_rank:myRole&&myRole.rank||'🌱 Новичок'};
-  if(!payload.title){toast('Укажите название объявления');return;}
-  const submit=e.currentTarget.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='Публикуем…';
-  const photoFiles = $('adPhotoInput') && $('adPhotoInput').files ? Array.from($('adPhotoInput').files).slice(0, 5) : [];
-  if (photoFiles.length > 0) {
-   const urls = [];
-   const sbUrl = 'https://zhakfkqqurjlqdthsnhz.supabase.co';
-   const sbKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : 'sb_publishable_T-9Yrgl3fHMvua82YTvgVw__QWlEzFl';
-   for (let i = 0; i < photoFiles.length; i++) {
-    submit.textContent = 'Загружаем фото (' + (i + 1) + '/' + photoFiles.length + ')…';
-    const pf = await compressImage(photoFiles.at(i), 1280, 0.82);
-    try {
-     const ext = 'jpg';
-     const fileName = Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
-     const upRes = await fetch(sbUrl + '/storage/v1/object/ad-images/' + fileName, {
-      method: 'POST',
-      headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': pf.type || 'image/jpeg' },
-      body: pf
-     });
-     if (upRes.ok) {
-      urls.push(sbUrl + '/storage/v1/object/public/ad-images/' + fileName);
-     } else {
-      const errTxt = await upRes.text(); toast('Ошибка фото ' + (i+1) + ': ' + errTxt.slice(0, 50));
-     }
-    } catch (upErr) { toast('Сбой фото: ' + upErr.message); }
-   }
-   if (urls.length > 0) {
-    payload.image_url = urls[0];
-    payload.images = urls;
-   }
-   submit.textContent = 'Публикуем…';
-  }
-  try { await api('ads',{method:'POST',headers:{'Prefer':'return=representation'},body:payload}); closeModal();toast('Объявление опубликовано');await loadAds();showPage('marketPage'); }
-  catch(err){toast('Ошибка публикации: '+err.message);submit.disabled=false;submit.textContent='Опубликовать объявление';}
- });
-}
-function showPage(pageId) {
- document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===pageId));
- document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===pageId));
- if(pageId==='chatsPage')loadChats();
-}
-document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
-$('sellNav').addEventListener('click',openSellModal);
-$('searchInput').addEventListener('input',renderAds);
-if ($('sortSelect')) $('sortSelect').addEventListener('change',renderAds);
-
-
-function compressImage(file, maxW = 1280, quality = 0.82) {
- return new Promise(resolve => {
-  if (!file || !file.type || !file.type.startsWith('image/')) return resolve(file);
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-   URL.revokeObjectURL(url);
-   let w = img.width, h = img.height;
-   if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-   const canvas = document.createElement('canvas');
-   canvas.width = w; canvas.height = h;
-   canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-   canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', quality);
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-  img.src = url;
- });
-}
-let favIds = new Set(JSON.parse(localStorage.getItem('mt_market_favs') || '[]').map(String));
-function toggleFav(id, ev) {
- if (ev) ev.stopPropagation();
- const key = String(id);
- if (favIds.has(key)) { favIds.delete(key); toast('Удалено из избранного'); }
- else { favIds.add(key); toast('Добавлено в избранное ❤️'); }
- localStorage.setItem('mt_market_favs', JSON.stringify(Array.from(favIds)));
- renderAds();
-}
-
-function roomIdFor(a,b) { return [String(a),String(b)].sort().join('_'); }
-async function startPrivateChat(ad) {
- const otherId=String(ad.seller_id);
- activeChat={room_id:roomIdFor(meId,otherId),receiver_id:otherId,ad_title:ad.title,display_name:ad.seller_name||'Продавец',support:false};
- closeModal();showPage('chatsPage');openChat(activeChat);
-}
-async function startSupportChat() {
- activeChat={room_id:'support_'+meId,receiver_id:'support',ad_title:'Техподдержка',display_name:'Техподдержка RP Маркет 08',support:true};
- openChat(activeChat);
-}
-let allChatsData = [], chatFilterTab = 'all', chatSearchQuery = '';
-const AVATAR_COLORS = ['#7b42f6','#0ea5e9','#10b981','#f59e0b','#ec4899','#6366f1'];
-function formatChatTime(iso) {
- if (!iso) return '';
- const d = new Date(iso);
- if (isNaN(d.getTime())) return '';
- const now = new Date();
- if (d.toDateString() === now.toDateString()) {
-  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
- }
- return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-}
-function renderChatList() {
- const container = $('chatList');
- if (!container) return;
- const q = chatSearchQuery.trim().toLowerCase();
- const filtered = allChatsData.filter(c => {
-  if (chatFilterTab === 'support') return Boolean(c.staffView);
-  if (c.staffView) return false;
-  if (chatFilterTab === 'sell' && !c.isSelling && !c.support) return false;
-  if (chatFilterTab === 'buy' && (c.isSelling || c.support)) return false;
-  if (q && !String(c.display_name||'').toLowerCase().includes(q) && !String(c.ad_title||'').toLowerCase().includes(q) && !String(c.lastText||'').toLowerCase().includes(q)) return false;
-  return true;
- });
- if (!filtered.length) {
-  container.innerHTML = '<div class="empty" style="margin-top:16px">Диалогов в этом разделе пока нет 💬</div>';
-  return;
- }
- const seenRooms = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
- container.innerHTML = filtered.map((c, idx) => {
-  const isUnread = c.lastId && !c.support && String(c.lastSenderId) !== meId && Number(seenRooms[c.room_id] || 0) < Number(c.lastId);
-  const color = AVATAR_COLORS[Math.abs(String(c.receiver_id || idx).split('').reduce((a,ch)=>a+ch.charCodeAt(0),0)) % AVATAR_COLORS.length];
-  const isDealChat = !c.support && !c.global && !c.staffView && c.ad_title && c.ad_title !== 'Личный чат';
-  const mainTitle = isDealChat ? c.ad_title : c.display_name;
-  const avHtml = c.global
-   ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#7b42f6);display:grid;place-items:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 12px rgba(14,165,233,.35)">💬</div>'
-   : (c.support
-      ? '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4f46e5);display:grid;place-items:center;font-size:21px;flex-shrink:0">🎧</div>'
-      : (c.avatarUrl
-         ? '<img src="'+escapeHTML(c.avatarUrl)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">'
-         : '<div style="width:48px;height:48px;border-radius:50%;background:'+color+';display:grid;place-items:center;font-size:18px;font-weight:850;color:#fff;flex-shrink:0">'+escapeHTML(Array.from(String(c.display_name||'И')).at(0).toUpperCase())+'</div>'));
-  const subLine = c.support && !c.staffView
-   ? '<span class="muted">Свяжитесь с поддержкой RP Маркет 08</span>'
-   : (isDealChat
-      ? '<span style="color:var(--accent2);font-weight:700">👤 '+escapeHTML(c.display_name)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : '')
-      : '<span style="color:var(--accent2);font-weight:700">'+escapeHTML(c.ad_title)+'</span>'+(c.lastText ? '<span class="muted">: '+escapeHTML(c.lastText)+'</span>' : ''));
-  const rightMeta = c.support && !c.staffView
-   ? '<span style="font-size:13px;color:var(--muted)">📌</span>'
-   : (isUnread ? '<span style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center">1</span>' : (c.pinned ? '<span style="font-size:12px;color:var(--muted)">📌</span>' : ''));
-  return '<button type="button" data-fchat="'+idx+'" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:left;background:transparent">'
-   + avHtml
-   + '<div style="min-width:0;flex:1">'
-   +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">'
-   +     '<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(mainTitle)+(!isDealChat && c.verified?' <span style="color:#60a5fa;font-size:13px">✔</span>':'')+'</div>'
-   +     '<div class="small muted" style="flex-shrink:0;font-size:11px">'+escapeHTML(c.timeStr || '')+'</div>'
-   +   '</div>'
-   +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
-   +     '<div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+subLine+'</div>'
-   +     rightMeta
-   +   '</div>'
-   + '</div>'
-   + '</button>';
- }).join('');
- container.querySelectorAll('[data-fchat]').forEach(b => b.addEventListener('click', () => {
-  const ch = filtered.at(Number(b.dataset.fchat));
-  if (ch && ch.lastId) {
-   const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
-   seen[ch.room_id] = ch.lastId;
-   localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
-  }
-  openChat(ch);
- }));
-}
-async function loadChats() {
- const container = $('chatList');
- const globalChat = { room_id: 'global_chat', receiver_id: 'global', ad_title: 'Общение игроков маркетплейса', display_name: 'Общий чат', global: true, pinned: true };
- const support = { room_id: 'support_'+meId, receiver_id: 'support', ad_title: 'Техподдержка', display_name: 'Техподдержка', support: true, pinned: true };
- let chats = [globalChat, support];
- const myAdTitles = new Set(ads.filter(a => String(a.seller_id) === meId).map(a => String(a.title || '').trim()));
- try {
-  const lastGlobal = await api('messages', { query: '?select=*&room_id=eq.global_chat&order=id.desc&limit=1' }).catch(()=>[]);
-  if (lastGlobal && lastGlobal.at(0)) {
-   const lg = lastGlobal.at(0);
-   globalChat.timeStr = formatChatTime(lg.created_at);
-   globalChat.lastText = (lg.sender_name || 'Игрок') + ': ' + (lg.text || '');
-   globalChat.lastId = lg.id;
-   globalChat.lastSenderId = lg.sender_id;
-  }
-  const mine = await api('messages', { query: '?select=*&or=(sender_id.eq.'+encodeURIComponent(meId)+',receiver_id.eq.'+encodeURIComponent(meId)+')&order=id.desc&limit=500' });
-  const map = new Map();
-  const otherIds = new Set();
-  (mine || []).forEach(m => {
-   if (m.room_id === support.room_id) {
-    if (!support.timeStr) { support.timeStr = formatChatTime(m.created_at); support.lastText = m.text || ''; }
-    return;
-   }
-   const other = String(m.sender_id) === meId ? String(m.receiver_id) : String(m.sender_id);
-   if (other === 'support') return;
-   otherIds.add(other);
-   if (!map.has(m.room_id)) {
-    const title = m.ad_title || 'Личный чат';
-    map.set(m.room_id, {
-     room_id: m.room_id,
-     receiver_id: other,
-     ad_title: title,
-     display_name: String(m.sender_id) === meId ? (m.receiver_name || 'Игрок') : (m.sender_name || 'Игрок'),
-     support: false,
-     isSelling: myAdTitles.has(String(title).trim()),
-     lastText: m.text || '',
-     lastId: m.id,
-     lastSenderId: m.sender_id,
-     timeStr: formatChatTime(m.created_at)
-    });
-   }
-  });
-  if (otherIds.size > 0) {
-   const profiles = await api('roles', { query: '?select=user_id,display_name,avatar_url,rank&user_id=in.(' + Array.from(otherIds).map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
-   const pMap = new Map((profiles || []).map(pr => [String(pr.user_id), pr]));
-   map.forEach(c => {
-    const pr = pMap.get(String(c.receiver_id));
-    if (pr) {
-     if (pr.display_name) c.display_name = pr.display_name;
-     if (pr.avatar_url) c.avatarUrl = pr.avatar_url;
-     if (rankLevel(pr.rank) >= 3) c.verified = true;
-    }
-   });
-  }
-  chats = chats.concat([...map.values()]);
-  if (myRank.level >= 7) {
-   if ($('supportTabBtn')) $('supportTabBtn').style.display = 'inline-block';
-   const supportMessages = await api('messages', { query: '?select=*&room_id=like.support_%25&order=id.desc&limit=500' });
-   const tickets = new Map();
-   const ticketUserIds = new Set();
-   (supportMessages || []).forEach(m => {
-    if (m.room_id === support.room_id) return;
-    const uid = String(m.room_id).replace('support_', '');
-    ticketUserIds.add(uid);
-    if (!tickets.has(m.room_id)) {
-     const needsReply = String(m.receiver_id) === 'support';
-     tickets.set(m.room_id, {
-      room_id: m.room_id,
-      receiver_id: uid,
-      ad_title: needsReply ? '🟡 Ждёт ответа' : '✅ Отвечено',
-      display_name: needsReply ? (m.sender_name || uid) : ('Игрок #' + uid),
-      support: true,
-      staffView: true,
-      needsReply: needsReply,
-      pinned: needsReply,
-      lastText: m.text || '',
-      lastId: m.id,
-      lastSenderId: m.sender_id,
-      timeStr: formatChatTime(m.created_at)
-     });
-    }
-   });
-   if (ticketUserIds.size > 0) {
-    const tProfiles = await api('roles', { query: '?select=user_id,display_name,avatar_url&user_id=in.(' + Array.from(ticketUserIds).map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
-    const tpMap = new Map((tProfiles || []).map(pr => [String(pr.user_id), pr]));
-    tickets.forEach(t => {
-     const pr = tpMap.get(String(t.receiver_id));
-     if (pr) {
-      if (pr.display_name) t.display_name = pr.display_name;
-      if (pr.avatar_url) t.avatarUrl = pr.avatar_url;
-     }
-    });
-   }
-   const sortedTickets = [...tickets.values()].sort((a, b) => Number(b.needsReply) - Number(a.needsReply));
-   const unansweredCount = sortedTickets.filter(t => t.needsReply).length;
-   if ($('supportTabBtn')) {
-    $('supportTabBtn').textContent = unansweredCount > 0 ? '🛟 Поддержка (' + unansweredCount + ')' : '🛟 Поддержка';
-   }
-   chats = chats.concat(sortedTickets);
-  }
- } catch (e) { console.warn('Чаты:', e); }
- allChatsData = chats;
- if ($('toggleChatSearch')) $('toggleChatSearch').onclick = () => {
-  const w = $('chatSearchWrap');
-  w.style.display = w.style.display === 'none' ? 'block' : 'none';
-  if (w.style.display === 'block') $('chatSearchInput').focus();
  };
- if ($('chatSearchInput')) $('chatSearchInput').oninput = e => { chatSearchQuery = e.target.value; renderChatList(); };
- document.querySelectorAll('.chat-tab').forEach(tab => tab.onclick = () => {
-  chatFilterTab = tab.dataset.ctab;
-document.querySelectorAll('.chat-tab').forEach(t => {
-const act = t.dataset.ctab === chatFilterTab;
-t.style.color = act ? '#fff' : 'var(--muted)';
-t.style.borderBottomColor = act ? 'var(--accent)' : 'transparent';
-});
-renderChatList();
-});
-renderChatList();
+
+ btnDel.onclick = async () => {
+  btnSold.disabled = true; btnDel.disabled = true;
+  btnDel.textContent = 'Снимаем…';
+  try {
+   await api('ads', {
+    method: 'DELETE',
+    query: '?id=eq.' + encodeURIComponent(ad.id),
+    headers: { 'Prefer': 'return=minimal' }
+   });
+   finishRemoveLocally();
+   closeModal();
+   toast('🗑️ Объявление снято');
+  } catch (e) {
+   btnSold.disabled = false; btnDel.disabled = false;
+   btnDel.textContent = '🗑️ Просто снять без записи';
+   toast('Ошибка: ' + e.message);
+  }
+ };
 }
-async function deleteCurrentChat() {
- if(!activeChat) return;
- const chat = activeChat;
- if(!confirm('Удалить этот чат и всю переписку в нём?')) return;
- try {
-  await api('rpc/delete_chat_room', {
-   method: 'POST',
-   body: { p_user_id: String(meId), p_room_id: String(chat.room_id) }
-  });
-  toast('Чат удалён 🗑️');
-  closeModal();
-  await loadChats();
- } catch(e) {
-  toast('Ошибка удаления чата: ' + e.message);
- }
-}
-function openChat(chat) {
- activeChat=chat;
- const staffReply=chat.support && myRank.level>=7 && chat.staffView;
- const canDelete = !chat.global || myRank.level >= 7;
- const delLabel = chat.global ? '🧹 Очистить чат' : '🗑️ Удалить чат';
- const delBtnHtml = canDelete ? '<button type="button" id="deleteChatBtn" class="inline-btn" style="color:#f87171;border-color:rgba(248,113,113,.35);flex-shrink:0">'+delLabel+'</button>' : '';
- showModal(chat.display_name,`
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-   <div class="small muted" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(chat.ad_title||'Личный чат')}</div>
-   ${delBtnHtml}
-  </div>
-  <div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div>
-  <form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="1500" autocomplete="off" placeholder="Сообщение..." required><button type="submit">➤</button></form>
- `);
- if(chatTimer)clearInterval(chatTimer);
- loadMessages();
- chatTimer=setInterval(()=>{if(activeChat&&activeChat.room_id===chat.room_id)loadMessages();},3000);
- $('sendMessageForm').addEventListener('submit',sendMessage);
- $('modalWrap').classList.add('chat-fullscreen');
- if($('deleteChatBtn')) $('deleteChatBtn').addEventListener('click',deleteCurrentChat);
-}
-const chatProfilesCache = new Map();
-function avatarColorFor(id) {
- const s = String(id || '0');
- let h = 0;
- for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
- return AVATAR_COLORS.at(h % AVATAR_COLORS.length);
-}
+
 async function openPublicProfile(uid) {
  const targetId = String(uid || '').trim();
  if (!targetId || targetId === 'support' || targetId === 'global') return;
