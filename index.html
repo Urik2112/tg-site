@@ -367,6 +367,16 @@ function parseNumericPrice(val) {
  const digits = String(val || '').replace(/[^\d]/g, '');
  return digits ? Number(digits) : null;
 }
+let favIds = new Set(JSON.parse(localStorage.getItem('mt_fav_ids') || '[]').map(String));
+function toggleFav(id, e) {
+ if (e) { e.preventDefault(); e.stopPropagation(); }
+ const key = String(id);
+ if (favIds.has(key)) favIds.delete(key);
+ else favIds.add(key);
+ localStorage.setItem('mt_fav_ids', JSON.stringify(Array.from(favIds)));
+ renderAds();
+}
+
 function renderAds() {
  if ($('profileDealsTotal') && typeof meId !== 'undefined') {
   $('profileDealsTotal').textContent = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
