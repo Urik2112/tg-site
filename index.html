@@ -2064,7 +2064,7 @@ const avStyle = 'width:32px;height:32px;border-radius:50%;overflow:hidden;displa
    const bubStyle = isMine ? 'background:linear-gradient(135deg,#6f42ff,#5531d9);border:1px solid rgba(139,92,246,.5);border-radius:15px 15px 4px 15px;padding:9px 12px;font-size:13px;line-height:1.4;color:#fff;word-break:break-word' : 'background:var(--card2);border:1px solid var(--line);border-radius:15px 15px 15px 4px;padding:9px 12px;font-size:13px;line-height:1.4;color:var(--text);word-break:break-word';
    const timeHtml2 = msgTime ? '<span style="display:block;font-size:10px;opacity:.65;text-align:right;margin-top:4px">' + escapeHTML(msgTime) + '</span>' : '';
    const avHtml = '<div class="msg-av ' + frCls + '" data-uid="' + escapeHTML(sid) + '" style="' + avStyle + '">' + avInner + '</div>';
-   return '<div style="' + rowStyle + '">' + avHtml + '<div style="' + bubStyle + '"><div data-uid="' + escapeHTML(sid) + '" style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:3px;cursor:pointer">' + escapeHTML(dispName) + '</div>' + escapeHTML(m.text) + timeHtml2 + '</div></div>';
+   return '<div style="' + rowStyle + '">' + avHtml + '<div style="' + bubStyle + '"><div data-uid="' + escapeHTML(sid) + '" style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:3px;cursor:pointer">' + escapeHTML(dispName) + '</div>' + escapeHTML(m.text)  + '</div></div>';
   }).join('') || 'Начните общение первым 👋';
 box.querySelectorAll('[data-uid]').forEach(el => {
 el.addEventListener('click', () => {
