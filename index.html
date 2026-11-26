@@ -516,6 +516,20 @@ function renderProfile() {
  $('profileLevel').textContent = myRank.level + '/10';
  setRankBadge($('profileRank'), myRole && myRole.rank);
  if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfile;
+ if ($('editProfileBtn') && !$('myAdsProfileBtn')) {
+  const myAdsCount = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
+  const bMyAds = document.createElement('button');
+  bMyAds.type = 'button';
+  bMyAds.id = 'myAdsProfileBtn';
+  bMyAds.className = 'btn secondary';
+  bMyAds.style.marginTop = '8px';
+  bMyAds.textContent = '📦 Мои лоты (' + myAdsCount + ')';
+  bMyAds.onclick = openMyAdsModal;
+  $('editProfileBtn').insertAdjacentElement('afterend', bMyAds);
+ } else if ($('myAdsProfileBtn')) {
+  const myAdsCount = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
+  $('myAdsProfileBtn').textContent = '📦 Мои лоты (' + myAdsCount + ')';
+ }
  $('adminButtonWrap').innerHTML = myRank.level>=8 ? '<button class="btn" id="openAdmin">👑 Админ-центр</button>' : '';
  if ($('openAdmin')) $('openAdmin').addEventListener('click', openAdminCenter);
 }
@@ -1468,11 +1482,37 @@ function openSellModal() {
  const subBtn = document.createElement('button');
  subBtn.type = 'submit'; subBtn.className = 'btn'; subBtn.textContent = 'Опубликовать объявление';
 
+ const marketHint = document.createElement('div');
+ marketHint.style.cssText = 'display:none;margin:-4px 0 10px;padding:9px 11px;border-radius:11px;background:var(--card2);border:1px solid var(--line);font-size:12px;align-items:center;justify-content:space-between;gap:8px';
+ const hintText = document.createElement('span');
+ const hintUseBtn = document.createElement('button');
+ hintUseBtn.type = 'button'; hintUseBtn.className = 'inline-btn'; hintUseBtn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:11px';
+ hintUseBtn.textContent = 'Подставить';
+ marketHint.append(hintText, hintUseBtn);
+
+ const updateSellMarketHint = async () => {
+  const q = inpTitle.value.trim().toLowerCase();
+  if (q.length < 2) { marketHint.style.display = 'none'; return; }
+  if (!priceHistoryCache.length) {
+   try {
+    priceHistoryCache = await api('price_history', { query: '?select=id,category,title,server,price,created_at&order=created_at.desc&limit=500' }) || [];
+   } catch (_) {}
+  }
+  const matched = priceHistoryCache.filter(r => String(r.title || '').toLowerCase().includes(q) && Number(r.price) > 0);
+  if (!matched.length) { marketHint.style.display = 'none'; return; }
+  const avg = Math.round(matched.reduce((s, r) => s + Number(r.price), 0) / matched.length);
+  hintText.textContent = '📊 Рынок (' + matched.length + ' сд.): ~' + formatMoneyShort(avg);
+  hintUseBtn.onclick = () => { inpPrice.value = String(avg); toast('Подставлена средняя цена рынка'); };
+  marketHint.style.display = 'flex';
+ };
+ inpTitle.addEventListener('input', updateSellMarketHint);
+
  form.append(
   mkLbl('Тип объявления'), selType,
   mkLbl('Категория'), selCat,
   mkLbl('Название'), inpTitle,
   mkLbl('Цена (₽)'), inpPrice,
+  marketHint,
   mkLbl('Сервер'), inpServer,
   mkLbl('Описание'), inpDesc,
   fileBox, subBtn
@@ -1975,12 +2015,14 @@ async function openAdminCenter() {
   <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
   <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
   <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Пункт правил (быстрый выбор)</label><select class="field" id="banRuleSelect"><option value="">— Выберите нарушение или введите вручную —</option>${BAN_RULES.map(r=>'<option value="'+escapeHTML(r.code+' — '+r.title)+'">'+escapeHTML(r.code+' — '+r.title)+'</option>').join('')}</select><label class="field-label">Причина блокировки</label><input class="field" name="reason" placeholder="Причина (для бана)"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn danger" type="submit" style="margin:0">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="margin:0">Разбанить</button></div></form></div>
+  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🤝 Контроль успешных сделок</b><button type="button" class="inline-btn" id="openAdminDealsBtn">Открыть журнал</button></div><div class="small muted" style="margin-top:4px">Проверка на твинки и аннулирование накрученных сделок</div></div>
   <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
  `);
  document.querySelectorAll('[data-open-admin-profile]').forEach(el=>el.addEventListener('click',()=>{
   const uid = el.dataset.openAdminProfile;
   if (uid && typeof openPublicProfile === 'function') openPublicProfile(uid);
  }));
+ if ($('openAdminDealsBtn')) $('openAdminDealsBtn').onclick = openAdminDealsLog;
  document.querySelectorAll('[data-pick-admin]').forEach(b=>b.addEventListener('click',()=>{
   const f=$('rankForm');if(!f)return;
   f.querySelector('[name="user_id"]').value=b.dataset.pickAdmin||'';
