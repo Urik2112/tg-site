@@ -1708,6 +1708,11 @@ async function loadChats() {
  if ($('supportTabBtn') && myRank && myRank.level >= 7) {
   $('supportTabBtn').style.display = 'inline-block';
  }
+ chatsListCache = [
+  { room_id: 'global', global: true, support: false, roleKind: 'all', display_name: '🌍 Общий чат игроков', ad_title: 'Общение и торговля 08 сервера', last_text: 'Нажмите, чтобы открыть общий чат', last_id: 0, unread: false },
+  { room_id: 'support_' + meId, global: false, support: true, staffView: false, roleKind: 'all', receiver_id: 'support', display_name: '🛟 Техподдержка RP Маркет 08', ad_title: 'Помощь и вопросы', last_text: 'Нажмите, чтобы написать администрации', last_id: 0, unread: false }
+ ];
+ renderChatList();
  try {
   const isStaff = myRank && myRank.level >= 7;
   const q = isStaff
