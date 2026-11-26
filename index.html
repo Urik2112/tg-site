@@ -732,7 +732,7 @@ function openAd(id) {
   } else if ($('sellerStatsLine')) {
    $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: 0';
   }
- }).then(async r => { const d = await r.json().catch(()=>({})); if (!r.ok || d.ok === false) toast('Уведомление: ' + (d.description || d.error || r.status)); }).catch(e => toast('Сеть notify: ' + e.message));
+ }).catch(() => {});
 }
 let priceHistoryCache = [];
 let selectedPriceCat = 'Все';
@@ -1886,6 +1886,31 @@ async function deleteCurrentChat() {
  } catch (e) {
   toast('Ошибка удаления чата: ' + e.message);
  }
+}
+
+function startPrivateChat(targetOrAd, nameOpt, titleOpt) {
+ let uid = '', name = '', title = 'Личный чат';
+ if (targetOrAd && typeof targetOrAd === 'object') {
+  uid = String(targetOrAd.seller_id || targetOrAd.user_id || '');
+  name = targetOrAd.seller_name || targetOrAd.display_name || ('Игрок ' + uid);
+  title = targetOrAd.title || 'Объявление';
+ } else {
+  uid = String(targetOrAd || '');
+  name = nameOpt || ('Игрок ' + uid);
+  title = titleOpt || 'Личный чат';
+ }
+ if (!uid || uid === String(meId)) { toast('Нельзя написать самому себе'); return; }
+ const c = {
+  room_id: roomIdFor(meId, uid),
+  receiver_id: uid,
+  ad_title: title,
+  display_name: name,
+  support: false,
+  global: false
+ };
+ closeModal();
+ showPage('chatsPage');
+ openChat(c);
 }
 
 function openChat(chat) {
