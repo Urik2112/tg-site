@@ -2376,12 +2376,6 @@ async function openAdminCenter() {
  showModal('👑 Админ-центр', '<div class="loading">Загружаем панель управления…</div>');
  try {
   rolesCache=await api('roles',{query:'?select=user_id,display_name,rank,is_banned,ban_reason,deals_success,updated_at&order=updated_at.desc&limit=300'})||[];
-  ).catch(()=>[]);
-   (staffAvs || []).forEach(av => {
-    const target = rolesCache.find(x => String(x.user_id) === String(av.user_id));
-    if (target) { target.avatar_url = av.avatar_url; target.avatar_frame = av.avatar_frame; }
-   });
-  }
  }
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
  let count=ads.length;
