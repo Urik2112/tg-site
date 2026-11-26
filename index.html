@@ -264,6 +264,8 @@
 <div id="bannedScreen" class="banned"><div><div style="font-size:62px">🚫</div><h1>Доступ заблокирован</h1><p id="banReason" class="muted"></p><p id="banId" class="small muted"></p></div></div>
 
 <script>
+var chatProfilesCache = new Map();
+
 (() => {
 'use strict';
 window.onerror = (m, u, l) => { alert('Ошибка JS (стр ' + l + '): ' + m); };
@@ -2071,7 +2073,6 @@ async function openPublicProfile(uid) {
   showModal('Профиль игрока', '<div class="loading">Не удалось загрузить профиль: ' + escapeHTML(e.message) + '</div>');
  }
 }
-const chatProfilesCache = new Map();
 async function loadMessages() {
  if(!activeChat)return;
  const chat=activeChat;
