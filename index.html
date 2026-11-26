@@ -2055,6 +2055,37 @@ function renderThemePicker() {
 }
 applyTheme(localStorage.getItem('mt_market_theme') || 'purple');
 
+function showPage(pageId) {
+ document.querySelectorAll('.page').forEach(el => el.classList.toggle('active', el.id === pageId));
+ document.querySelectorAll('#bottomNav .nav-item[data-page]').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.page === pageId);
+ });
+ if (pageId === 'chatsPage' && typeof loadChats === 'function') loadChats();
+ if (pageId === 'pricesPage' && typeof loadPriceHistory === 'function') loadPriceHistory(false);
+ if (pageId === 'profilePage' && typeof renderProfile === 'function') renderProfile();
+}
+
+document.querySelectorAll('#bottomNav .nav-item[data-page]').forEach(btn => {
+ btn.addEventListener('click', () => showPage(btn.dataset.page));
+});
+
+if ($('sellNav')) {
+ $('sellNav').addEventListener('click', () => {
+  if (typeof openSellModal === 'function') openSellModal();
+ });
+}
+
+if ($('modalClose')) $('modalClose').addEventListener('click', closeModal);
+if ($('modalWrap')) {
+ $('modalWrap').addEventListener('click', e => {
+  if (e.target === $('modalWrap')) closeModal();
+ });
+}
+
+if ($('searchInput')) $('searchInput').addEventListener('input', renderAds);
+if ($('sortSelect')) $('sortSelect').addEventListener('change', renderAds);
+if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
+
 async function init() {
  renderCategories();renderDealFilters();
  loadAds();
