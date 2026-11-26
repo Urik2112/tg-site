@@ -1413,9 +1413,9 @@ function openSellModal() {
  };
 
  const selType = mkSel('type', [
-  { v: 'sell', t: 'Продам' },
-  { v: 'buy', t: 'Куплю' },
-  { v: 'trade', t: 'Обмен' }
+  { v: 'Продам', t: 'Продам' },
+  { v: 'Куплю', t: 'Куплю' },
+  { v: 'Обмен', t: 'Обмен' }
  ]);
  const selCat = mkSel('category', ['Недвижимость', 'Автомобили', 'Одежда', 'Аксессуары', 'Бизнес', 'Другое']);
 
@@ -1488,7 +1488,7 @@ function openSellModal() {
      title: title,
      price: price,
      server: inpServer.value.trim() || '08 сервер',
-     description: inpDesc.value.trim(),
+     desc: inpDesc.value.trim(),
      seller_id: String(meId),
      seller_name: meName,
      images: photos, image_url: photos.at(0) || null
