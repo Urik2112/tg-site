@@ -1711,8 +1711,8 @@ async function loadChats() {
  try {
   const isStaff = myRank && myRank.level >= 7;
   const q = isStaff
-   ? '?select=*&order=id.desc&limit=500'
-   : '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=400';
+   ? '?select=*&order=id.desc&limit=150'
+   : '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=150';
   const rows = await api('messages', { query: q }) || [];
   const map = new Map();
   const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
