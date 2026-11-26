@@ -1710,16 +1710,11 @@ async function loadChats() {
  if ($('supportTabBtn') && myRank && myRank.level >= 7) {
   $('supportTabBtn').style.display = 'inline-block';
  }
- chatsListCache = [
-  { room_id: 'global', global: true, support: false, roleKind: 'all', display_name: '🌍 Общий чат игроков', ad_title: 'Общение и торговля 08 сервера', last_text: 'Нажмите, чтобы открыть общий чат', last_id: 0, unread: false },
-  { room_id: 'support_' + meId, global: false, support: true, staffView: false, roleKind: 'all', receiver_id: 'support', display_name: '🛟 Техподдержка RP Маркет 08', ad_title: 'Помощь и вопросы', last_text: 'Нажмите, чтобы написать администрации', last_id: 0, unread: false }
- ];
- renderChatList();
  try {
   const isStaff = myRank && myRank.level >= 7;
   const q = isStaff
-   ? '?select=*&order=id.desc&limit=150'
-   : '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=150';
+   ? '?select=*&order=id.desc&limit=250'
+   : '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=250';
   const rows = await api('messages', { query: q }) || [];
   const map = new Map();
   const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
@@ -1744,7 +1739,7 @@ async function loadChats() {
    roleKind: 'all',
    receiver_id: 'support',
    display_name: '🛟 Техподдержка RP Маркет 08',
-   ad_title: 'Помощь, жалобы и вопросы по сделкам',
+   ad_title: 'Помощь и вопросы по площадке',
    last_text: 'Нажмите, чтобы написать администрации',
    last_id: 0,
    unread: false
@@ -1755,10 +1750,10 @@ async function loadChats() {
    if (!rid) return;
    if (rid === 'global') {
     const g = map.get('global');
-    if (m.id > g.last_id) {
-     g.last_id = m.id;
+    if ((m.id || 0) > g.last_id) {
+     g.last_id = m.id || 0;
      g.last_text = (m.sender_name || 'Игрок') + ': ' + String(m.text || '');
-     g.unread = (seen.global || 0) < m.id && String(m.sender_id) !== String(meId);
+     g.unread = (seen.global || 0) < (m.id || 0) && String(m.sender_id) !== String(meId);
     }
     return;
    }
@@ -1856,8 +1851,7 @@ function renderChatList() {
   const sub = document.createElement('div');
   sub.className = 'small muted';
   sub.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px';
-  const cleanPreview = c.last_text.startsWith('[DEAL_') ? '🤝 Обновление по сделке' : c.last_text;
-  sub.textContent = (c.ad_title && !c.global && !c.support ? c.ad_title + ' · ' : '') + cleanPreview;
+  sub.textContent = (c.ad_title && !c.global && !c.support ? c.ad_title + ' · ' : '') + c.last_text;
   left.append(title, sub);
   row.appendChild(left);
 
@@ -1917,7 +1911,6 @@ function startPrivateChat(targetOrAd, nameOpt, titleOpt) {
 function openChat(chat) {
  activeChat = chat;
  const canDelete = !chat.global || (myRank && myRank.level >= 7);
- const canDeal = !chat.global && !chat.support && String(chat.receiver_id || '') !== String(meId);
 
  showModal(chat.display_name, '');
  const body = $('modalBody');
@@ -1932,43 +1925,34 @@ function openChat(chat) {
  const btnsWrap = document.createElement('div');
  btnsWrap.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
 
- if (canDeal && typeof openProposeDealModal === 'function') {
-  const dealBtn = document.createElement('button');
-  dealBtn.type = 'button';
-  dealBtn.className = 'inline-btn';
-  dealBtn.style.cssText = 'color:var(--green);border-color:rgba(37,211,102,.4)';
-  dealBtn.textContent = '🤝 Сделка';
-  dealBtn.onclick = openProposeDealModal;
-  btnsWrap.appendChild(dealBtn);
- }
-
  if (canDelete) {
-const delBtn = document.createElement('button');
-delBtn.type = 'button';
-delBtn.className = 'inline-btn';
-delBtn.style.cssText = 'color:#f87171;border-color:rgba(248,113,113,.35)';
-delBtn.textContent = chat.global ? '🧹 Очистить чат' : '🗑️ Удалить чат';
-delBtn.onclick = deleteCurrentChat;
-btnsWrap.appendChild(delBtn);
-}
-topBar.append(adSub, btnsWrap);
-const msgBox = document.createElement('div');
-msgBox.id = 'messagesBox';
-msgBox.className = 'messages';
-const ld = document.createElement('div');
-ld.className = 'loading';
-ld.textContent = 'Загружаем сообщения…';
-msgBox.appendChild(ld);
-const form = document.createElement('form');
-form.id = 'sendMessageForm';
-form.className = 'send-row';
-const inp = document.createElement('input');
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'inline-btn';
+  delBtn.style.cssText = 'color:#f87171;border-color:rgba(248,113,113,.35)';
+  delBtn.textContent = chat.global ? '🧹 Очистить чат' : '🗑️ Удалить чат';
+  delBtn.onclick = deleteCurrentChat;
+  btnsWrap.appendChild(delBtn);
+ }
+ topBar.append(adSub, btnsWrap);
+
+ const msgBox = document.createElement('div');
+ msgBox.id = 'messagesBox';
+ msgBox.className = 'messages';
+ const ld = document.createElement('div');
+ ld.className = 'loading';
+ ld.textContent = 'Загружаем сообщения…';
+ msgBox.appendChild(ld);
+
+ const form = document.createElement('form');
+ form.id = 'sendMessageForm';
+ form.className = 'send-row';
+ const inp = document.createElement('input');
 inp.className = 'field';
 inp.name = 'text';
-inp.maxLength = 1500;
+inp.maxLength = 600;
+inp.placeholder = 'Сообщение…';
 inp.autocomplete = 'off';
-inp.placeholder = 'Сообщение...';
-inp.required = true;
 const sendBtn = document.createElement('button');
 sendBtn.type = 'submit';
 sendBtn.textContent = '➤';
@@ -1982,371 +1966,78 @@ if (activeChat && activeChat.room_id === chat.room_id) loadMessages();
 }, 3000);
 $('modalWrap').classList.add('chat-fullscreen');
 }
-async function openPublicProfile(uid) {
- const targetId = String(uid || '').trim();
- if (!targetId || targetId === 'support' || targetId === 'global') return;
- if (targetId === meId) { closeModal(); showPage('profilePage'); return; }
- showModal('Профиль игрока', '<div class="loading">Загружаем профиль…</div>');
- try {
-  const rows = await api('roles', { query: '?select=*&user_id=eq.' + encodeURIComponent(targetId) + '&limit=1' });
-  const pr = (rows && rows.at(0)) ? rows.at(0) : { user_id: targetId, display_name: 'Игрок #' + targetId, rank: RANKS.at(0).name };
-  chatProfilesCache.set(targetId, pr);
-  const name = pr.display_name || ('Игрок #' + targetId);
-  const r = rankFor(pr.rank);
-  const frCls = frameClassFor(pr.avatar_frame);
-  const letter = (name.charAt(0) || 'И').toUpperCase();
-  const avInner = pr.avatar_url
-   ? '<img src="' + escapeHTML(pr.avatar_url) + '" style="width:100%;height:100%;object-fit:cover">'
-   : escapeHTML(letter);
-  const bioText = pr.bio ? escapeHTML(pr.bio) : 'Описание профиля не заполнено.';
-  const pubBannerBg = pr.banner_url
-   ? '<div style="position:absolute;top:0;left:0;right:0;height:365px;background:url(\'' + escapeHTML(pr.banner_url) + '\') center/cover no-repeat;z-index:0;pointer-events:none"><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.08) 0%,rgba(0,0,0,0.55) 72%,var(--card) 100%)"></div></div>'
-   : '';
-  showModal('Профиль игрока', `
-   <div style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:0 0 18px">
-    ${pubBannerBg}
-    <div style="position:relative;z-index:1;height:${pr.banner_url ? '210px' : '12px'};width:100%"></div>
-    <div class="${frCls}" style="position:relative;z-index:1;width:88px;height:88px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff;background:${avatarColorFor(targetId)};box-shadow:0 8px 22px rgba(0,0,0,.6)">${avInner}</div>
-    <div style="position:relative;z-index:1;font-size:18px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.8)">${escapeHTML(name)}</div>
-    <div style="position:relative;z-index:1"><span class="rank" style="color:${r.color};background:${r.bg}">${escapeHTML(r.name)}</span></div>
-    <div class="small muted">ID: ${escapeHTML(targetId)}</div>
-    <div style="width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;text-align:left;margin-top:4px">${bioText}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:4px">
-     <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px">${Number(pr.deals_total||0)}</div><div class="small muted">Всего сделок</div></div>
-     <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px"><div style="font-weight:900;font-size:16px;color:#10b981">${Number(pr.deals_success||0)}</div><div class="small muted">Успешных</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:2px">
-     <button type="button" id="pubLikeBoxBtn" style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;cursor:pointer">
-      <div id="pubLikesNum" style="font-weight:900;font-size:16px;color:#ff657a">…</div>
-      <div id="pubLikesSub" class="small muted">❤️ Лайкнуть</div>
-     </button>
-     <div id="pubPhoneBox" style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer" title="Нажмите, чтобы скопировать">
-      <div style="font-weight:900;font-size:15px">${escapeHTML(pr.game_phone || 'Не указан')}</div>
-      <div class="small muted">📱 Игровой номер</div>
-     </div>
-    </div>
-    <button type="button" class="btn" id="msgFromProfileBtn" style="margin-top:8px">💬 Написать в ЛС</button>
-   </div>
-  `);
-  $('modalWrap').classList.add('profile-fullscreen');
-  api('profile_likes', { query: '?select=from_user_id&to_user_id=eq.' + encodeURIComponent(targetId)  })
-   .then(lRows => {
-    const arr = Array.isArray(lRows) ? lRows : [];
-    const isLiked = arr.some(x => String(x.from_user_id) === String(meId));
-    if ($('pubLikesNum')) $('pubLikesNum').textContent = arr.length;
-    if ($('pubLikesSub')) $('pubLikesSub').textContent = isLiked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
-   }).catch(err => {
-    if ($('pubLikesNum')) $('pubLikesNum').textContent = '0';
-    console.warn('profile_likes:', err);
-   });
-  if ($('pubLikeBoxBtn')) {
-   $('pubLikeBoxBtn').onclick = async () => {
-    const btn = $('pubLikeBoxBtn');
-    btn.disabled = true;
-    try {
-     const res = await api('rpc/toggle_profile_like', { method: 'POST', body: { p_from_id: String(meId), p_to_id: String(targetId) } });
-     const data = Array.isArray(res) ? res.at(0) : res;
-     if (data && typeof data.count === 'number') {
-      if ($('pubLikesNum')) $('pubLikesNum').textContent = data.count;
-      if ($('pubLikesSub')) $('pubLikesSub').textContent = data.liked ? '❤️ Вы лайкнули' : '🤍 Поставить лайк';
-      toast(data.liked ? 'Лайк поставлен ❤️' : 'Лайк убран');
-     }
-    } catch (err) { toast('Ошибка лайка: ' + err.message); }
-    finally { btn.disabled = false; }
-   };
-  }
-  if ($('pubPhoneBox') && pr.game_phone) {
-   $('pubPhoneBox').onclick = () => {
-    if (navigator.clipboard) navigator.clipboard.writeText(pr.game_phone).catch(()=>{});
-    toast('Номер скопирован: ' + pr.game_phone);
-   };
-  }
-  if ($('msgFromProfileBtn')) {
-   $('msgFromProfileBtn').onclick = () => {
-    activeChat = { room_id: roomIdFor(meId, targetId), receiver_id: targetId, ad_title: 'Личный чат', display_name: name, support: false };
-    closeModal();
-    showPage('chatsPage');
-    openChat(activeChat);
-   };
-  }
- } catch (e) {
-  showModal('Профиль игрока', '<div class="loading">Не удалось загрузить профиль: ' + escapeHTML(e.message) + '</div>');
- }
-}
 async function loadMessages() {
- if(!activeChat)return;
- const chat=activeChat;
- try {
-  const rows=await api('messages',{query:'?select=*&room_id=eq.'+encodeURIComponent(chat.room_id)+'&order=id.asc&limit=300'});
-  if(!activeChat||activeChat.room_id!==chat.room_id)return;
-  if (rows && rows.length) {
-   const lastRow = rows.at(rows.length - 1);
-   if (lastRow && lastRow.id) {
-    const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
-    if (seen[chat.room_id] !== lastRow.id) {
-     seen[chat.room_id] = lastRow.id;
-     localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
-     renderChatList();
-    }
-   }
-   const missingIds = Array.from(new Set(rows.map(r => String(r.sender_id)).filter(id => id && id !== 'support' && id !== 'global' && !chatProfilesCache.has(id))));
-   if (missingIds.length > 0) {
-    const profs = await api('roles', { query: '?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,deals_total,deals_success&user_id=in.(' + missingIds.map(id=>encodeURIComponent(id)).join(',') + ')' }).catch(()=>[]);
-    (profs || []).forEach(pr => chatProfilesCache.set(String(pr.user_id), pr));
-    missingIds.forEach(id => { if (!chatProfilesCache.has(id)) chatProfilesCache.set(id, { user_id: id }); });
-   }
-  }
-  const box=$('messagesBox'); if(!box)return;
-  box.innerHTML=(rows||[]).map(m=>{
-   const sid = String(m.sender_id || '');
-   const isMine = sid === meId;
-   const pr = isMine ? (myRole || {}) : (chatProfilesCache.get(sid) || {});
-   const dispName = pr.display_name || m.sender_name || sid || 'Игрок';
-   const letter = (dispName.charAt(0) || 'И').toUpperCase();
-   const avInner = pr.avatar_url ? '<img src="'+escapeHTML(pr.avatar_url)+'" alt="">' : escapeHTML(letter);
-   const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
-   const timeHtml = msgTime ? '<span class="msg-time">'+escapeHTML(msgTime)+'</span>' : '';
-   const rawTxt = String(m.text || '');
-   if (rawTxt.startsWith('[DEAL_OFFER:')) {
-    let payload = null;
-    try { payload = JSON.parse(rawTxt.slice(12, -1)); } catch (_) {}
-    if (payload) {
-     const alreadyHandled = (rows || []).some(r => String(r.text || '').startsWith('[DEAL_DONE:' + payload.offer_id + ']') || String(r.text || '').startsWith('[DEAL_CANCEL:' + payload.offer_id + ']'));
-     const isBuyer = String(payload.buyer_id) === String(meId);
-     const isSeller = String(payload.seller_id) === String(meId);
-     let actHtml = '';
-     if (alreadyHandled) {
-      actHtml = '<div class="small muted" style="margin-top:8px;font-weight:700">Статус: завершено / закрыто</div>';
-     } else if (isBuyer) {
-      actHtml = '<div style="display:flex;gap:6px;margin-top:9px"><button type="button" class="btn" data-confirm-deal="'+escapeHTML(rawTxt.slice(12, -1))+'" style="margin:0;padding:8px 10px;font-size:12px">✅ Подтвердить получение</button><button type="button" class="btn secondary" data-cancel-deal="'+escapeHTML(payload.offer_id)+'" style="margin:0;padding:8px 10px;font-size:12px;width:auto">✕</button></div>';
-     } else if (isSeller) {
-      actHtml = '<button type="button" class="inline-btn" data-cancel-deal="'+escapeHTML(payload.offer_id)+'" style="margin-top:8px;color:#ff657a">❌ Отменить предложение</button>';
-     }
-     return '<div style="margin:8px auto;max-width:92%;background:var(--card2);border:1px solid rgba(37,211,102,.45);border-radius:14px;padding:12px">'
-      + '<div style="font-weight:850;font-size:13px;color:var(--green);margin-bottom:4px">🤝 Предложение завершить сделку</div>'
-      + '<div style="font-size:13px;font-weight:800">' + escapeHTML(payload.ad_title || 'Товар') + '</div>'
-      + '<div style="font-size:13px;color:var(--yellow);font-weight:850;margin-top:2px">Сумма: ' + formatMoneyShort(payload.price) + '</div>'
-      + '<div class="small muted" style="font-size:11px;margin-top:4px">После подтверждения покупателем сделка пройдёт анти-твинк проверку.</div>'
-      + actHtml + '</div>';
-    }
-   }
-   if (rawTxt.startsWith('[DEAL_DONE:')) {
-    const label = rawTxt.replace(/^\[DEAL_DONE:[^\]]+\]\s*/, '');
-    const revBtn = label.includes('засчитана')
-     ? '<div style="margin-top:7px"><button type="button" class="inline-btn" data-open-review-room="1" style="color:var(--yellow);border-color:rgba(245,158,11,.45);font-size:11px">⭐ Оставить отзыв о сделке</button></div>'
-     : '';
-    return '<div style="margin:6px auto;max-width:90%;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.35);border-radius:12px;padding:9px 12px;text-align:center;font-size:12px;font-weight:750;color:var(--green)">' + escapeHTML(label || '✅ Сделка подтверждена') + revBtn + '</div>';
-   }
-   if (rawTxt.startsWith('[DEAL_CANCEL:')) {
-    return '<div style="margin:6px auto;max-width:90%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;font-size:12px;color:var(--muted)">❌ Предложение сделки отменено</div>';
-   }
-   const avHtml = '<div class="msg-av '+frameClassFor(pr.avatar_frame)+'" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
-   return '<div class="msg-row '+(isMine?'mine':'')+'">'
-    + avHtml
-    + '<div class="bubble '+(isMine?'mine':'')+'"><small><span class="msg-author-link" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(dispName)+'</span></small>'+escapeHTML(m.text)+timeHtml+'</div>'
-    + '</div>';
-  }).join('')||'<div class="loading">Начните общение первым 👋</div>';
-  box.querySelectorAll('[data-uid]').forEach(el => {
-   el.addEventListener('click', () => openPublicProfile(el.dataset.uid));
-  });
-  box.querySelectorAll('[data-confirm-deal]').forEach(btn => {
-   btn.onclick = () => handleConfirmSafeDeal(btn, btn.dataset.confirmDeal);
-  });
-  box.querySelectorAll('[data-cancel-deal]').forEach(btn => {
-   btn.onclick = () => handleCancelSafeDeal(btn, btn.dataset.cancelDeal);
-  });
-  box.querySelectorAll('[data-open-review-room]').forEach(btn => {
-   btn.onclick = () => openMyDealsAndReviewsModal();
-  });
-  box.scrollTop=box.scrollHeight;
- } catch(e) { const box=$('messagesBox');if(box)box.innerHTML='<div class="loading">Ошибка загрузки: '+escapeHTML(e.message)+'</div>'; }
-}
-function openProposeDealModal() {
- if (!activeChat || activeChat.global || activeChat.support) return;
- const chat = activeChat;
- const myAds = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)) : [];
- showModal('🤝 Предложить завершить сделку', '');
- const body = $('modalBody');
-
- const note = document.createElement('div');
- note.className = 'notice';
- note.style.marginBottom = '10px';
- note.textContent = 'Сделка засчитается в профиль после подтверждения покупателем и проверки анти-твинк фильтров (до 2 сделок в неделю с одним игроком и до 10 в сутки).';
- body.appendChild(note);
-
- const form = document.createElement('form');
- const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
-
- const selAd = document.createElement('select');
- selAd.className = 'field';
- const optCustom = document.createElement('option');
- optCustom.value = '';
- optCustom.textContent = chat.ad_title && chat.ad_title !== 'Личный чат' ? ('По теме чата: ' + chat.ad_title) : '— Без привязки к объявлению (ввести название) —';
- selAd.appendChild(optCustom);
- myAds.forEach(a => {
-  const o = document.createElement('option');
-  o.value = String(a.id);
-  o.textContent = a.title + ' (' + formatPrice(a.price, a.type) + ')';
-  if (chat.ad_title && String(a.title).trim() === String(chat.ad_title).trim()) o.selected = true;
-  selAd.appendChild(o);
- });
-
- const inpTitle = document.createElement('input');
- inpTitle.className = 'field';
- inpTitle.maxLength = 80;
- inpTitle.placeholder = 'Название товара / услуги';
- inpTitle.value = (chat.ad_title && chat.ad_title !== 'Личный чат') ? chat.ad_title : '';
-
- const inpPrice = document.createElement('input');
- inpPrice.className = 'field';
- inpPrice.type = 'number';
- inpPrice.min = '1';
- inpPrice.required = true;
- inpPrice.placeholder = 'Итоговая сумма сделки в ₽ (например: 1500000)';
-
- const syncFromAd = () => {
-  const found = myAds.find(x => String(x.id) === selAd.value);
-  if (found) {
-   inpTitle.value = found.title || '';
-   const numP = parseNumericPrice(found.price);
-   if (numP > 0) inpPrice.value = String(numP);
-  }
- };
- selAd.onchange = syncFromAd;
- syncFromAd();
-
- const submitBtn = document.createElement('button');
- submitBtn.type = 'submit';
- submitBtn.className = 'btn';
- submitBtn.textContent = '📨 Отправить запрос покупателю';
-
- form.append(mkLbl('Выберите ваш лот'), selAd, mkLbl('Название товара'), inpTitle, mkLbl('Итоговая цена (₽)'), inpPrice, submitBtn);
- body.appendChild(form);
-
- form.onsubmit = async e => {
-  e.preventDefault();
-  const title = inpTitle.value.trim();
-  const price = Number(inpPrice.value || 0);
-  if (!title || price <= 0) { toast('Укажите название и сумму сделки'); return; }
-  const found = myAds.find(x => String(x.id) === selAd.value);
-  const payload = {
-   offer_id: String(Date.now()),
-   ad_id: found ? Number(found.id) : null,
-   ad_title: title,
-   category: found ? (found.category || 'Другое') : 'Другое',
-   seller_id: String(meId),
-   buyer_id: String(chat.receiver_id),
-   price: price
-  };
-  submitBtn.disabled = true; submitBtn.textContent = 'Отправляем…';
-  try {
-   await api('messages', {
-    method: 'POST',
-    headers: { 'Prefer': 'return=minimal' },
-    body: {
-     room_id: chat.room_id,
-     sender_id: String(meId),
-     sender_name: meName,
-     receiver_id: String(chat.receiver_id),
-     ad_title: title,
-     text: '[DEAL_OFFER:' + JSON.stringify(payload) + ']'
-    }
-   });
-   closeModal();
-   openChat(chat);
-  } catch (err) {
-   toast('Ошибка: ' + err.message);
-   submitBtn.disabled = false; submitBtn.textContent = '📨 Отправить запрос покупателю';
-  }
- };
-}
-
-async function handleConfirmSafeDeal(btn, rawJson) {
- if (!activeChat) return;
- let payload = null;
- try { payload = JSON.parse(rawJson); } catch (_) {}
- if (!payload) return;
- btn.disabled = true; btn.textContent = 'Проверяем…';
- try {
-const res = await api('rpc/confirm_safe_deal', {
-method: 'POST',
-body: {
-p_room_id: activeChat.room_id,
-p_ad_id: payload.ad_id ? Number(payload.ad_id) : null,
-p_ad_title: payload.ad_title || 'Товар',
-p_category: payload.category || 'Другое',
-p_seller_id: String(payload.seller_id),
-p_buyer_id: String(meId),
-p_price: Number(payload.price || 0)
-}
-});
-const counted = res && res.counted === true;
-const statusText = counted
-? ('✅ Сделка подтверждена и засчитана в профиль! (' + payload.ad_title + ' · ' + formatMoneyShort(payload.price) + ')')
-: ('✅ Получение подтверждено, но без начисления в рейтинг (' + ((res && res.reason) || 'сработал анти-твинк лимит') + ')');
-await api('messages', {
-method: 'POST',
-headers: { 'Prefer': 'return=minimal' },
-body: {
-room_id: activeChat.room_id,
-sender_id: String(meId),
-sender_name: meName,
-receiver_id: String(payload.seller_id),
-ad_title: payload.ad_title || 'Сделка',
-text: '[DEAL_DONE:' + payload.offer_id + '] ' + statusText
-}
-});
-toast(counted ? '🤝 Сделка успешно засчитана!' : '⚠️ Сделка закрыта без начисления: ' + ((res && res.reason) || 'лимит'));
-await loadRole();
-await loadAds();
-await loadMessages();
-} catch (err) {
-toast('Ошибка: ' + err.message);
-btn.disabled = false; btn.textContent = '✅ Подтвердить получение';
-}
-}
-async function handleCancelSafeDeal(btn, offerId) {
 if (!activeChat) return;
-btn.disabled = true;
+const chat = activeChat;
 try {
-await api('messages', {
-method: 'POST',
-headers: { 'Prefer': 'return=minimal' },
-body: {
-room_id: activeChat.room_id,
-sender_id: String(meId),
-sender_name: meName,
-receiver_id: String(activeChat.receiver_id),
-ad_title: activeChat.ad_title || 'Сделка',
-text: '[DEAL_CANCEL:' + offerId + ']'
+const rows = await api('messages', { query: '?select=*&room_id=eq.' + encodeURIComponent(chat.room_id) + '&order=id.asc&limit=300' });
+if (!activeChat || activeChat.room_id !== chat.room_id) return;
+if (rows && rows.length) {
+const lastRow = rows.at(rows.length - 1);
+if (lastRow && lastRow.id) {
+const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+if (seen[chat.room_id] !== lastRow.id) {
+seen[chat.room_id] = lastRow.id;
+localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
+renderChatList();
 }
+}
+}
+const box = $('messagesBox');
+if (!box) return;
+box.innerHTML = (rows || []).map(m => {
+const sid = String(m.sender_id || '');
+const isMine = sid === String(meId);
+const dispName = isMine ? meName : (m.sender_name || sid || 'Игрок');
+const letter = (dispName.charAt(0) || 'И').toUpperCase();
+const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
+const timeHtml = msgTime ? '' + escapeHTML(msgTime) + '' : '';
+const avHtml = '' + escapeHTML(letter) + '';
+return ''
++ avHtml
++ '' + escapeHTML(dispName) + '' + escapeHTML(m.text) + timeHtml + ''
++ '';
+}).join('') || 'Начните общение первым 👋';
+box.querySelectorAll('[data-uid]').forEach(el => {
+el.addEventListener('click', () => {
+if (typeof openPublicProfile === 'function') openPublicProfile(el.dataset.uid);
 });
-await loadMessages();
-} catch (err) {
-toast('Ошибка: ' + err.message);
-btn.disabled = false;
+});
+box.scrollTop = box.scrollHeight;
+} catch (e) {
+const box = $('messagesBox');
+if (box) box.innerHTML = 'Ошибка загрузки: ' + escapeHTML(e.message) + '';
 }
 }
 async function sendMessage(e) {
- e.preventDefault(); if(!activeChat)return;
- const form=e.currentTarget;const input=form.elements.text;const value=input.value.trim();if(!value)return;
- const chat=activeChat; const staffReply=chat.support&&myRank.level>=7&&chat.staffView;
- const receiver=chat.global?'global':(chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id);
- const payload={room_id:chat.room_id,ad_title:chat.ad_title||'Личный чат',sender_id:meId,sender_name:meName,receiver_id:receiver,text:value};
- try {
-  await api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:payload});
-  input.value='';
-  await loadMessages();
-  if (receiver && receiver !== 'support' && receiver !== 'global') {
-   const fnUrl = 'https://' + 'zhakfkqqurjlqdthsnhz' + '.supabase.co/functions/v1/notify-tg';
-   fetch(fnUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-    body: JSON.stringify({ receiver_id: receiver, sender_name: meName, ad_title: payload.ad_title, text: value })
-   }).catch(() => {});
-  }
- }
- catch(err){toast('Не удалось отправить: '+err.message);}
+e.preventDefault();
+if (!activeChat) return;
+const form = e.currentTarget;
+const input = form.elements.text;
+const value = (input ? input.value : '').trim();
+if (!value) return;
+const chat = activeChat;
+const staffReply = chat.support && myRank && myRank.level >= 7 && chat.staffView;
+const receiver = chat.global ? 'global' : (chat.support ? (staffReply ? chat.room_id.replace('support_', '') : 'support') : String(chat.receiver_id || ''));
+const payload = {
+room_id: String(chat.room_id),
+ad_title: chat.ad_title || 'Личный чат',
+sender_id: String(meId),
+sender_name: meName,
+receiver_id: receiver,
+text: value
+};
+const btn = form.querySelector('button[type="submit"]');
+if (btn) btn.disabled = true;
+try {
+await api('messages', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: payload });
+if (input) input.value = '';
+await loadMessages();
+} catch (err) {
+toast('Не удалось отправить: ' + err.message);
+} finally {
+if (btn) btn.disabled = false;
+}
 }
 async function loadReportsAdmin() {
  const box = $('adminReportsBox'); if (!box) return;
