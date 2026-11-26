@@ -1368,6 +1368,314 @@ async function deleteAd(ad) {
  };
 }
 
+function openSellModal() {
+ if (myRole && myRole.is_banned) return;
+ showModal('Разместить объявление', '');
+ const body = $('modalBody');
+ const form = document.createElement('form');
+
+ const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
+ const mkSel = (name, items) => {
+  const s = document.createElement('select'); s.className = 'field'; s.name = name;
+  items.forEach(it => {
+   const o = document.createElement('option');
+   if (typeof it === 'string') { o.value = it; o.textContent = it; }
+   else { o.value = it.v; o.textContent = it.t; }
+   s.appendChild(o);
+  });
+  return s;
+ };
+
+ const selType = mkSel('type', [
+  { v: 'sell', t: 'Продам' },
+  { v: 'buy', t: 'Куплю' },
+  { v: 'trade', t: 'Обмен' }
+ ]);
+ const selCat = mkSel('category', ['Недвижимость', 'Автомобили', 'Одежда', 'Аксессуары', 'Бизнес', 'Другое']);
+
+ const inpTitle = document.createElement('input');
+ inpTitle.className = 'field'; inpTitle.name = 'title'; inpTitle.required = true; inpTitle.maxLength = 70;
+ inpTitle.placeholder = 'Например: BMW M5 F90 или Дом на Рублёвке';
+
+ const inpPrice = document.createElement('input');
+ inpPrice.className = 'field'; inpPrice.name = 'price'; inpPrice.required = true; inpPrice.maxLength = 30;
+ inpPrice.placeholder = 'Например: 15 000 000 или Договорная';
+
+ const inpServer = document.createElement('input');
+ inpServer.className = 'field'; inpServer.name = 'server'; inpServer.value = '08 сервер'; inpServer.maxLength = 30;
+
+ const inpDesc = document.createElement('textarea');
+ inpDesc.className = 'field'; inpDesc.name = 'description'; inpDesc.maxLength = 600;
+ inpDesc.placeholder = 'Опишите состояние, пробег, тюнинг или условия сделки...';
+
+ const fileBox = document.createElement('label');
+ fileBox.style.cssText = 'display:block;margin:6px 0 12px;padding:12px;background:var(--bg);border:1px dashed var(--accent);border-radius:11px;text-align:center;cursor:pointer;font-size:13px';
+ fileBox.textContent = '📷 Прикрепить фото (до 3 шт.)';
+ const fileInp = document.createElement('input');
+ fileInp.type = 'file'; fileInp.accept = 'image/*'; fileInp.multiple = true; fileInp.style.display = 'none';
+ const fileNote = document.createElement('div');
+ fileNote.style.cssText = 'font-size:11px;color:#aaa2c5;margin-top:4px';
+ fileInp.onchange = () => {
+  const cnt = fileInp.files ? Math.min(3, fileInp.files.length) : 0;
+  fileNote.textContent = cnt ? ('Выбрано фото: ' + cnt) : '';
+ };
+ fileBox.append(fileInp, fileNote);
+
+ const subBtn = document.createElement('button');
+ subBtn.type = 'submit'; subBtn.className = 'btn'; subBtn.textContent = 'Опубликовать объявление';
+
+ form.append(
+  mkLbl('Тип объявления'), selType,
+  mkLbl('Категория'), selCat,
+  mkLbl('Название'), inpTitle,
+  mkLbl('Цена (₽)'), inpPrice,
+  mkLbl('Сервер'), inpServer,
+  mkLbl('Описание'), inpDesc,
+  fileBox, subBtn
+ );
+ body.appendChild(form);
+
+ form.onsubmit = async e => {
+  e.preventDefault();
+  const title = inpTitle.value.trim();
+  const price = inpPrice.value.trim();
+  if (!title || !price) { toast('Заполните название и цену'); return; }
+  subBtn.disabled = true; subBtn.textContent = 'Публикуем…';
+  try {
+   const photos = [];
+   const files = Array.from(fileInp.files || []).slice(0, 3);
+   for (const f of files) {
+    const dataUrl = await new Promise((res, rej) => {
+     const r = new FileReader();
+     r.onload = () => res(r.result);
+     r.onerror = rej;
+     r.readAsDataURL(f);
+    });
+    photos.push(dataUrl);
+   }
+   await api('ads', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=minimal' },
+    body: {
+     type: selType.value,
+     category: selCat.value,
+     title: title,
+     price: price,
+     server: inpServer.value.trim() || '08 сервер',
+     description: inpDesc.value.trim(),
+     seller_id: String(meId),
+     seller_name: meName,
+     photos: photos
+    }
+   });
+   closeModal();
+   toast('✅ Объявление опубликовано!');
+   await loadAds();
+  } catch (err) {
+   toast('Ошибка: ' + err.message);
+   subBtn.disabled = false; subBtn.textContent = 'Опубликовать объявление';
+  }
+ };
+}
+
+function roomIdFor(a, b) {
+ const arr = [String(a || ''), String(b || '')].sort();
+ return 'dm_' + arr[0] + '_' + arr[1];
+}
+
+let chatsListCache = [];
+
+async function loadChats() {
+ const listEl = $('chatsList');
+ if (!listEl) return;
+ try {
+  const q = '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=400';
+  const rows = await api('messages', { query: q }) || [];
+  const map = new Map();
+
+  map.set('global', {
+   room_id: 'global',
+   global: true,
+   support: false,
+   display_name: '🌍 Общий чат игроков',
+   ad_title: 'Общение и торговля 08 сервера',
+   last_text: 'Нажмите, чтобы открыть общий чат',
+   last_id: 0,
+   unread: false
+  });
+
+  const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+
+  rows.forEach(m => {
+   const rid = String(m.room_id || '');
+   if (!rid) return;
+   if (rid === 'global') {
+    const g = map.get('global');
+    if (m.id > g.last_id) {
+     g.last_id = m.id;
+     g.last_text = (m.sender_name || 'Игрок') + ': ' + String(m.text || '');
+     g.unread = (seen.global || 0) < m.id && String(m.sender_id) !== String(meId);
+    }
+    return;
+   }
+   if (!map.has(rid)) {
+    const isSup = rid.startsWith('support_');
+    const otherId = isSup
+     ? (String(m.sender_id) === String(meId) ? 'support' : String(m.sender_id))
+     : (String(m.sender_id) === String(meId) ? String(m.receiver_id) : String(m.sender_id));
+    const otherName = isSup
+     ? (String(m.sender_id) === String(meId) ? '🛡️ Поддержка' : (m.sender_name || otherId))
+     : (String(m.sender_id) === String(meId) ? ('Игрок ' + otherId) : (m.sender_name || otherId));
+    map.set(rid, {
+     room_id: rid,
+     global: false,
+     support: isSup,
+     staffView: isSup && myRank && myRank.level >= 7 && String(m.sender_id) !== String(meId),
+     receiver_id: otherId,
+     display_name: otherName,
+     ad_title: m.ad_title || 'Личный чат',
+     last_text: String(m.text || ''),
+     last_id: m.id || 0,
+     unread: (seen[rid] || 0) < (m.id || 0) && String(m.sender_id) !== String(meId)
+    });
+   } else {
+    const item = map.get(rid);
+    if (String(m.sender_id) !== String(meId) && m.sender_name && item.display_name.startsWith('Игрок ')) {
+     item.display_name = m.sender_name;
+    }
+   }
+  });
+
+  chatsListCache = Array.from(map.values());
+  renderChatList();
+ } catch (e) {
+  if (listEl) listEl.innerHTML = '';
+ }
+}
+
+function renderChatList() {
+ const listEl = $('chatsList');
+ if (!listEl) return;
+ listEl.innerHTML = '';
+ if (!chatsListCache.length) {
+  const emp = document.createElement('div');
+  emp.className = 'empty';
+  emp.textContent = 'Пока нет активных чатов';
+  listEl.appendChild(emp);
+  return;
+ }
+ chatsListCache.forEach(c => {
+  const row = document.createElement('div');
+  row.className = 'panel';
+  row.style.cssText = 'padding:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px';
+  const left = document.createElement('div');
+  left.style.cssText = 'min-width:0;flex:1';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  title.textContent = c.display_name;
+  const sub = document.createElement('div');
+  sub.className = 'small muted';
+  sub.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px';
+  sub.textContent = c.last_text.startsWith('[DEAL_') ? '🤝 Обновление по сделке' : c.last_text;
+  left.append(title, sub);
+  row.appendChild(left);
+
+  if (c.unread) {
+   const dot = document.createElement('span');
+   dot.style.cssText = 'width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0';
+   row.appendChild(dot);
+  }
+  row.onclick = () => openChat(c);
+  listEl.appendChild(row);
+ });
+}
+
+async function deleteCurrentChat() {
+ if (!activeChat) return;
+ const chat = activeChat;
+ if (chat.global && (!myRank || myRank.level < 7)) return;
+ if (!confirm('Удалить этот чат и всю переписку в нём?')) return;
+ try {
+  await api('rpc/delete_chat_room', {
+   method: 'POST',
+   body: { p_user_id: String(meId), p_room_id: String(chat.room_id) }
+  });
+  toast('Чат удалён 🗑️');
+  closeModal();
+  await loadChats();
+ } catch (e) {
+  toast('Ошибка удаления чата: ' + e.message);
+ }
+}
+
+function openChat(chat) {
+ activeChat = chat;
+ const canDelete = !chat.global || (myRank && myRank.level >= 7);
+ const canDeal = !chat.global && !chat.support && String(chat.receiver_id || '') !== String(meId);
+
+ showModal(chat.display_name, '');
+ const body = $('modalBody');
+
+ const topBar = document.createElement('div');
+ topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px';
+ const adSub = document.createElement('div');
+ adSub.className = 'small muted';
+ adSub.style.cssText = 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+ adSub.textContent = chat.ad_title || 'Личный чат';
+
+ const btnsWrap = document.createElement('div');
+ btnsWrap.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
+
+ if (canDeal && typeof openProposeDealModal === 'function') {
+  const dealBtn = document.createElement('button');
+  dealBtn.type = 'button';
+  dealBtn.className = 'inline-btn';
+  dealBtn.style.cssText = 'color:var(--green);border-color:rgba(37,211,102,.4)';
+  dealBtn.textContent = '🤝 Сделка';
+  dealBtn.onclick = openProposeDealModal;
+  btnsWrap.appendChild(dealBtn);
+ }
+
+ if (canDelete) {
+const delBtn = document.createElement('button');
+delBtn.type = 'button';
+delBtn.className = 'inline-btn';
+delBtn.style.cssText = 'color:#f87171;border-color:rgba(248,113,113,.35)';
+delBtn.textContent = chat.global ? '🧹 Очистить чат' : '🗑️ Удалить чат';
+delBtn.onclick = deleteCurrentChat;
+btnsWrap.appendChild(delBtn);
+}
+topBar.append(adSub, btnsWrap);
+const msgBox = document.createElement('div');
+msgBox.id = 'messagesBox';
+msgBox.className = 'messages';
+const ld = document.createElement('div');
+ld.className = 'loading';
+ld.textContent = 'Загружаем сообщения…';
+msgBox.appendChild(ld);
+const form = document.createElement('form');
+form.id = 'sendMessageForm';
+form.className = 'send-row';
+const inp = document.createElement('input');
+inp.className = 'field';
+inp.name = 'text';
+inp.maxLength = 1500;
+inp.autocomplete = 'off';
+inp.placeholder = 'Сообщение...';
+inp.required = true;
+const sendBtn = document.createElement('button');
+sendBtn.type = 'submit';
+sendBtn.textContent = '➤';
+form.append(inp, sendBtn);
+form.addEventListener('submit', sendMessage);
+body.append(topBar, msgBox, form);
+if (chatTimer) clearInterval(chatTimer);
+loadMessages();
+chatTimer = setInterval(() => {
+if (activeChat && activeChat.room_id === chat.room_id) loadMessages();
+}, 3000);
+$('modalWrap').classList.add('chat-fullscreen');
+}
 async function openPublicProfile(uid) {
  const targetId = String(uid || '').trim();
  if (!targetId || targetId === 'support' || targetId === 'global') return;
