@@ -873,6 +873,50 @@ const RP_BRAND_SYNONYMS = {
  'цлс': 'cls', 'е63': 'e63', 'ц63': 'c63', 'с63': 's63', 'амг': 'amg'
 };
 
+const RP_PRETTY_EN = {
+ 'bmw': 'BMW', 'mercedes': 'Mercedes-Benz', 'audi': 'Audi', 'toyota': 'Toyota',
+ 'camry': 'Camry', 'landcruiser': 'Land Cruiser', 'lamborghini': 'Lamborghini', 'urus': 'Urus',
+ 'porsche': 'Porsche', 'cayenne': 'Cayenne', 'taycan': 'Taycan', 'nissan': 'Nissan',
+ 'gtr': 'GT-R', 'skyline': 'Skyline', 'vaz': 'VAZ', 'lada': 'Lada', 'priora': 'Priora',
+ 'vesta': 'Vesta', 'granta': 'Granta', 'rollsroyce': 'Rolls-Royce', 'cullinan': 'Cullinan',
+ 'phantom': 'Phantom', 'ferrari': 'Ferrari', 'mclaren': 'McLaren', 'bugatti': 'Bugatti',
+ 'dodge': 'Dodge', 'challenger': 'Challenger', 'charger': 'Charger', 'mustang': 'Mustang',
+ 'ford': 'Ford', 'chevrolet': 'Chevrolet', 'camaro': 'Camaro', 'corvette': 'Corvette',
+ 'tesla': 'Tesla', 'cybertruck': 'Cybertruck', 'amg': 'AMG', 'cls': 'CLS', 'g63': 'G63 AMG',
+ 'skin': 'Skin', 'house': 'House', 'flat': 'Apartment', 'garage': 'Garage',
+ 'biz': 'Business', 'azs': 'Gas Station', 'shop': 'Shop', 'acs': 'Accessory',
+ 'bag': 'Backpack', 'case': 'Case', 'plate': 'License Plate'
+};
+
+function toPrettyEnglishTitle(raw) {
+ const map = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
+  'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+  'х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'
+ };
+ const parts = String(raw || '').trim().split(/\s+/).filter(Boolean);
+ if (!parts.length) return '';
+ const out = [];
+ parts.forEach(part => {
+  const clean = part.toLowerCase().replace(/[^a-zа-яё0-9-]/gi, '');
+  if (!clean) return;
+  let canon = RP_BRAND_SYNONYMS[clean];
+  if (!canon) {
+   let tr = '';
+   for (const ch of clean) tr += (map[ch] !== undefined ? map[ch] : ch);
+   canon = RP_BRAND_SYNONYMS[tr] || tr;
+  }
+  if (RP_PRETTY_EN[canon]) {
+   out.push(RP_PRETTY_EN[canon]);
+  } else if (/^[a-z]{1,3}\d+[a-z0-9]*$/i.test(canon) || /^\d+[a-z]{1,3}$/i.test(canon) || canon.length <= 3) {
+   out.push(canon.toUpperCase());
+  } else {
+   out.push(canon.charAt(0).toUpperCase() + canon.slice(1));
+  }
+ });
+ return Array.from(new Set(out)).join(' ');
+}
+
 function normalizeRpTitle(raw) {
  const map = {
   'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
@@ -911,7 +955,6 @@ function computeRpSimilarity(titleA, titleB) {
  const tokB = normalizeRpTitle(titleB);
  if (!tokA.length || !tokB.length) return 0;
 
- // Жёсткая защита от склейки разных цифро-буквенных индексов (f90 vs e60, g63 vs g55)
  const codesA = tokA.filter(t => /\d/.test(t));
  const codesB = tokB.filter(t => /\d/.test(t));
  if (codesA.length && codesB.length) {
@@ -957,29 +1000,57 @@ function openMergePriceModal(targetGroup) {
   return a.title.localeCompare(b.title, 'ru');
  });
 
- showModal('🔗 Умное объединение (RU/EN ИИ)', '');
+ showModal('🔗 Умное объединение (EN + ИИ)', '');
  const body = $('modalBody');
- const note = document.createElement('div');
- note.className = 'notice';
- note.style.marginBottom = '10px';
- note.textContent = 'ИИ-алгоритм автоматически сопоставил русские, английские и транслит-варианты для «' + targetGroup.title + '». Нажмите автоподбор или отметьте вручную.';
- body.appendChild(note);
+
+ const enLbl = document.createElement('label');
+ enLbl.className = 'field-label';
+ enLbl.textContent = '✨ Итоговое красивое название на английском (EN)';
+ body.appendChild(enLbl);
+
+ const enRow = document.createElement('div');
+ enRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px';
+ const enInput = document.createElement('input');
+ enInput.className = 'field';
+ enInput.style.margin = '0';
+ enInput.value = toPrettyEnglishTitle(targetGroup.title) || targetGroup.title;
+ enInput.placeholder = 'Например: BMW M5 F90';
+
+ const autoEnBtn = document.createElement('button');
+ autoEnBtn.type = 'button';
+ autoEnBtn.className = 'inline-btn';
+ autoEnBtn.style.cssText = 'flex-shrink:0;padding:0 10px';
+ autoEnBtn.textContent = '🌐 Авто EN';
+ autoEnBtn.onclick = () => {
+  enInput.value = toPrettyEnglishTitle(enInput.value || targetGroup.title);
+  toast('Переведено в красивый EN формат');
+ };
+ enRow.append(enInput, autoEnBtn);
+ body.appendChild(enRow);
 
  const aiBar = document.createElement('div');
- aiBar.style.cssText = 'display:flex;gap:6px;margin-bottom:8px';
+ aiBar.style.cssText = 'display:grid;grid-template-columns:1.4fr 1fr 0.8fr;gap:6px;margin-bottom:8px';
+
  const aiAutoBtn = document.createElement('button');
  aiAutoBtn.type = 'button';
  aiAutoBtn.className = 'inline-btn';
- aiAutoBtn.style.cssText = 'flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:9px 10px;font-weight:800';
+ aiAutoBtn.style.cssText = 'background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:9px 8px;font-weight:800;font-size:11px';
  const aiMatchesCount = others.filter(o => o.sim >= 65).length;
- aiAutoBtn.textContent = '✨ Умный автоподбор ИИ (' + aiMatchesCount + ')';
+ aiAutoBtn.textContent = '✨ Автоподбор (' + aiMatchesCount + ')';
+
+ const selectAllBtn = document.createElement('button');
+ selectAllBtn.type = 'button';
+ selectAllBtn.className = 'inline-btn';
+ selectAllBtn.style.cssText = 'padding:9px 8px;font-size:11px';
+ selectAllBtn.textContent = '☑️ Выбрать все';
 
  const clearSelBtn = document.createElement('button');
  clearSelBtn.type = 'button';
  clearSelBtn.className = 'inline-btn';
- clearSelBtn.style.padding = '9px 10px';
+ clearSelBtn.style.cssText = 'padding:9px 8px;font-size:11px';
  clearSelBtn.textContent = 'Снять все';
- aiBar.append(aiAutoBtn, clearSelBtn);
+
+ aiBar.append(aiAutoBtn, selectAllBtn, clearSelBtn);
  body.appendChild(aiBar);
 
  const searchInp = document.createElement('input');
@@ -989,94 +1060,94 @@ function openMergePriceModal(targetGroup) {
  body.appendChild(searchInp);
 
  const wrap = document.createElement('div');
- wrap.style.cssText = 'max-height:240px;overflow:auto;margin-bottom:10px';
+ wrap.style.cssText = 'max-height:220px;overflow:auto;margin-bottom:10px';
  const checkboxes = [];
 
  if (!others.length) {
-  const emp = document.createElement('div'); emp.className = 'small muted'; emp.textContent = 'Других позиций для объединения пока нет.';
-  wrap.appendChild(emp);
- } else {
-  others.forEach(o => {
-   const lbl = document.createElement('label');
-   const isHigh = o.sim >= 65;
-   lbl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:var(--card2);border:1px solid ' + (isHigh ? 'rgba(139,92,246,.55)' : 'var(--line)') + ';border-radius:10px;margin-bottom:6px;cursor:pointer';
-   const left = document.createElement('span'); left.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;min-width:0';
-   const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = o.title;
-   const sp = document.createElement('span'); sp.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap'; sp.textContent = o.title;
-   left.append(cb, sp);
-
-   const right = document.createElement('span');
-   right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
-   if (o.sim >= 45) {
-    const simBadge = document.createElement('span');
-    simBadge.style.cssText = 'font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:' + (isHigh ? 'rgba(37,211,102,.16);color:var(--green)' : 'rgba(245,158,11,.15);color:var(--yellow)');
-    simBadge.textContent = '✨ ' + o.sim + '%';
-    right.appendChild(simBadge);
-   }
-   const cnt = document.createElement('span'); cnt.className = 'small muted'; cnt.textContent = o.count + ' сд.';
-   right.appendChild(cnt);
-
-   lbl.append(left, right);
-   wrap.appendChild(lbl);
-   checkboxes.push({ cb, lbl, title: o.title, sim: o.sim });
-  });
- }
- body.appendChild(wrap);
-
- aiAutoBtn.onclick = () => {
-  let pickedCnt = 0;
-  checkboxes.forEach(item => {
-   if (item.sim >= 65) {
-    item.cb.checked = true;
-    pickedCnt++;
-   }
-  });
-  if (pickedCnt > 0) {
-   toast('✨ ИИ отметил похожих вариантов: ' + pickedCnt);
-  } else {
-   toast('Похожих синонимов с высокой точностью не найдено');
-  }
- };
-
- clearSelBtn.onclick = () => {
-  checkboxes.forEach(item => { item.cb.checked = false; });
- };
-
- searchInp.oninput = () => {
-  const q = searchInp.value.trim().toLowerCase();
-  checkboxes.forEach(item => {
-   item.lbl.style.display = !q || item.title.toLowerCase().includes(q) ? 'flex' : 'none';
-  });
- };
-
- const subBtn = document.createElement('button');
- subBtn.type = 'button';
- subBtn.className = 'btn';
- subBtn.disabled = !others.length;
- subBtn.textContent = '🔗 Объединить выбранные в «' + targetGroup.title + '»';
- body.appendChild(subBtn);
-
- subBtn.onclick = async () => {
-  const picked = checkboxes.filter(x => x.cb.checked).map(x => x.title);
-  if (!picked.length) { toast('Отметьте хотя бы один вариант или нажмите ✨ Умный автоподбор ИИ'); return; }
-  subBtn.disabled = true; subBtn.textContent = 'Объединяем…';
-  try {
-   await api('rpc/admin_manage_price', {
-    method: 'POST',
-    body: {
-     p_admin_id: String(meId),
-     p_action: 'merge',
-     p_new_title: targetGroup.title,
-     p_category: targetGroup.category,
-     p_merge_titles: picked
-    }
-   });
-   toast('✅ Объединено позиций: ' + picked.length);
-   closeModal();
-   await loadPriceHistory(true);
+const emp = document.createElement('div'); emp.className = 'small muted'; emp.textContent = 'Других карточек для склейки пока нет — можно просто сохранить красивое EN название выше.';
+wrap.appendChild(emp);
+} else {
+others.forEach(o => {
+const lbl = document.createElement('label');
+const isHigh = o.sim >= 65;
+lbl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:var(--card2);border:1px solid ' + (isHigh ? 'rgba(139,92,246,.55)' : 'var(--line)') + ';border-radius:10px;margin-bottom:6px;cursor:pointer';
+const left = document.createElement('span'); left.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;min-width:0';
+const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = o.title;
+const sp = document.createElement('span'); sp.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap'; sp.textContent = o.title;
+left.append(cb, sp);
+const right = document.createElement('span');
+right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
+if (o.sim >= 45) {
+const simBadge = document.createElement('span');
+simBadge.style.cssText = 'font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:' + (isHigh ? 'rgba(37,211,102,.16);color:var(--green)' : 'rgba(245,158,11,.15);color:var(--yellow)');
+simBadge.textContent = '✨ ' + o.sim + '%';
+right.appendChild(simBadge);
+}
+const cnt = document.createElement('span'); cnt.className = 'small muted'; cnt.textContent = o.count + ' сд.';
+right.appendChild(cnt);
+lbl.append(left, right);
+wrap.appendChild(lbl);
+checkboxes.push({ cb, lbl, title: o.title, sim: o.sim });
+});
+}
+body.appendChild(wrap);
+aiAutoBtn.onclick = () => {
+let pickedCnt = 0;
+checkboxes.forEach(item => {
+if (item.sim >= 65) {
+item.cb.checked = true;
+pickedCnt++;
+}
+});
+toast(pickedCnt > 0 ? ('✨ ИИ отметил похожих: ' + pickedCnt) : 'Похожих синонимов с высокой точностью не найдено');
+};
+selectAllBtn.onclick = () => {
+let cnt = 0;
+checkboxes.forEach(item => {
+if (item.lbl.style.display !== 'none') {
+item.cb.checked = true;
+cnt++;
+}
+});
+toast('☑️ Выбрано позиций: ' + cnt);
+};
+clearSelBtn.onclick = () => {
+checkboxes.forEach(item => { item.cb.checked = false; });
+};
+searchInp.oninput = () => {
+const q = searchInp.value.trim().toLowerCase();
+checkboxes.forEach(item => {
+item.lbl.style.display = !q || item.title.toLowerCase().includes(q) ? 'flex' : 'none';
+});
+};
+const subBtn = document.createElement('button');
+subBtn.type = 'button';
+subBtn.className = 'btn';
+subBtn.textContent = '🔗 Объединить и сохранить на EN';
+body.appendChild(subBtn);
+subBtn.onclick = async () => {
+const finalEnTitle = (enInput.value || '').trim();
+if (!finalEnTitle) { toast('Укажите название на английском'); return; }
+const picked = checkboxes.filter(x => x.cb.checked).map(x => x.title);
+const allToMerge = Array.from(new Set([targetGroup.title, ...picked]));
+subBtn.disabled = true; subBtn.textContent = 'Объединяем…';
+try {
+await api('rpc/admin_manage_price', {
+method: 'POST',
+body: {
+p_admin_id: String(meId),
+p_action: 'merge',
+p_new_title: finalEnTitle,
+p_category: targetGroup.category,
+p_merge_titles: allToMerge
+}
+});
+toast('✅ Объединено в «' + finalEnTitle + '»');
+closeModal();
+await loadPriceHistory(true);
 } catch (err) {
 toast('Ошибка: ' + err.message);
-subBtn.disabled = false; subBtn.textContent = '🔗 Объединить выбранные';
+subBtn.disabled = false; subBtn.textContent = '🔗 Объединить и сохранить на EN';
 }
 };
 }
