@@ -1568,19 +1568,55 @@ function roomIdFor(a, b) {
 }
 
 let chatsListCache = [];
+let activeChatTab = 'all';
+
+if ($('toggleChatSearch')) {
+ $('toggleChatSearch').onclick = () => {
+  const w = $('chatSearchWrap');
+  if (!w) return;
+  const open = w.style.display === 'none';
+  w.style.display = open ? 'block' : 'none';
+  if (open && $('chatSearchInput')) $('chatSearchInput').focus();
+ };
+}
+
+if ($('chatSearchInput')) {
+ $('chatSearchInput').oninput = () => renderChatList();
+}
+
+document.querySelectorAll('#chatTabs .chat-tab').forEach(tab => {
+ tab.onclick = () => {
+  activeChatTab = tab.dataset.ctab || 'all';
+  document.querySelectorAll('#chatTabs .chat-tab').forEach(t => {
+   const isAct = t === tab;
+   t.classList.toggle('active', isAct);
+   t.style.color = isAct ? '#fff' : 'var(--muted)';
+   t.style.borderBottomColor = isAct ? 'var(--accent)' : 'transparent';
+  });
+  renderChatList();
+ };
+});
 
 async function loadChats() {
- const listEl = $('chatsList');
+ const listEl = $('chatList');
  if (!listEl) return;
+ if ($('supportTabBtn') && myRank && myRank.level >= 7) {
+  $('supportTabBtn').style.display = 'inline-block';
+ }
  try {
-  const q = '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=400';
+  const isStaff = myRank && myRank.level >= 7;
+  const q = isStaff
+   ? '?select=*&order=id.desc&limit=500'
+   : '?select=*&or=(sender_id.eq.' + encodeURIComponent(meId) + ',receiver_id.eq.' + encodeURIComponent(meId) + ',room_id.eq.global)&order=id.desc&limit=400';
   const rows = await api('messages', { query: q }) || [];
   const map = new Map();
+  const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
 
   map.set('global', {
    room_id: 'global',
    global: true,
    support: false,
+   roleKind: 'all',
    display_name: '🌍 Общий чат игроков',
    ad_title: 'Общение и торговля 08 сервера',
    last_text: 'Нажмите, чтобы открыть общий чат',
@@ -1588,7 +1624,19 @@ async function loadChats() {
    unread: false
   });
 
-  const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
+  map.set('support_' + meId, {
+   room_id: 'support_' + meId,
+   global: false,
+   support: true,
+   staffView: false,
+   roleKind: 'all',
+   receiver_id: 'support',
+   display_name: '🛟 Техподдержка RP Маркет 08',
+   ad_title: 'Помощь, жалобы и вопросы по сделкам',
+   last_text: 'Нажмите, чтобы написать администрации',
+   last_id: 0,
+   unread: false
+  });
 
   rows.forEach(m => {
    const rid = String(m.room_id || '');
@@ -1602,19 +1650,28 @@ async function loadChats() {
     }
     return;
    }
+   const isSup = rid.startsWith('support_');
+   const isMySupport = rid === ('support_' + meId);
+   if (isSup && !isMySupport && !isStaff) return;
+   if (!isSup && String(m.sender_id) !== String(meId) && String(m.receiver_id) !== String(meId)) return;
+
    if (!map.has(rid)) {
-    const isSup = rid.startsWith('support_');
     const otherId = isSup
-     ? (String(m.sender_id) === String(meId) ? 'support' : String(m.sender_id))
+     ? (isMySupport ? 'support' : rid.replace('support_', ''))
      : (String(m.sender_id) === String(meId) ? String(m.receiver_id) : String(m.sender_id));
     const otherName = isSup
-     ? (String(m.sender_id) === String(meId) ? '🛡️ Поддержка' : (m.sender_name || otherId))
+     ? (isMySupport ? '🛟 Техподдержка RP Маркет 08' : ('Тикет #' + otherId + (m.sender_name && m.sender_id === otherId ? ' · ' + m.sender_name : '')))
      : (String(m.sender_id) === String(meId) ? ('Игрок ' + otherId) : (m.sender_name || otherId));
+
+    const myAdMatch = Array.isArray(ads) && ads.some(a => String(a.seller_id) === String(meId) && String(a.title || '').trim() === String(m.ad_title || '').trim());
+    const roleKind = isSup ? (isMySupport ? 'all' : 'support') : (myAdMatch ? 'sell' : 'buy');
+
     map.set(rid, {
      room_id: rid,
      global: false,
      support: isSup,
-     staffView: isSup && myRank && myRank.level >= 7 && String(m.sender_id) !== String(meId),
+     staffView: isSup && isStaff && !isMySupport,
+     roleKind: roleKind,
      receiver_id: otherId,
      display_name: otherName,
      ad_title: m.ad_title || 'Личный чат',
@@ -1624,7 +1681,12 @@ async function loadChats() {
     });
    } else {
     const item = map.get(rid);
-    if (String(m.sender_id) !== String(meId) && m.sender_name && item.display_name.startsWith('Игрок ')) {
+    if ((m.id || 0) > item.last_id) {
+     item.last_id = m.id || 0;
+     item.last_text = String(m.text || '');
+     item.unread = (seen[rid] || 0) < (m.id || 0) && String(m.sender_id) !== String(meId);
+    }
+    if (!isSup && String(m.sender_id) !== String(meId) && m.sender_name && item.display_name.startsWith('Игрок ')) {
      item.display_name = m.sender_name;
     }
    }
@@ -1633,22 +1695,45 @@ async function loadChats() {
   chatsListCache = Array.from(map.values());
   renderChatList();
  } catch (e) {
-  if (listEl) listEl.innerHTML = '';
+  listEl.innerHTML = '';
+  const errEl = document.createElement('div');
+  errEl.className = 'empty';
+  errEl.textContent = 'Не удалось загрузить чаты: ' + e.message;
+  listEl.appendChild(errEl);
  }
 }
 
 function renderChatList() {
- const listEl = $('chatsList');
+ const listEl = $('chatList');
  if (!listEl) return;
+ const q = ($('chatSearchInput') ? $('chatSearchInput').value : '').trim().toLowerCase();
+ const filtered = chatsListCache.filter(c => {
+  if (activeChatTab === 'support') {
+   if (c.roleKind !== 'support') return false;
+  } else if (activeChatTab === 'sell') {
+   if (c.global || c.support || c.roleKind !== 'sell') return false;
+  } else if (activeChatTab === 'buy') {
+   if (c.global || c.support || c.roleKind !== 'buy') return false;
+  } else {
+   if (c.roleKind === 'support') return false;
+  }
+  if (q) {
+   const hay = (c.display_name + ' ' + c.ad_title + ' ' + c.last_text).toLowerCase();
+   if (!hay.includes(q)) return false;
+  }
+  return true;
+ });
+
  listEl.innerHTML = '';
- if (!chatsListCache.length) {
+ if (!filtered.length) {
   const emp = document.createElement('div');
   emp.className = 'empty';
-  emp.textContent = 'Пока нет активных чатов';
+  emp.textContent = 'В этой вкладке пока нет чатов';
   listEl.appendChild(emp);
   return;
  }
- chatsListCache.forEach(c => {
+
+ filtered.forEach(c => {
   const row = document.createElement('div');
   row.className = 'panel';
   row.style.cssText = 'padding:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px';
@@ -1660,7 +1745,8 @@ function renderChatList() {
   const sub = document.createElement('div');
   sub.className = 'small muted';
   sub.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px';
-  sub.textContent = c.last_text.startsWith('[DEAL_') ? '🤝 Обновление по сделке' : c.last_text;
+  const cleanPreview = c.last_text.startsWith('[DEAL_') ? '🤝 Обновление по сделке' : c.last_text;
+  sub.textContent = (c.ad_title && !c.global && !c.support ? c.ad_title + ' · ' : '') + cleanPreview;
   left.append(title, sub);
   row.appendChild(left);
 
