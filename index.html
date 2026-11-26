@@ -359,9 +359,30 @@ function renderDealFilters() {
  $('dealFilters').innerHTML=DEALS.map(d=>'<button class="filter '+(selectedDeal===d?'selected':'')+'" data-deal="'+d+'">'+d+'</button>').join('');
  $('dealFilters').querySelectorAll('[data-deal]').forEach(b=>b.addEventListener('click',()=>{selectedDeal=b.dataset.deal;renderDealFilters();renderAds();}));
 }
+function formatSpacedDigits(val) {
+ const raw = String(val || '');
+ let digits = '';
+ for (let i = 0; i < raw.length; i++) {
+  const c = raw.charAt(i);
+  if (c >= '0' && c <= '9') digits += c;
+ }
+ digits = digits.slice(0, 13);
+ if (!digits) return '';
+ let res = '';
+ let cnt = 0;
+ for (let i = digits.length - 1; i >= 0; i--) {
+  if (cnt > 0 && cnt % 3 === 0) res = ' ' + res;
+  res = digits.charAt(i) + res;
+  cnt++;
+ }
+ return res;
+}
+
 function formatPrice(price,type) {
- if (type==='Обмен') return 'Обмен';
- const n=Number(price); return Number.isFinite(n) && n>0 ? n.toLocaleString('ru-RU')+' ₽' : (price ? escapeHTML(price) : 'Договорная');
+ const n = Number(price);
+ if (!price || n === 0) return 'Договорная';
+ if (!Number.isNaN(n) && n > 0) return formatSpacedDigits(Math.round(n)) + ' ₽';
+ return String(price);
 }
 function parseNumericPrice(val) {
  const digits = String(val || '').replace(/[^\d]/g, '');
@@ -1449,18 +1470,113 @@ function openSellModal() {
   { v: 'Куплю', t: 'Куплю' },
   { v: 'Обмен', t: 'Обмен' }
  ]);
- const selCat = mkSel('category', ['Недвижимость', 'Автомобили', 'Одежда', 'Аксессуары', 'Бизнес', 'Другое']);
+ const selCat = mkSel('category', ['Автомобили', 'Недвижимость', 'Бизнес', 'Одежда', 'Аксессуары', 'Другое']);
 
  const inpTitle = document.createElement('input');
  inpTitle.className = 'field'; inpTitle.name = 'title'; inpTitle.required = true; inpTitle.maxLength = 70;
  inpTitle.placeholder = 'Например: BMW M5 F90 или Дом на Рублёвке';
 
- const inpPrice = document.createElement('input');
- inpPrice.className = 'field'; inpPrice.name = 'price'; inpPrice.required = true; inpPrice.maxLength = 30;
- inpPrice.placeholder = 'Например: 15 000 000 или Договорная';
+ const priceRow = document.createElement('div');
+ priceRow.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:10px';
 
- const inpServer = document.createElement('input');
- inpServer.className = 'field'; inpServer.name = 'server'; inpServer.value = '08 сервер'; inpServer.maxLength = 30;
+ const inpPrice = document.createElement('input');
+ inpPrice.className = 'field'; inpPrice.name = 'price'; inpPrice.inputMode = 'numeric'; inpPrice.maxLength = 22;
+ inpPrice.style.margin = '0';
+ inpPrice.placeholder = 'Например: 15 000 000';
+
+ const btnNeg = document.createElement('button');
+ btnNeg.type = 'button'; btnNeg.className = 'inline-btn';
+ btnNeg.style.cssText = 'flex-shrink:0;padding:12px 11px;font-size:12px;font-weight:800';
+ btnNeg.textContent = '🤝 Договорная';
+
+ let isNegotiable = false;
+ const setNegotiable = (flag) => {
+  isNegotiable = flag;
+  if (isNegotiable) {
+   inpPrice.value = 'Договорная';
+   inpPrice.readOnly = true;
+   inpPrice.style.opacity = '0.75';
+   btnNeg.style.background = 'var(--accent)';
+   btnNeg.style.color = '#fff';
+   btnNeg.style.borderColor = 'var(--accent)';
+  } else {
+   if (inpPrice.value === 'Договорная') inpPrice.value = '';
+   inpPrice.readOnly = false;
+   inpPrice.style.opacity = '1';
+   btnNeg.style.background = '';
+   btnNeg.style.color = '';
+   btnNeg.style.borderColor = '';
+  }
+ };
+
+ btnNeg.onclick = () => {
+  setNegotiable(!isNegotiable);
+  if (!isNegotiable) inpPrice.focus();
+ };
+
+ const applyLivePriceSpaces = () => {
+  if (isNegotiable) return;
+  const raw = inpPrice.value;
+  if (raw.toLowerCase().includes('договор')) {
+   setNegotiable(true);
+   return;
+  }
+  const selStart = inpPrice.selectionStart || raw.length;
+  let digitsBefore = 0;
+  for (let i = 0; i < selStart; i++) {
+   const c = raw.charAt(i);
+   if (c >= '0' && c <= '9') digitsBefore++;
+  }
+  const formatted = formatSpacedDigits(raw);
+  if (inpPrice.value === formatted) return;
+  inpPrice.value = formatted;
+  let pos = 0, seen = 0;
+  while (pos < formatted.length && seen < digitsBefore) {
+   const fc = formatted.charAt(pos);
+   if (fc >= '0' && fc <= '9') seen++;
+   pos++;
+  }
+  try { inpPrice.setSelectionRange(pos, pos); } catch (_) {}
+ };
+
+ inpPrice.addEventListener('input', applyLivePriceSpaces);
+ inpPrice.addEventListener('keyup', applyLivePriceSpaces);
+
+ priceRow.append(inpPrice, btnNeg);
+
+ const marketHint = document.createElement('div');
+ marketHint.style.cssText = 'display:none;margin:-2px 0 10px;padding:9px 11px;border-radius:11px;background:var(--card2);border:1px solid var(--line);font-size:12px;align-items:center;justify-content:space-between;gap:8px';
+ const hintText = document.createElement('span');
+ const hintUseBtn = document.createElement('button');
+ hintUseBtn.type = 'button'; hintUseBtn.className = 'inline-btn'; hintUseBtn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:11px';
+ hintUseBtn.textContent = 'Подставить';
+ marketHint.append(hintText, hintUseBtn);
+
+ const updateSellMarketHint = async () => {
+  const q = inpTitle.value.trim().toLowerCase();
+  if (q.length < 2) { marketHint.style.display = 'none'; return; }
+  if (!priceHistoryCache.length) {
+   try {
+    priceHistoryCache = await api('price_history', { query: '?select=id,category,title,server,price,created_at&order=created_at.desc&limit=500' }) || [];
+   } catch (_) {}
+  }
+  const matched = priceHistoryCache.filter(r => String(r.title || '').toLowerCase().includes(q) && Number(r.price) > 0);
+  if (!matched.length) { marketHint.style.display = 'none'; return; }
+  const avg = Math.round(matched.reduce((s, r) => s + Number(r.price), 0) / matched.length);
+  hintText.textContent = '📊 Рынок (' + matched.length + ' сд.): ~' + formatMoneyShort(avg);
+  hintUseBtn.onclick = () => {
+   setNegotiable(false);
+   inpPrice.value = formatSpacedDigits(avg);
+   toast('Подставлена средняя цена рынка');
+  };
+  marketHint.style.display = 'flex';
+ };
+ inpTitle.addEventListener('input', updateSellMarketHint);
+
+ const selBargain = mkSel('bargain', [
+  { v: 'Торг возможен', t: '🤝 Торг возможен' },
+  { v: 'Без торга', t: '🔒 Без торга' }
+ ]);
 
  const inpDesc = document.createElement('textarea');
  inpDesc.className = 'field'; inpDesc.name = 'description'; inpDesc.maxLength = 600;
@@ -1482,38 +1598,13 @@ function openSellModal() {
  const subBtn = document.createElement('button');
  subBtn.type = 'submit'; subBtn.className = 'btn'; subBtn.textContent = 'Опубликовать объявление';
 
- const marketHint = document.createElement('div');
- marketHint.style.cssText = 'display:none;margin:-4px 0 10px;padding:9px 11px;border-radius:11px;background:var(--card2);border:1px solid var(--line);font-size:12px;align-items:center;justify-content:space-between;gap:8px';
- const hintText = document.createElement('span');
- const hintUseBtn = document.createElement('button');
- hintUseBtn.type = 'button'; hintUseBtn.className = 'inline-btn'; hintUseBtn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:11px';
- hintUseBtn.textContent = 'Подставить';
- marketHint.append(hintText, hintUseBtn);
-
- const updateSellMarketHint = async () => {
-  const q = inpTitle.value.trim().toLowerCase();
-  if (q.length < 2) { marketHint.style.display = 'none'; return; }
-  if (!priceHistoryCache.length) {
-   try {
-    priceHistoryCache = await api('price_history', { query: '?select=id,category,title,server,price,created_at&order=created_at.desc&limit=500' }) || [];
-   } catch (_) {}
-  }
-  const matched = priceHistoryCache.filter(r => String(r.title || '').toLowerCase().includes(q) && Number(r.price) > 0);
-  if (!matched.length) { marketHint.style.display = 'none'; return; }
-  const avg = Math.round(matched.reduce((s, r) => s + Number(r.price), 0) / matched.length);
-  hintText.textContent = '📊 Рынок (' + matched.length + ' сд.): ~' + formatMoneyShort(avg);
-  hintUseBtn.onclick = () => { inpPrice.value = String(avg); toast('Подставлена средняя цена рынка'); };
-  marketHint.style.display = 'flex';
- };
- inpTitle.addEventListener('input', updateSellMarketHint);
-
  form.append(
   mkLbl('Тип объявления'), selType,
   mkLbl('Категория'), selCat,
   mkLbl('Название'), inpTitle,
-  mkLbl('Цена (₽)'), inpPrice,
+  mkLbl('Цена (₽)'), priceRow,
   marketHint,
-  mkLbl('Сервер'), inpServer,
+  mkLbl('Условия торга'), selBargain,
   mkLbl('Описание'), inpDesc,
   fileBox, subBtn
  );
@@ -1522,8 +1613,21 @@ function openSellModal() {
  form.onsubmit = async e => {
   e.preventDefault();
   const title = inpTitle.value.trim();
-  const price = inpPrice.value.trim();
-  if (!title || !price) { toast('Заполните название и цену'); return; }
+  const rawPrice = inpPrice.value.trim();
+  const negMode = isNegotiable || rawPrice.toLowerCase().includes('договор');
+  let cleanNumStr = '';
+  for (let i = 0; i < rawPrice.length; i++) {
+   const c = rawPrice.charAt(i);
+   if (c >= '0' && c <= '9') cleanNumStr += c;
+  }
+  const numericPrice = negMode ? 0 : Number(cleanNumStr);
+
+  if (!title) { toast('Укажите название объявления'); return; }
+  if (!negMode && (!numericPrice || numericPrice <= 0)) {
+   toast('Введите сумму цифрами или нажмите «🤝 Договорная»');
+   return;
+  }
+
   subBtn.disabled = true; subBtn.textContent = 'Публикуем…';
   try {
    const photos = [];
@@ -1544,12 +1648,13 @@ function openSellModal() {
      type: selType.value,
      category: selCat.value,
      title: title,
-     price: price,
-     server: inpServer.value.trim() || '08 сервер',
+     price: numericPrice,
+     server: selBargain.value || 'Торг возможен',
      desc: inpDesc.value.trim(),
      seller_id: String(meId),
      seller_name: meName,
-     images: photos, image_url: photos.at(0) || null
+     images: photos,
+     image_url: photos.at(0) || null
     }
    });
    closeModal();
