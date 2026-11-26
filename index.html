@@ -2372,7 +2372,8 @@ function openRulesModal() {
 if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
 
 async function openAdminCenter() {
- if(myRank.level<8)return;
+ if(!myRank || myRank.level<8){ toast('Админ-центр доступен с 8 уровня'); return; }
+ showModal('👑 Админ-центр', '<div class="loading">Загружаем панель управления…</div>');
  try { rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[]; }
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
  let count=ads.length;
@@ -2389,7 +2390,7 @@ async function openAdminCenter() {
   const resolvedName=p.display_name || fallbackNames[uid] || 'Администратор';
   const avInner=p.avatar_url
    ? '<img src="'+escapeHTML(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">'
-   : escapeHTML(Array.from(resolvedName).at(0).toUpperCase());
+   : escapeHTML((String(resolvedName || 'А').trim().charAt(0) || 'А').toUpperCase());
   const avHtml='<div class="'+frameClassFor(p.avatar_frame)+'" style="width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:16px;color:#fff;background:'+avatarColorFor(uid)+';flex-shrink:0">'+avInner+'</div>';
   const btn=ok?'<button type="button" class="inline-btn" data-pick-admin="'+escapeHTML(uid)+'" data-pick-level="'+lv+'">✏️ Изм.</button>':'<span class="muted">—</span>';
   return '<div class="admin-player" style="align-items:center;gap:10px">'
@@ -2449,7 +2450,7 @@ async function openAdminCenter() {
  $('playersList').querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',async()=>{
   const id=b.dataset.remove;const player=rolesCache.find(p=>String(p.user_id)===id);
   if(!player||rankLevel(player.rank)>=myRank.level){toast('Недостаточно прав');return;}
-  if(!confirm('Снять должность игрока '+id+' и вернуть ранг Новичок?'))return;
+  if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Точно снять?'; setTimeout(()=>{ if(b){ delete b.dataset.armed; b.textContent='Снять'; } }, 3500); return; }
   try {await upsertRole(id,{rank:RANKS[0].name});toast('Должность снята');openAdminCenter();}
   catch(err){toast('Ошибка: '+err.message);}
  }));
