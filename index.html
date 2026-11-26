@@ -1564,7 +1564,7 @@ function openSellModal() {
 
 function roomIdFor(a, b) {
  const arr = [String(a || ''), String(b || '')].sort();
- return 'dm_' + arr[0] + '_' + arr[1];
+ return 'dm_' + arr.at(0) + '_' + arr.at(1);
 }
 
 let chatsListCache = [];
@@ -1884,6 +1884,40 @@ async function loadMessages() {
    const avInner = pr.avatar_url ? '<img src="'+escapeHTML(pr.avatar_url)+'" alt="">' : escapeHTML(letter);
    const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
    const timeHtml = msgTime ? '<span class="msg-time">'+escapeHTML(msgTime)+'</span>' : '';
+   const rawTxt = String(m.text || '');
+   if (rawTxt.startsWith('[DEAL_OFFER:')) {
+    let payload = null;
+    try { payload = JSON.parse(rawTxt.slice(12, -1)); } catch (_) {}
+    if (payload) {
+     const alreadyHandled = (rows || []).some(r => String(r.text || '').startsWith('[DEAL_DONE:' + payload.offer_id + ']') || String(r.text || '').startsWith('[DEAL_CANCEL:' + payload.offer_id + ']'));
+     const isBuyer = String(payload.buyer_id) === String(meId);
+     const isSeller = String(payload.seller_id) === String(meId);
+     let actHtml = '';
+     if (alreadyHandled) {
+      actHtml = '<div class="small muted" style="margin-top:8px;font-weight:700">Статус: завершено / закрыто</div>';
+     } else if (isBuyer) {
+      actHtml = '<div style="display:flex;gap:6px;margin-top:9px"><button type="button" class="btn" data-confirm-deal="'+escapeHTML(rawTxt.slice(12, -1))+'" style="margin:0;padding:8px 10px;font-size:12px">✅ Подтвердить получение</button><button type="button" class="btn secondary" data-cancel-deal="'+escapeHTML(payload.offer_id)+'" style="margin:0;padding:8px 10px;font-size:12px;width:auto">✕</button></div>';
+     } else if (isSeller) {
+      actHtml = '<button type="button" class="inline-btn" data-cancel-deal="'+escapeHTML(payload.offer_id)+'" style="margin-top:8px;color:#ff657a">❌ Отменить предложение</button>';
+     }
+     return '<div style="margin:8px auto;max-width:92%;background:var(--card2);border:1px solid rgba(37,211,102,.45);border-radius:14px;padding:12px">'
+      + '<div style="font-weight:850;font-size:13px;color:var(--green);margin-bottom:4px">🤝 Предложение завершить сделку</div>'
+      + '<div style="font-size:13px;font-weight:800">' + escapeHTML(payload.ad_title || 'Товар') + '</div>'
+      + '<div style="font-size:13px;color:var(--yellow);font-weight:850;margin-top:2px">Сумма: ' + formatMoneyShort(payload.price) + '</div>'
+      + '<div class="small muted" style="font-size:11px;margin-top:4px">После подтверждения покупателем сделка пройдёт анти-твинк проверку.</div>'
+      + actHtml + '</div>';
+    }
+   }
+   if (rawTxt.startsWith('[DEAL_DONE:')) {
+    const label = rawTxt.replace(/^\[DEAL_DONE:[^\]]+\]\s*/, '');
+    const revBtn = label.includes('засчитана')
+     ? '<div style="margin-top:7px"><button type="button" class="inline-btn" data-open-review-room="1" style="color:var(--yellow);border-color:rgba(245,158,11,.45);font-size:11px">⭐ Оставить отзыв о сделке</button></div>'
+     : '';
+    return '<div style="margin:6px auto;max-width:90%;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.35);border-radius:12px;padding:9px 12px;text-align:center;font-size:12px;font-weight:750;color:var(--green)">' + escapeHTML(label || '✅ Сделка подтверждена') + revBtn + '</div>';
+   }
+   if (rawTxt.startsWith('[DEAL_CANCEL:')) {
+    return '<div style="margin:6px auto;max-width:90%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;font-size:12px;color:var(--muted)">❌ Предложение сделки отменено</div>';
+   }
    const avHtml = '<div class="msg-av '+frameClassFor(pr.avatar_frame)+'" data-uid="'+escapeHTML(sid)+'" style="background:'+avatarColorFor(sid)+'" title="Открыть профиль">'+avInner+'</div>';
    return '<div class="msg-row '+(isMine?'mine':'')+'">'
     + avHtml
@@ -1893,8 +1927,183 @@ async function loadMessages() {
   box.querySelectorAll('[data-uid]').forEach(el => {
    el.addEventListener('click', () => openPublicProfile(el.dataset.uid));
   });
+  box.querySelectorAll('[data-confirm-deal]').forEach(btn => {
+   btn.onclick = () => handleConfirmSafeDeal(btn, btn.dataset.confirmDeal);
+  });
+  box.querySelectorAll('[data-cancel-deal]').forEach(btn => {
+   btn.onclick = () => handleCancelSafeDeal(btn, btn.dataset.cancelDeal);
+  });
+  box.querySelectorAll('[data-open-review-room]').forEach(btn => {
+   btn.onclick = () => openMyDealsAndReviewsModal();
+  });
   box.scrollTop=box.scrollHeight;
  } catch(e) { const box=$('messagesBox');if(box)box.innerHTML='<div class="loading">Ошибка загрузки: '+escapeHTML(e.message)+'</div>'; }
+}
+function openProposeDealModal() {
+ if (!activeChat || activeChat.global || activeChat.support) return;
+ const chat = activeChat;
+ const myAds = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)) : [];
+ showModal('🤝 Предложить завершить сделку', '');
+ const body = $('modalBody');
+
+ const note = document.createElement('div');
+ note.className = 'notice';
+ note.style.marginBottom = '10px';
+ note.textContent = 'Сделка засчитается в профиль после подтверждения покупателем и проверки анти-твинк фильтров (до 2 сделок в неделю с одним игроком и до 10 в сутки).';
+ body.appendChild(note);
+
+ const form = document.createElement('form');
+ const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
+
+ const selAd = document.createElement('select');
+ selAd.className = 'field';
+ const optCustom = document.createElement('option');
+ optCustom.value = '';
+ optCustom.textContent = chat.ad_title && chat.ad_title !== 'Личный чат' ? ('По теме чата: ' + chat.ad_title) : '— Без привязки к объявлению (ввести название) —';
+ selAd.appendChild(optCustom);
+ myAds.forEach(a => {
+  const o = document.createElement('option');
+  o.value = String(a.id);
+  o.textContent = a.title + ' (' + formatPrice(a.price, a.type) + ')';
+  if (chat.ad_title && String(a.title).trim() === String(chat.ad_title).trim()) o.selected = true;
+  selAd.appendChild(o);
+ });
+
+ const inpTitle = document.createElement('input');
+ inpTitle.className = 'field';
+ inpTitle.maxLength = 80;
+ inpTitle.placeholder = 'Название товара / услуги';
+ inpTitle.value = (chat.ad_title && chat.ad_title !== 'Личный чат') ? chat.ad_title : '';
+
+ const inpPrice = document.createElement('input');
+ inpPrice.className = 'field';
+ inpPrice.type = 'number';
+ inpPrice.min = '1';
+ inpPrice.required = true;
+ inpPrice.placeholder = 'Итоговая сумма сделки в ₽ (например: 1500000)';
+
+ const syncFromAd = () => {
+  const found = myAds.find(x => String(x.id) === selAd.value);
+  if (found) {
+   inpTitle.value = found.title || '';
+   const numP = parseNumericPrice(found.price);
+   if (numP > 0) inpPrice.value = String(numP);
+  }
+ };
+ selAd.onchange = syncFromAd;
+ syncFromAd();
+
+ const submitBtn = document.createElement('button');
+ submitBtn.type = 'submit';
+ submitBtn.className = 'btn';
+ submitBtn.textContent = '📨 Отправить запрос покупателю';
+
+ form.append(mkLbl('Выберите ваш лот'), selAd, mkLbl('Название товара'), inpTitle, mkLbl('Итоговая цена (₽)'), inpPrice, submitBtn);
+ body.appendChild(form);
+
+ form.onsubmit = async e => {
+  e.preventDefault();
+  const title = inpTitle.value.trim();
+  const price = Number(inpPrice.value || 0);
+  if (!title || price <= 0) { toast('Укажите название и сумму сделки'); return; }
+  const found = myAds.find(x => String(x.id) === selAd.value);
+  const payload = {
+   offer_id: String(Date.now()),
+   ad_id: found ? Number(found.id) : null,
+   ad_title: title,
+   category: found ? (found.category || 'Другое') : 'Другое',
+   seller_id: String(meId),
+   buyer_id: String(chat.receiver_id),
+   price: price
+  };
+  submitBtn.disabled = true; submitBtn.textContent = 'Отправляем…';
+  try {
+   await api('messages', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=minimal' },
+    body: {
+     room_id: chat.room_id,
+     sender_id: String(meId),
+     sender_name: meName,
+     receiver_id: String(chat.receiver_id),
+     ad_title: title,
+     text: '[DEAL_OFFER:' + JSON.stringify(payload) + ']'
+    }
+   });
+   closeModal();
+   openChat(chat);
+  } catch (err) {
+   toast('Ошибка: ' + err.message);
+   submitBtn.disabled = false; submitBtn.textContent = '📨 Отправить запрос покупателю';
+  }
+ };
+}
+
+async function handleConfirmSafeDeal(btn, rawJson) {
+ if (!activeChat) return;
+ let payload = null;
+ try { payload = JSON.parse(rawJson); } catch (_) {}
+ if (!payload) return;
+ btn.disabled = true; btn.textContent = 'Проверяем…';
+ try {
+const res = await api('rpc/confirm_safe_deal', {
+method: 'POST',
+body: {
+p_room_id: activeChat.room_id,
+p_ad_id: payload.ad_id ? Number(payload.ad_id) : null,
+p_ad_title: payload.ad_title || 'Товар',
+p_category: payload.category || 'Другое',
+p_seller_id: String(payload.seller_id),
+p_buyer_id: String(meId),
+p_price: Number(payload.price || 0)
+}
+});
+const counted = res && res.counted === true;
+const statusText = counted
+? ('✅ Сделка подтверждена и засчитана в профиль! (' + payload.ad_title + ' · ' + formatMoneyShort(payload.price) + ')')
+: ('✅ Получение подтверждено, но без начисления в рейтинг (' + ((res && res.reason) || 'сработал анти-твинк лимит') + ')');
+await api('messages', {
+method: 'POST',
+headers: { 'Prefer': 'return=minimal' },
+body: {
+room_id: activeChat.room_id,
+sender_id: String(meId),
+sender_name: meName,
+receiver_id: String(payload.seller_id),
+ad_title: payload.ad_title || 'Сделка',
+text: '[DEAL_DONE:' + payload.offer_id + '] ' + statusText
+}
+});
+toast(counted ? '🤝 Сделка успешно засчитана!' : '⚠️ Сделка закрыта без начисления: ' + ((res && res.reason) || 'лимит'));
+await loadRole();
+await loadAds();
+await loadMessages();
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false; btn.textContent = '✅ Подтвердить получение';
+}
+}
+async function handleCancelSafeDeal(btn, offerId) {
+if (!activeChat) return;
+btn.disabled = true;
+try {
+await api('messages', {
+method: 'POST',
+headers: { 'Prefer': 'return=minimal' },
+body: {
+room_id: activeChat.room_id,
+sender_id: String(meId),
+sender_name: meName,
+receiver_id: String(activeChat.receiver_id),
+ad_title: activeChat.ad_title || 'Сделка',
+text: '[DEAL_CANCEL:' + offerId + ']'
+}
+});
+await loadMessages();
+} catch (err) {
+toast('Ошибка: ' + err.message);
+btn.disabled = false;
+}
 }
 async function sendMessage(e) {
  e.preventDefault(); if(!activeChat)return;
@@ -1903,7 +2112,7 @@ async function sendMessage(e) {
  const receiver=chat.global?'global':(chat.support?(staffReply?chat.room_id.replace('support_',''):'support'):chat.receiver_id);
  const payload={room_id:chat.room_id,ad_title:chat.ad_title||'Личный чат',sender_id:meId,sender_name:meName,receiver_id:receiver,text:value};
  try {
-  await api('messages',{method:'POST',headers:{'Prefer':'return=representation'},body:payload});
+  await api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:payload});
   input.value='';
   await loadMessages();
   if (receiver && receiver !== 'support' && receiver !== 'global') {
