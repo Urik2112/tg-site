@@ -1584,13 +1584,13 @@ function openSellModal() {
 
  const fileBox = document.createElement('label');
  fileBox.style.cssText = 'display:block;margin:6px 0 12px;padding:12px;background:var(--bg);border:1px dashed var(--accent);border-radius:11px;text-align:center;cursor:pointer;font-size:13px';
- fileBox.textContent = '📷 Прикрепить фото (до 3 шт.)';
+ fileBox.textContent = '📷 Прикрепить фото (до 5 шт.)';
  const fileInp = document.createElement('input');
  fileInp.type = 'file'; fileInp.accept = 'image/*'; fileInp.multiple = true; fileInp.style.display = 'none';
  const fileNote = document.createElement('div');
  fileNote.style.cssText = 'font-size:11px;color:#aaa2c5;margin-top:4px';
  fileInp.onchange = () => {
-  const cnt = fileInp.files ? Math.min(3, fileInp.files.length) : 0;
+  const cnt = fileInp.files ? Math.min(5, fileInp.files.length) : 0;
   fileNote.textContent = cnt ? ('Выбрано фото: ' + cnt) : '';
  };
  fileBox.append(fileInp, fileNote);
@@ -1631,7 +1631,7 @@ function openSellModal() {
   subBtn.disabled = true; subBtn.textContent = 'Публикуем…';
   try {
    const photos = [];
-   const files = Array.from(fileInp.files || []).slice(0, 3);
+   const files = Array.from(fileInp.files || []).slice(0, 5);
    for (const f of files) {
     const dataUrl = await new Promise((res, rej) => {
      const r = new FileReader();
@@ -2535,6 +2535,40 @@ if ($('modalWrap')) {
 if ($('searchInput')) $('searchInput').addEventListener('input', renderAds);
 if ($('sortSelect')) $('sortSelect').addEventListener('change', renderAds);
 if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
+
+function openMyAdsModal() {
+ const myAds = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)) : [];
+ showModal('📦 Мои объявления (' + myAds.length + ')', '');
+ const body = $('modalBody');
+ if (!myAds.length) {
+  body.innerHTML = '<div class="empty">У вас пока нет активных объявлений.</div>';
+  return;
+ }
+ myAds.forEach(ad => {
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px';
+  const title = document.createElement('div'); title.style.cssText = 'font-weight:800;font-size:14px'; title.textContent = ad.title;
+  const sub = document.createElement('div'); sub.className = 'small muted'; sub.textContent = (ad.category || 'Товар') + ' · ' + formatPrice(ad.price, ad.type);
+  const row = document.createElement('div'); row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px';
+  const bP = document.createElement('button'); bP.type = 'button'; bP.className = 'inline-btn'; bP.textContent = '✏️ Цена';
+  bP.onclick = () => {
+   showModal('✏️ Изменить цену', '');
+   const mb = $('modalBody');
+   const inp = document.createElement('input'); inp.className = 'field'; inp.inputMode = 'numeric'; inp.value = Number(ad.price) > 0 ? formatSpacedDigits(ad.price) : '';
+   inp.oninput = () => { inp.value = formatSpacedDigits(inp.value); };
+   const sv = document.createElement('button'); sv.type = 'button'; sv.className = 'btn'; sv.textContent = 'Сохранить';
+   sv.onclick = async () => {
+    let d = ''; for (let i = 0; i < inp.value.length; i++) { const c = inp.value.charAt(i); if (c >= '0' && c <= '9') d += c; }
+    await api('ads', { method: 'PATCH', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=minimal' }, body: { price: Number(d || 0) } });
+    ad.price = Number(d || 0); renderAds(); toast('✅ Обновлено'); openMyAdsModal();
+   };
+   mb.append(inp, sv);
+  };
+  const bD = document.createElement('button'); bD.type = 'button'; bD.className = 'inline-btn'; bD.style.color = '#ff657a'; bD.textContent = '🗑️ Снять';
+  bD.onclick = () => deleteAd(ad);
+  row.append(bP, bD); card.append(title, sub, row); body.appendChild(card);
+ });
+}
 
 async function init() {
  renderCategories();renderDealFilters();
