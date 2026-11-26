@@ -1996,14 +1996,14 @@ btnsWrap.appendChild(delBtn);
 topBar.append(adSub, btnsWrap);
 const msgBox = document.createElement('div');
 msgBox.id = 'messagesBox';
-msgBox.className = 'messages';
+msgBox.className = 'messages'; msgBox.style.cssText = 'height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:10px 2px;margin:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)';
 const ld = document.createElement('div');
 ld.className = 'loading';
 ld.textContent = 'Загружаем сообщения…';
 msgBox.appendChild(ld);
 const form = document.createElement('form');
 form.id = 'sendMessageForm';
-form.className = 'send-row';
+form.className = 'send-row'; form.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:6px';
 const inp = document.createElement('input');
 inp.className = 'field';
 inp.name = 'text';
@@ -2059,12 +2059,13 @@ const frCls = pr.avatar_frame && typeof frameClassFor === 'function' ? frameClas
 const bgCol = typeof avatarColorFor === 'function' ? avatarColorFor(sid) : '#5b3df5';
 const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
 const timeHtml = msgTime ? '' + escapeHTML(msgTime) + '' : '';
-const avHtml = '' + avInner + '';
-return ''
-+ avHtml
-+ '' + escapeHTML(dispName) + '' + escapeHTML(m.text) + timeHtml + ''
-+ '';
-}).join('') || 'Начните общение первым 👋';
+const avStyle = 'width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850;color:#fff;flex-shrink:0;cursor:pointer;background:' + bgCol;
+   const rowStyle = 'display:flex;align-items:flex-end;gap:8px;max-width:86%;align-self:' + (isMine ? 'flex-end;flex-direction:row-reverse' : 'flex-start');
+   const bubStyle = isMine ? 'background:linear-gradient(135deg,#6f42ff,#5531d9);border:1px solid rgba(139,92,246,.5);border-radius:15px 15px 4px 15px;padding:9px 12px;font-size:13px;line-height:1.4;color:#fff;word-break:break-word' : 'background:var(--card2);border:1px solid var(--line);border-radius:15px 15px 15px 4px;padding:9px 12px;font-size:13px;line-height:1.4;color:var(--text);word-break:break-word';
+   const timeHtml2 = msgTime ? '<span style="display:block;font-size:10px;opacity:.65;text-align:right;margin-top:4px">' + escapeHTML(msgTime) + '</span>' : '';
+   const avHtml = '<div class="msg-av ' + frCls + '" data-uid="' + escapeHTML(sid) + '" style="' + avStyle + '">' + avInner + '</div>';
+   return '<div style="' + rowStyle + '">' + avHtml + '<div style="' + bubStyle + '"><div data-uid="' + escapeHTML(sid) + '" style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:3px;cursor:pointer">' + escapeHTML(dispName) + '</div>' + escapeHTML(m.text) + timeHtml2 + '</div></div>';
+  }).join('') || 'Начните общение первым 👋';
 box.querySelectorAll('[data-uid]').forEach(el => {
 el.addEventListener('click', () => {
 if (typeof openPublicProfile === 'function') openPublicProfile(el.dataset.uid);
