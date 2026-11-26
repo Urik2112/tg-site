@@ -2376,9 +2376,7 @@ async function openAdminCenter() {
  showModal('👑 Админ-центр', '<div class="loading">Загружаем панель управления…</div>');
  try {
   rolesCache=await api('roles',{query:'?select=user_id,display_name,rank,is_banned,ban_reason,deals_success,updated_at&order=updated_at.desc&limit=300'})||[];
-  const staffIds = rolesCache.filter(x => rankLevel(x.rank) >= 7).map(x => encodeURIComponent(String(x.user_id)));
-  if (staffIds.length > 0) {
-   const staffAvs = await api('roles',{query:'?select=user_id,avatar_url,avatar_frame&user_id=in.(' + staffIds.join(',') + ')'}).catch(()=>[]);
+  ).catch(()=>[]);
    (staffAvs || []).forEach(av => {
     const target = rolesCache.find(x => String(x.user_id) === String(av.user_id));
     if (target) { target.avatar_url = av.avatar_url; target.avatar_frame = av.avatar_frame; }
@@ -2433,7 +2431,7 @@ async function openAdminCenter() {
   const uid = el.dataset.openAdminProfile;
   if (uid && typeof openPublicProfile === 'function') openPublicProfile(uid);
  }));
- if ($('openAdminDealsBtn')) $('openAdminDealsBtn').onclick = openAdminDealsLog;
+ if ($('openAdminDealsBtn') && typeof openAdminDealsLog === 'function') $('openAdminDealsBtn').onclick = openAdminDealsLog;
  document.querySelectorAll('[data-pick-admin]').forEach(b=>b.addEventListener('click',()=>{
   const f=$('rankForm');if(!f)return;
   f.querySelector('[name="user_id"]').value=b.dataset.pickAdmin||'';
