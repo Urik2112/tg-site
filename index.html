@@ -333,16 +333,16 @@ function headers(extra={}) { return {'apikey':SUPABASE_KEY,'Authorization':'Bear
 async function api(table, options={}) {
  const url = SUPABASE_URL+'/'+table+(options.query || '');
  let response;
- for (let attempt = 0; attempt < 2; attempt++) {
+ for (let attempt = 0; attempt < 3; attempt++) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 6500);
+  const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
    response = await fetch(url,{method:options.method||'GET',headers:headers(options.headers||{}),body:options.body?JSON.stringify(options.body):undefined,signal:ctrl.signal});
    clearTimeout(timer);
    break;
   } catch (e) {
    clearTimeout(timer);
-   if (attempt === 1) throw new Error(e && e.name === 'AbortError' ? 'Сервер базы не ответил вовремя (попробуйте ещё раз)' : (e.message || 'Ошибка сети'));
+   if (attempt === 2) throw new Error(e && e.name === 'AbortError' ? 'Медленное соединение с базой. Нажмите «Обновить».' : (e.message || 'Ошибка сети'));
   }
  }
  const text = await response.text();
@@ -400,8 +400,34 @@ function renderAds() {
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
 async function loadAds() {
- try { ads=await api('ads',{query:'?select=*&order=id.desc&limit=200'}) || []; renderAds(); }
- catch(e) { $('adsGrid').innerHTML='<div class="empty">Не удалось загрузить объявления.<br><span class="small">'+escapeHTML(e.message)+'</span></div>'; }
+ try {
+  ads = await api('ads', { query: '?select=*&order=id.desc&limit=45' }) || [];
+  renderAds();
+ } catch(e) {
+  const grid = $('adsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'empty';
+  const t1 = document.createElement('div');
+  t1.style.fontWeight = '800';
+  t1.textContent = 'Не удалось загрузить объявления';
+  const t2 = document.createElement('div');
+  t2.className = 'small muted';
+  t2.style.marginTop = '4px';
+  t2.textContent = e.message || 'Ошибка сети';
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'inline-btn';
+  retryBtn.style.marginTop = '10px';
+  retryBtn.textContent = '🔄 Повторить загрузку';
+  retryBtn.onclick = () => {
+   grid.innerHTML = '<div class="loading">Загружаем объявления…</div>';
+   loadAds();
+  };
+  box.append(t1, t2, retryBtn);
+  grid.appendChild(box);
+ }
 }
 async function loadRole() {
  try {
@@ -1465,7 +1491,7 @@ function openSellModal() {
      description: inpDesc.value.trim(),
      seller_id: String(meId),
      seller_name: meName,
-     photos: photos
+     images: photos, image_url: photos.at(0) || null
     }
    });
    closeModal();
