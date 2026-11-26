@@ -690,7 +690,7 @@ function openAd(id) {
   <div class="detail-price">${formatPrice(ad.price,ad.type)}</div>
   <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
   <div class="small muted">${ad.server==='Торг возможен'?'🤝 Торг возможен':(ad.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости')}</div>
-  <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.description||'Продавец не добавил описание.')}</div>
+  <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.desc||ad.description||'Продавец не добавил описание.')}</div>
   <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
   <div id="adMarketPriceHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-size:12px"></div>
