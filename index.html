@@ -1845,8 +1845,7 @@ function renderChatList() {
 
  filtered.forEach(c => {
   const row = document.createElement('div');
-  row.className = 'panel';
-  row.style.cssText = 'padding:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px';
+  row.style.cssText = 'padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px';
   const left = document.createElement('div');
   left.style.cssText = 'min-width:0;flex:1';
   const title = document.createElement('div');
@@ -2072,6 +2071,7 @@ async function openPublicProfile(uid) {
   showModal('Профиль игрока', '<div class="loading">Не удалось загрузить профиль: ' + escapeHTML(e.message) + '</div>');
  }
 }
+const chatProfilesCache = new Map();
 async function loadMessages() {
  if(!activeChat)return;
  const chat=activeChat;
