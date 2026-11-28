@@ -173,20 +173,8 @@
     </section>
 
     <section id="chatsPage" class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="section-title" style="margin:0;font-size:24px">Чаты</div>
-        <button type="button" id="toggleChatSearch" style="width:36px;height:36px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:16px">🔍</button>
-      </div>
-      <div id="chatSearchWrap" style="display:none;margin-bottom:12px">
-        <input id="chatSearchInput" class="search" style="margin:0" placeholder="Поиск по имени или объявлению..." autocomplete="off">
-      </div>
-      <div id="chatTabs" style="display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:8px;overflow-x:auto">
-        <button type="button" class="chat-tab active" data-ctab="all" style="background:none;border:none;padding:8px 2px;font-size:14px;font-weight:800;color:#fff;border-bottom:2.5px solid var(--accent)">Все</button>
-        <button type="button" class="chat-tab" data-ctab="sell" style="background:none;border:none;padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Продаю</button>
-        <button type="button" class="chat-tab" data-ctab="buy" style="background:none;border:none;padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent">Покупаю</button>
-        <button type="button" class="chat-tab" data-ctab="support" id="supportTabBtn" style="background:none;border:none;display:none;padding:8px 2px;font-size:14px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent;white-space:nowrap">🛟 Поддержка</button>
-      </div>
-      <div id="chatList" style="display:flex;flex-direction:column"><div class="loading">Загружаем чаты…</div></div>
+      <div class="section-title">Чаты</div>
+      <div id="chatList" class="chat-list"><div class="loading">Загружаем чаты…</div></div>
     </section>
 
     <section id="profilePage" class="page">
@@ -1675,42 +1663,9 @@ function roomIdFor(a, b) {
  return 'dm_' + arr.at(0) + '_' + arr.at(1);
 }
 
-let chatsListCache = [];
-let activeChatTab = 'all';
-
-if ($('toggleChatSearch')) {
- $('toggleChatSearch').onclick = () => {
-  const w = $('chatSearchWrap');
-  if (!w) return;
-  const open = w.style.display === 'none';
-  w.style.display = open ? 'block' : 'none';
-  if (open && $('chatSearchInput')) $('chatSearchInput').focus();
- };
-}
-
-if ($('chatSearchInput')) {
- $('chatSearchInput').oninput = () => renderChatList();
-}
-
-document.querySelectorAll('#chatTabs .chat-tab').forEach(tab => {
- tab.onclick = () => {
-  activeChatTab = tab.dataset.ctab || 'all';
-  document.querySelectorAll('#chatTabs .chat-tab').forEach(t => {
-   const isAct = t === tab;
-   t.classList.toggle('active', isAct);
-   t.style.color = isAct ? '#fff' : 'var(--muted)';
-   t.style.borderBottomColor = isAct ? 'var(--accent)' : 'transparent';
-  });
-  renderChatList();
- };
-});
-
 async function loadChats() {
  const listEl = $('chatList');
  if (!listEl) return;
- if ($('supportTabBtn') && myRank && myRank.level >= 7) {
-  $('supportTabBtn').style.display = 'inline-block';
- }
  try {
   const isStaff = myRank && myRank.level >= 7;
   const q = isStaff
@@ -1724,47 +1679,44 @@ async function loadChats() {
    room_id: 'global',
    global: true,
    support: false,
-   roleKind: 'all',
    display_name: '🌍 Общий чат игроков',
    ad_title: 'Общение и торговля 08 сервера',
    last_text: 'Нажмите, чтобы открыть общий чат',
-   last_time: '',
    last_id: 0,
    unread: false
   });
 
-  map.set('support_' + meId, {
-   room_id: 'support_' + meId,
-   global: false,
-   support: true,
-   staffView: false,
-   roleKind: 'all',
-   receiver_id: 'support',
-   display_name: '🛟 Техподдержка RP Маркет 08',
-   ad_title: 'Помощь и вопросы по площадке',
-   last_text: 'Нажмите, чтобы написать администрации',
-   last_time: '',
-   last_id: 0,
-   unread: false
-  });
+  if (!isStaff) {
+   map.set('support_' + meId, {
+    room_id: 'support_' + meId,
+    global: false,
+    support: true,
+    staffView: false,
+    receiver_id: 'support',
+    display_name: '🛟 Техподдержка RP Маркет 08',
+    ad_title: 'Помощь и вопросы администрации',
+    last_text: 'Нажмите, чтобы написать в поддержку',
+    last_id: 0,
+    unread: false
+   });
+  }
 
   const peerIds = new Set();
 
   rows.forEach(m => {
    const rid = String(m.room_id || '');
-   if (!rid) return;
+   if (!rid || rid === 'support') return;
    if (rid === 'global') {
     const g = map.get('global');
     if ((m.id || 0) > g.last_id) {
      g.last_id = m.id || 0;
      g.last_text = (m.sender_name || 'Игрок') + ': ' + String(m.text || '');
-     g.last_time = m.created_at ? formatChatTime(m.created_at) : '';
      g.unread = (seen.global || 0) < (m.id || 0) && String(m.sender_id) !== String(meId);
     }
     return;
    }
-   const isSup = rid === 'support' || rid.startsWith('support_') || String(m.receiver_id) === 'support';
-   const isMySupport = rid === ('support_' + meId) || (rid === 'support' && String(m.sender_id) === String(meId));
+   const isSup = rid.startsWith('support_');
+   const isMySupport = rid === ('support_' + meId);
    if (isSup && !isMySupport && !isStaff) return;
    if (!isSup && String(m.sender_id) !== String(meId) && String(m.receiver_id) !== String(meId)) return;
 
@@ -1776,23 +1728,18 @@ async function loadChats() {
 
    if (!map.has(rid)) {
     const otherName = isSup
-     ? (isMySupport ? '🛟 Техподдержка RP Маркет 08' : ('Тикет #' + otherId + (m.sender_name && m.sender_id === otherId ? ' · ' + m.sender_name : '')))
+     ? (isMySupport ? '🛟 Техподдержка RP Маркет 08' : ('🛟 Тикет #' + otherId))
      : (String(m.sender_id) === String(meId) ? ('Игрок ' + otherId) : (m.sender_name || otherId));
-
-    const myAdMatch = Array.isArray(ads) && ads.some(a => String(a.seller_id) === String(meId) && String(a.title || '').trim() === String(m.ad_title || '').trim());
-    const roleKind = isSup ? (isMySupport ? 'all' : 'support') : (myAdMatch ? 'sell' : 'buy');
 
     map.set(rid, {
      room_id: rid,
      global: false,
      support: isSup,
      staffView: isSup && isStaff && !isMySupport,
-     roleKind: roleKind,
      receiver_id: otherId,
      display_name: otherName,
      ad_title: m.ad_title || 'Личный чат',
      last_text: String(m.text || ''),
-     last_time: m.created_at ? formatChatTime(m.created_at) : '',
      last_id: m.id || 0,
      unread: (seen[rid] || 0) < (m.id || 0) && String(m.sender_id) !== String(meId)
     });
@@ -1801,7 +1748,6 @@ async function loadChats() {
     if ((m.id || 0) > item.last_id) {
      item.last_id = m.id || 0;
      item.last_text = String(m.text || '');
-     item.last_time = m.created_at ? formatChatTime(m.created_at) : '';
      item.unread = (seen[rid] || 0) < (m.id || 0) && String(m.sender_id) !== String(meId);
     }
     if (!isSup && String(m.sender_id) !== String(meId) && m.sender_name && item.display_name.startsWith('Игрок ')) {
@@ -1819,200 +1765,149 @@ async function loadChats() {
    missingPeers.forEach(id => { if (!chatProfilesCache.has(id)) chatProfilesCache.set(id, { user_id: id }); });
   }
 
-  map.forEach(item => {
-   if (!item.global && (!item.support || item.staffView) && item.receiver_id) {
-    const pr = chatProfilesCache.get(String(item.receiver_id));
+  listEl.innerHTML = '';
+  Array.from(map.values()).forEach(c => {
+   if (!c.global && (!c.support || c.staffView) && c.receiver_id) {
+    const pr = chatProfilesCache.get(String(c.receiver_id));
     if (pr && pr.display_name) {
-     item.display_name = item.staffView ? ('Тикет: ' + pr.display_name) : pr.display_name;
+     c.display_name = c.staffView ? ('🛟 Тикет: ' + pr.display_name) : pr.display_name;
     }
    }
+   const btn = document.createElement('button');
+   btn.type = 'button';
+   btn.className = 'chat-item';
+   const pr = (!c.global && (!c.support || c.staffView) && c.receiver_id) ? (chatProfilesCache.get(String(c.receiver_id)) || {}) : {};
+   const frCls = pr.avatar_frame && typeof frameClassFor === 'function' ? frameClassFor(pr.avatar_frame) : '';
+   const icon = document.createElement('div');
+   icon.className = 'chat-icon ' + frCls;
+   icon.style.overflow = 'hidden';
+   if (pr.avatar_url) {
+    const im = document.createElement('img');
+    im.src = pr.avatar_url;
+    im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    icon.appendChild(im);
+   } else {
+    icon.textContent = c.global ? '🌍' : (c.support ? '🛟' : (Array.from(String(c.display_name || 'И')).at(0) || 'И').toUpperCase());
+   }
+   const meta = document.createElement('div');
+   meta.className = 'chat-meta';
+   const st = document.createElement('strong');
+   st.textContent = c.display_name + (c.unread ? ' •' : '');
+   const sp = document.createElement('span');
+   sp.textContent = (c.ad_title && !c.global && !c.support ? c.ad_title + ' · ' : '') + c.last_text;
+   meta.append(st, sp);
+   btn.append(icon, meta);
+   btn.onclick = () => openChat(c);
+   listEl.appendChild(btn);
   });
-
-  chatsListCache = Array.from(map.values());
-  renderChatList();
  } catch (e) {
-  listEl.innerHTML = '';
-  const errEl = document.createElement('div');
-  errEl.className = 'empty';
-  errEl.textContent = 'Не удалось загрузить чаты: ' + e.message;
-  listEl.appendChild(errEl);
+  listEl.innerHTML = '<div class="empty">Не удалось загрузить чаты: ' + escapeHTML(e.message) + '</div>';
  }
 }
 
-function renderChatList() {
- const listEl = $('chatList');
- if (!listEl) return;
- const q = ($('chatSearchInput') ? $('chatSearchInput').value : '').trim().toLowerCase();
- const filtered = chatsListCache.filter(c => {
-  if (activeChatTab === 'support') {
-   if (c.roleKind !== 'support') return false;
-  } else if (activeChatTab === 'sell') {
-   if (c.global || c.support || c.roleKind !== 'sell') return false;
-  } else if (activeChatTab === 'buy') {
-   if (c.global || c.support || c.roleKind !== 'buy') return false;
-  } else {
-   if (c.roleKind === 'support') return false;
-  }
-  if (q) {
-   const hay = (c.display_name + ' ' + c.ad_title + ' ' + c.last_text).toLowerCase();
-   if (!hay.includes(q)) return false;
-  }
-  return true;
- });
+function renderChatList() { loadChats(); }
 
- listEl.innerHTML = '';
- if (!filtered.length) {
-  const emp = document.createElement('div');
-  emp.className = 'empty';
-  emp.textContent = 'В этой вкладке пока нет чатов';
-  listEl.appendChild(emp);
-  return;
- }
-
- filtered.forEach(c => {
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer';
-
-  const pr = (!c.global && (!c.support || c.staffView) && c.receiver_id)
-   ? (chatProfilesCache.get(String(c.receiver_id)) || {})
-   : {};
-  const frCls = pr.avatar_frame && typeof frameClassFor === 'function' ? frameClassFor(pr.avatar_frame) : '';
-  const bgCol = c.global ? 'linear-gradient(135deg,#2563eb,#7c3aed)' : (c.support ? 'linear-gradient(135deg,#059669,#10b981)' : (typeof avatarColorFor === 'function' ? avatarColorFor(c.receiver_id || c.room_id) : '#5b3df5'));
-
-  const av = document.createElement('div');
-  av.className = frCls;
-  av.style.cssText = 'width:48px;height:48px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;flex-shrink:0;background:' + bgCol;
-  if (pr.avatar_url) {
-   const im = document.createElement('img');
-   im.src = pr.avatar_url;
-   im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
-   av.appendChild(im);
-  } else {
-   av.textContent = c.global ? '🌍' : (c.support && !c.staffView ? '🛟' : (Array.from(String(c.display_name || 'И')).at(0) || 'И').toUpperCase());
-  }
-
-  const mid = document.createElement('div');
-  mid.style.cssText = 'min-width:0;flex:1';
-
-  const topLine = document.createElement('div');
-  topLine.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px';
-  const title = document.createElement('div');
-  title.style.cssText = 'font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-  title.textContent = c.display_name;
-  const tm = document.createElement('span');
-  tm.className = 'small muted';
-  tm.style.cssText = 'font-size:11px;flex-shrink:0';
-  tm.textContent = c.last_time || '';
-  topLine.append(title, tm);
-
-  const sub = document.createElement('div');
-  sub.className = 'small muted';
-  sub.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-size:12px';
-  sub.textContent = (c.ad_title && !c.global && !c.support ? c.ad_title + ' · ' : '') + c.last_text;
-
-  mid.append(topLine, sub);
-  row.append(av, mid);
-
-  if (c.unread) {
-   const dot = document.createElement('span');
-dot.style.cssText = 'width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0';
-row.appendChild(dot);
-}
-row.onclick = () => openChat(c);
-listEl.appendChild(row);
-});
-}
 async function deleteCurrentChat() {
-if (!activeChat) return;
-const chat = activeChat;
-if (chat.global && (!myRank || myRank.level < 7)) return;
-try {
-await api('rpc/delete_chat_room', {
-method: 'POST',
-body: { p_user_id: String(meId), p_room_id: String(chat.room_id) }
-});
-toast('Чат удалён 🗑️');
-closeModal();
-await loadChats();
-} catch (e) {
-toast('Ошибка удаления чата: ' + e.message);
+ if (!activeChat) return;
+ const chat = activeChat;
+ if (chat.global && (!myRank || myRank.level < 7)) return;
+ try {
+  await api('rpc/delete_chat_room', {
+   method: 'POST',
+   body: { p_user_id: String(meId), p_room_id: String(chat.room_id) }
+  });
+  toast('Чат удалён 🗑️');
+  closeModal();
+  await loadChats();
+ } catch (e) {
+  toast('Ошибка удаления чата: ' + e.message);
+ }
 }
-}
+
 function startPrivateChat(targetOrAd, nameOpt, titleOpt) {
-let uid = '', name = '', title = 'Личный чат';
-if (targetOrAd && typeof targetOrAd === 'object') {
-uid = String(targetOrAd.seller_id || targetOrAd.user_id || '');
-name = targetOrAd.seller_name || targetOrAd.display_name || ('Игрок ' + uid);
-title = targetOrAd.title || 'Объявление';
-} else {
-uid = String(targetOrAd || '');
-name = nameOpt || ('Игрок ' + uid);
-title = titleOpt || 'Личный чат';
+ let uid = '', name = '', title = 'Личный чат';
+ if (targetOrAd && typeof targetOrAd === 'object') {
+  uid = String(targetOrAd.seller_id || targetOrAd.user_id || '');
+  name = targetOrAd.seller_name || targetOrAd.display_name || ('Игрок ' + uid);
+  title = targetOrAd.title || 'Объявление';
+ } else {
+  uid = String(targetOrAd || '');
+  name = nameOpt || ('Игрок ' + uid);
+  title = titleOpt || 'Личный чат';
+ }
+ if (!uid || uid === String(meId)) { toast('Нельзя написать самому себе'); return; }
+ const c = {
+  room_id: roomIdFor(meId, uid),
+  receiver_id: uid,
+  ad_title: title,
+  display_name: name,
+  support: false,
+  global: false
+ };
+ closeModal();
+ showPage('chatsPage');
+ openChat(c);
 }
-if (!uid || uid === String(meId)) { toast('Нельзя написать самому себе'); return; }
-const c = {
-room_id: roomIdFor(meId, uid),
-receiver_id: uid,
-ad_title: title,
-display_name: name,
-support: false,
-global: false
-};
-closeModal();
-showPage('chatsPage');
-openChat(c);
-}
+
 function openChat(chat) {
-activeChat = chat;
-const canDelete = !chat.global || (myRank && myRank.level >= 7);
-showModal(chat.display_name, '');
-const body = $('modalBody');
-const topBar = document.createElement('div');
-topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px';
-const adSub = document.createElement('div');
-adSub.className = 'small muted';
-adSub.style.cssText = 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-adSub.textContent = chat.ad_title || 'Личный чат';
-const btnsWrap = document.createElement('div');
-btnsWrap.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
-if (canDelete) {
-let delArmed = false;
-const delBtn = document.createElement('button');
-delBtn.type = 'button';
-delBtn.className = 'inline-btn';
-delBtn.style.cssText = 'color:#f87171;border-color:rgba(248,113,113,.35)';
-delBtn.textContent = chat.global ? '🧹 Очистить' : '🗑️ Удалить чат';
-delBtn.onclick = () => {
-if (!delArmed) {
-delArmed = true;
-delBtn.textContent = 'Точно удалить?';
-setTimeout(() => { delArmed = false; if (delBtn) delBtn.textContent = chat.global ? '🧹 Очистить' : '🗑️ Удалить чат'; }, 3500);
-return;
-}
-deleteCurrentChat();
-};
-btnsWrap.appendChild(delBtn);
-}
-topBar.append(adSub, btnsWrap);
-const msgBox = document.createElement('div');
-msgBox.id = 'messagesBox';
-msgBox.className = 'messages'; msgBox.style.cssText = 'height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:10px 2px;margin:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)';
-const ld = document.createElement('div');
-ld.className = 'loading';
-ld.textContent = 'Загружаем сообщения…';
-msgBox.appendChild(ld);
-const form = document.createElement('form');
-form.id = 'sendMessageForm';
-form.className = 'send-row'; form.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:6px';
-const inp = document.createElement('input');
-inp.className = 'field';
-inp.name = 'text';
-inp.maxLength = 600;
-inp.placeholder = 'Сообщение…';
-inp.autocomplete = 'off';
-const sendBtn = document.createElement('button');
-sendBtn.type = 'submit';
-sendBtn.textContent = '➤';
+ activeChat = chat;
+ const canDelete = !chat.global || (myRank && myRank.level >= 7);
+
+ showModal(chat.display_name, '');
+ const body = $('modalBody');
+
+ const topBar = document.createElement('div');
+ topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px';
+ const adSub = document.createElement('div');
+ adSub.className = 'small muted';
+ adSub.style.cssText = 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+ adSub.textContent = chat.ad_title || 'Личный чат';
+
+ const btnsWrap = document.createElement('div');
+ btnsWrap.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
+
+ if (canDelete) {
+  let delArmed = false;
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'inline-btn';
+  delBtn.style.cssText = 'color:#f87171;border-color:rgba(248,113,113,.35)';
+  delBtn.textContent = chat.global ? '🧹 Очистить' : '🗑️ Удалить чат';
+  delBtn.onclick = () => {
+   if (!delArmed) {
+    delArmed = true;
+    delBtn.textContent = 'Точно удалить?';
+    setTimeout(() => { delArmed = false; if (delBtn) delBtn.textContent = chat.global ? '🧹 Очистить' : '🗑️ Удалить чат'; }, 3500);
+    return;
+   }
+   deleteCurrentChat();
+  };
+  btnsWrap.appendChild(delBtn);
+ }
+ topBar.append(adSub, btnsWrap);
+
+ const msgBox = document.createElement('div');
+ msgBox.id = 'messagesBox';
+ msgBox.className = 'messages';
+ msgBox.style.cssText = 'height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:10px 2px;margin:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)';
+ const ld = document.createElement('div');
+ ld.className = 'loading';
+ ld.textContent = 'Загружаем сообщения…';
+ msgBox.appendChild(ld);
+
+ const form = document.createElement('form');
+ form.id = 'sendMessageForm';
+ form.className = 'send-row';
+ form.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:6px';
+ const inp = document.createElement('input');
+ inp.className = 'field';
+ inp.name = 'text';
+ inp.maxLength = 600;
+ inp.placeholder = 'Сообщение…';
+ inp.autocomplete = 'off';
+ const sendBtn = document.createElement('button');
+ sendBtn.type = 'submit';
+ sendBtn.textContent = '➤';
 form.append(inp, sendBtn);
 form.addEventListener('submit', sendMessage);
 body.append(topBar, msgBox, form);
@@ -2036,7 +1931,6 @@ const seen = JSON.parse(localStorage.getItem('mt_seen_chats') || '{}');
 if (seen[chat.room_id] !== lastRow.id) {
 seen[chat.room_id] = lastRow.id;
 localStorage.setItem('mt_seen_chats', JSON.stringify(seen));
-renderChatList();
 }
 }
 const missingIds = Array.from(new Set(rows.map(r => String(r.sender_id)).filter(id => id && id !== 'support' && id !== 'global' && !chatProfilesCache.has(id))));
@@ -2057,15 +1951,14 @@ const letter = (Array.from(dispName).at(0) || 'И').toUpperCase();
 const avInner = pr.avatar_url ? '' : escapeHTML(letter);
 const frCls = pr.avatar_frame && typeof frameClassFor === 'function' ? frameClassFor(pr.avatar_frame) : '';
 const bgCol = typeof avatarColorFor === 'function' ? avatarColorFor(sid) : '#5b3df5';
-const msgTime = m.created_at ? formatChatTime(m.created_at) : '';
-const timeHtml = msgTime ? '' + escapeHTML(msgTime) + '' : '';
 const avStyle = 'width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850;color:#fff;flex-shrink:0;cursor:pointer;background:' + bgCol;
-   const rowStyle = 'display:flex;align-items:flex-end;gap:8px;max-width:86%;align-self:' + (isMine ? 'flex-end;flex-direction:row-reverse' : 'flex-start');
-   const bubStyle = isMine ? 'background:linear-gradient(135deg,#6f42ff,#5531d9);border:1px solid rgba(139,92,246,.5);border-radius:15px 15px 4px 15px;padding:9px 12px;font-size:13px;line-height:1.4;color:#fff;word-break:break-word' : 'background:var(--card2);border:1px solid var(--line);border-radius:15px 15px 15px 4px;padding:9px 12px;font-size:13px;line-height:1.4;color:var(--text);word-break:break-word';
-   const timeHtml2 = msgTime ? '<span style="display:block;font-size:10px;opacity:.65;text-align:right;margin-top:4px">' + escapeHTML(msgTime) + '</span>' : '';
-   const avHtml = '<div class="msg-av ' + frCls + '" data-uid="' + escapeHTML(sid) + '" style="' + avStyle + '">' + avInner + '</div>';
-   return '<div style="' + rowStyle + '">' + avHtml + '<div style="' + bubStyle + '"><div data-uid="' + escapeHTML(sid) + '" style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:3px;cursor:pointer">' + escapeHTML(dispName) + '</div>' + escapeHTML(m.text)  + '</div></div>';
-  }).join('') || 'Начните общение первым 👋';
+const rowStyle = 'display:flex;align-items:flex-end;gap:8px;max-width:86%;align-self:' + (isMine ? 'flex-end;flex-direction:row-reverse' : 'flex-start');
+const bubStyle = isMine
+? 'background:linear-gradient(135deg,#6f42ff,#5531d9);border:1px solid rgba(139,92,246,.5);border-radius:15px 15px 4px 15px;padding:9px 12px;font-size:13px;line-height:1.4;color:#fff;word-break:break-word'
+: 'background:var(--card2);border:1px solid var(--line);border-radius:15px 15px 15px 4px;padding:9px 12px;font-size:13px;line-height:1.4;color:var(--text);word-break:break-word';
+const avHtml = '<div class="' + frCls + '" data-uid="' + escapeHTML(sid) + '" style="' + avStyle + '">' + avInner + '</div>';
+   return '<div style="' + rowStyle + '">' + avHtml + '<div style="' + bubStyle + '"><div data-uid="' + escapeHTML(sid) + '" style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:3px;cursor:pointer">' + escapeHTML(dispName) + '</div>' + escapeHTML(m.text) + '</div></div>';
+}).join('') || 'Начните общение первым 👋';
 box.querySelectorAll('[data-uid]').forEach(el => {
 el.addEventListener('click', () => {
 if (typeof openPublicProfile === 'function') openPublicProfile(el.dataset.uid);
