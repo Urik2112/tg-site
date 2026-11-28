@@ -393,23 +393,25 @@ $('modalClose').addEventListener('click',closeModal);
 $('modalWrap').addEventListener('click',e=>{if(e.target===$('modalWrap'))closeModal();});
 function headers(extra={}) { return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...extra}; }
 async function api(table, options={}) {
- const url = SUPABASE_URL+'/'+table+(options.query || '');
- let response;
- for (let attempt = 0; attempt < 3; attempt++) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 12000);
-  try {
-   response = await fetch(url,{method:options.method||'GET',headers:headers(options.headers||{}),body:options.body?JSON.stringify(options.body):undefined,signal:ctrl.signal});
+ const method=String(options.method||'GET').toUpperCase();
+ const url=SUPABASE_URL+'/'+table+(options.query||'');
+ const maxAttempts=(method==='GET'||method==='HEAD')?3:1;
+ let response,text='';
+ for(let attempt=0;attempt<maxAttempts;attempt++){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),12000);
+  try{
+   response=await fetch(url,{method,headers:headers(options.headers||{}),body:options.body?JSON.stringify(options.body):undefined,signal:ctrl.signal});
+   text=await response.text();
    clearTimeout(timer);
    break;
-  } catch (e) {
+  }catch(e){
    clearTimeout(timer);
-   if (attempt === 2) throw new Error(e && e.name === 'AbortError' ? 'Медленное соединение с базой. Нажмите «Обновить».' : (e.message || 'Ошибка сети'));
+   if(attempt===maxAttempts-1)throw new Error(e&&e.name==='AbortError'?'Запрос к базе превысил 12 секунд. Проверьте соединение и повторите попытку.':(e.message||'Ошибка сети'));
   }
  }
- const text = await response.text();
- let data=null; try { data=text?JSON.parse(text):null; } catch (_) { data=text; }
- if (!response.ok) { const msg = data && data.message ? data.message : (typeof data==='string'?data:response.statusText); throw new Error(msg || 'Ошибка Supabase ('+response.status+')'); }
+ let data=null;try{data=text?JSON.parse(text):null;}catch(_){data=text;}
+ if(!response.ok){const msg=data&&data.message?data.message:(typeof data==='string'?data:response.statusText);throw new Error(msg||'Ошибка Supabase ('+response.status+')');}
  return data;
 }
 function setRankBadge(target, rank) { const r=rankFor(rank); target.innerHTML='<span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'; }
@@ -786,7 +788,7 @@ function openAd(id) {
   box.style.display = 'block';
   box.innerHTML = `📊 <b>Средняя цена по рынку:</b> ${formatMoneyShort(avg)} <span class="muted">(${nums.length} сдел.)</span>${diffBadge}`;
  }).catch(() => {});
- api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success,first_seen_at,active_seconds,tenure_tag&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
+ api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success,first_seen_at,active_seconds,tenure_tag,tenure_override&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
   const sr = Array.isArray(r) ? r.at(0) : r;
   if (sr) {
    if (sr.avatar_url && $('sellerAvatarBox')) $('sellerAvatarBox').innerHTML = '<img src="'+escapeHTML(sr.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">';
@@ -1759,7 +1761,7 @@ async function openPublicProfile(uid){
  uid=String(uid||'');if(!uid||uid==='support'||uid==='global')return;
  showModal('Профиль','<div class="loading">Загружаем профиль…</div>');
  let p=null,likes=0;
- try{const r=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,game_phone,deals_success,first_seen_at,active_seconds,tenure_tag&user_id=eq.'+encodeURIComponent(uid)+'&limit=1'});p=r&&r[0]||null;}catch(_){}
+ try{const r=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,game_phone,deals_success,first_seen_at,active_seconds,tenure_tag,tenure_override&user_id=eq.'+encodeURIComponent(uid)+'&limit=1'});p=r&&r[0]||null;}catch(_){}
  try{const l=await api('profile_likes',{query:'?select=from_user_id&to_user_id=eq.'+encodeURIComponent(uid)});likes=Array.isArray(l)?l.length:0;}catch(_){}
  p=p||{user_id:uid};
  const mineAds=(ads||[]).filter(a=>String(a.seller_id)===uid),name=p.display_name||(mineAds[0]&&mineAds[0].seller_name)||'Игрок',r=rankFor(p.rank);
@@ -1901,7 +1903,7 @@ function msgHTML(m){
  const sid=String(m.sender_id||''),mine=sid===String(meId),p=m._p;
  const pr=mine?(myRole||{}):(chatProfilesCache.get(sid)||{});
  const name=pr.display_name||m.sender_name||(mine?meName:sid)||'Игрок';
- const tail=p?(p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':'<span class="msg-time">отправляется…</span>'):'<span class="msg-time">'+escapeHTML(formatChatTime(m.created_at))+'</span>';
+ const tail=p?(p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':(p.state==='ok'?'<span class="msg-time">отправлено</span>':'<span class="msg-time">отправляется…</span>')):'<span class="msg-time">'+escapeHTML(formatChatTime(m.created_at))+'</span>';
  return '<div class="msg-row'+(mine?' mine':'')+'">'+avatarHTML(pr,sid,name,32)+'<div class="bubble'+(mine?' mine':'')+(p?' pending':'')+'"><div class="msg-author" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(name)+'</div>'+escapeHTML(m.text)+tail+'</div></div>';
 }
 function renderMsgs(stick){
@@ -1963,6 +1965,22 @@ async function loadMessages(){
  }catch(e){const box=$('messagesBox');if(box&&!curRows.length&&!box.querySelector('.msg-row'))box.innerHTML='<div class="empty">Нет соединения. Пробуем снова…</div>';}
  finally{msgBusy=false;}
 }
+async function deliver(p){
+ const chat=p&&p.chat;if(!chat)throw new Error('Диалог больше не активен');
+ try{
+  const receiver=chat.global?'global':(chat.support?(chat.staffView?String(chat.receiver_id||'support'):'support'):String(chat.receiver_id||''));
+  const body={room_id:String(chat.room_id),ad_title:String(chat.ad_title||'Личный чат'),sender_id:String(meId),sender_name:String(meName),receiver_id:receiver,text:String(p.text||'')};
+  await api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body});
+  p.state='ok';
+  if(activeChat===chat){renderMsgs();lastSig='';loadMessages();}
+  return true;
+ }catch(err){
+  p.state='fail';
+  if(activeChat===chat)renderMsgs();
+  toast('Не удалось отправить сообщение: '+(err&&err.message||'ошибка сети'));
+  return false;
+ }
+}
 async function sendMessage(e){
  e.preventDefault();
  if(!activeChat)return;
@@ -1972,13 +1990,11 @@ async function sendMessage(e){
  const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,5),key:activeChat.key,text:text,chat:activeChat,state:'send'};
  pending.push(p);renderMsgs(true);
  const sb=e.currentTarget.querySelector('button[type="submit"]');if(sb)sb.disabled=true;
- await deliver(p);
- if(sb)sb.disabled=false;input.focus();
+ try{await deliver(p);}catch(err){p.state='fail';renderMsgs();toast('Не удалось отправить сообщение: '+(err&&err.message||'ошибка сети'));}
+ finally{if(sb)sb.disabled=false;if(input&&input.isConnected)input.focus();}
 }
 const TENURE=[
- {name:'🌱 Новичок',h:0,d:0,col:'#22c55e',bg:'rgba(34,197,94,.14)',bd:'rgba(34,197,94,.35)'},
- {name:'👤 Участник',h:2,d:3,col:'#22c55e',bg:'rgba(34,197,94,.14)',bd:'rgba(34,197,94,.35)'},
- {name:'🤓 Матёрый',h:8,d:10,col:'#eab308',bg:'rgba(234,179,8,.14)',bd:'rgba(234,179,8,.35)'},
+ {name:'👤 Участник',h:0,d:0,col:'#22c55e',bg:'rgba(34,197,94,.14)',bd:'rgba(34,197,94,.35)'},
  {name:'💯 Свояк',h:20,d:21,col:'#eab308',bg:'rgba(234,179,8,.14)',bd:'rgba(234,179,8,.35)'},
  {name:'😎 Бывалый',h:45,d:45,col:'#a855f7',bg:'rgba(168,85,247,.16)',bd:'rgba(168,85,247,.38)'},
  {name:'✌️ Олдовый',h:90,d:90,col:'#a855f7',bg:'rgba(168,85,247,.16)',bd:'rgba(168,85,247,.38)'},
@@ -1990,17 +2006,21 @@ function tenureLevel(sec,first){
  let L=0;TENURE.forEach((x,i)=>{if(h>=x.h||d>=x.d)L=i;});
  return {i:L,h:h,d:d};
 }
-function tenureOf(row){return TENURE[tenureLevel(row&&row.active_seconds,row&&row.first_seen_at).i];}
+function tenureOf(row){
+ const override=String(row&&row.tenure_override||'');
+ const manual=TENURE.find(t=>t.name===override);
+ return manual||TENURE[tenureLevel(row&&row.active_seconds,row&&row.first_seen_at).i];
+}
 function tenureChip(t){return '<span class="rank tenure-chip" style="color:'+t.col+';background:'+t.bg+';border:1px solid '+t.bd+';margin-left:6px">'+escapeHTML(t.name)+'</span>';}
 function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return (h?h+' ч ':'')+m+' мин';}
 function renderTenure(){
- const x=tenureLevel(tenure.active,tenure.first),t=TENURE[x.i],n=TENURE[x.i+1];
+ const x=tenureLevel(tenure.active,tenure.first),automatic=TENURE[x.i],manual=TENURE.find(t=>t.name===String(myRole&&myRole.tenure_override||'')),shown=manual||automatic,n=TENURE[x.i+1];
  const pr=$('profileRank');
- if(pr){pr.querySelectorAll('.tenure-chip').forEach(e=>e.remove());pr.insertAdjacentHTML('beforeend',tenureChip(t));}
+ if(pr){pr.querySelectorAll('.tenure-chip').forEach(e=>e.remove());pr.insertAdjacentHTML('beforeend',tenureChip(shown));}
  const box=$('tenureBox');if(!box)return;
  const frac=n?Math.min(1,Math.max(x.h/n.h,x.d/n.d)):1;
  const next=n?'До «'+n.name+'»: ещё '+Math.max(0,Math.ceil(n.h-x.h))+' ч онлайна или '+Math.max(0,Math.ceil(n.d-x.d))+' дн.':'Максимальный тег достигнут 🏆';
- box.innerHTML='<div class="small muted">⏱ В маркете: <b style="color:var(--text)">'+fmtDur(tenure.active)+'</b> онлайн · '+Math.floor(x.d)+' дн. с первого входа</div><div class="ten-bar"><i style="width:'+Math.round(frac*100)+'%;background:'+t.col+'"></i></div><div class="small muted">'+next+'</div>';
+ box.innerHTML='<div class="small muted">⏱ В маркете: <b style="color:var(--text)">'+fmtDur(tenure.active)+'</b> онлайн · '+Math.floor(x.d)+' дн. с первого входа</div><div class="ten-bar"><i style="width:'+Math.round(frac*100)+'%;background:'+automatic.col+'"></i></div><div class="small muted">'+next+'</div>'+(manual?'<div class="small muted" style="margin-top:5px">Статус выдан администрацией</div>':'');
 }
 async function patchRole(uid,fields,rpc,rpcBody){
  try{const r=await api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(uid),headers:{'Prefer':'return=representation'},body:fields});if(Array.isArray(r)&&r.length)return true;}catch(_){}
@@ -2009,7 +2029,7 @@ async function patchRole(uid,fields,rpc,rpcBody){
 }
 async function syncTenure(force){
  if(!force&&tenure.active===tenure.synced)return;
- const tag=TENURE[tenureLevel(tenure.active,tenure.first).i].name;
+ const tag=tenureOf(Object.assign({},myRole||{},{active_seconds:tenure.active,first_seen_at:tenure.first})).name;
  const f={first_seen_at:tenure.first,active_seconds:Math.floor(tenure.active),tenure_tag:tag};
  const ok=await patchRole(meId,f,'sync_tenure',{p_user_id:String(meId),p_first_seen_at:f.first_seen_at,p_active_seconds:f.active_seconds,p_tenure_tag:tag});
  if(ok){tenure.synced=tenure.active;if(myRole)Object.assign(myRole,f);}
@@ -2020,16 +2040,17 @@ function startTenure(){
  tenure.active=Math.max(Number(myRole.active_seconds)||0,Number(localStorage.getItem(lk))||0);
  tenure.first=myRole.first_seen_at||localStorage.getItem(fk)||new Date().toISOString();
  localStorage.setItem(fk,tenure.first);
- const stored=TENURE.findIndex(t=>t.name===myRole.tenure_tag),lv=tenureLevel(tenure.active,tenure.first).i;
- if(stored>=0&&lv>stored)toast('🎉 Вы получили новый тег: '+TENURE[lv].name+'!');
+ const automaticStored=TENURE.findIndex(t=>t.name===myRole.tenure_tag),lv=tenureLevel(tenure.active,tenure.first).i;
+ const hasManual=TENURE.some(t=>t.name===String(myRole.tenure_override||''));
+ if(!hasManual&&automaticStored>=0&&lv>automaticStored)toast('🎉 Вы получили новый тег: '+TENURE[lv].name+'!');
  tenure.lvl=lv;tenure.synced=Number(myRole.active_seconds)||0;
- if(!myRole.first_seen_at||stored!==lv)syncTenure(true);
+ if(!myRole.first_seen_at||(!hasManual&&automaticStored!==lv))syncTenure(true);
  renderTenure();
  tenure.timer=setInterval(()=>{
   if(document.visibilityState!=='visible')return;
   tenure.active+=60;localStorage.setItem(lk,String(tenure.active));
   const x=tenureLevel(tenure.active,tenure.first).i;
-  if(x>tenure.lvl){tenure.lvl=x;toast('🎉 Вы получили новый тег: '+TENURE[x].name+'!');syncTenure(true);}
+  if(x>tenure.lvl){tenure.lvl=x;if(!TENURE.some(t=>t.name===String(myRole&&myRole.tenure_override||'')))toast('🎉 Вы получили новый тег: '+TENURE[x].name+'!');syncTenure(true);}
   else if(tenure.active-tenure.synced>=150)syncTenure(false);
   renderTenure();
  },60000);
@@ -2193,91 +2214,61 @@ function openRulesModal() {
 if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModal);
 
 async function openAdminCenter() {
- if(!myRank || myRank.level<8){ toast('Админ-центр доступен с 8 уровня'); return; }
- showModal('👑 Админ-центр', '<div class="loading">Загружаем панель управления…</div>');
- try {
-  rolesCache=await api('roles',{query:'?select=user_id,display_name,rank,is_banned,ban_reason,deals_success,updated_at&order=updated_at.desc&limit=300'})||[];
- }
+ if(!myRank || myRank.level<8){toast('Админ-центр доступен с 8 уровня');return;}
+ showModal('👑 Админ-центр','<div class="loading">Загружаем панель управления…</div>');
+ try{rolesCache=await api('roles',{query:'?select=user_id,display_name,rank,is_banned,ban_reason,deals_success,updated_at,tenure_override&order=updated_at.desc&limit=300'})||[];}
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
- let count=ads.length;
- const rankOptions=RANKS.filter(r=>r.level<myRank.level || myRank.level===10).map(r=>'<option value="'+r.level+'">'+escapeHTML(r.name)+' ('+r.level+')</option>').join('');
+ const count=ads.length;
+ const rankOptions=RANKS.filter(r=>r.level<myRank.level||myRank.level===10).map(r=>'<option value="'+r.level+'">'+escapeHTML(r.name)+' ('+r.level+')</option>').join('');
+ const tenureOptions='<option value="">⟲ Авто (сбросить ручной статус)</option>'+TENURE.map(t=>'<option value="'+escapeHTML(t.name)+'">'+escapeHTML(t.name)+'</option>').join('');
  const adminsOnly=rolesCache.filter(p=>rankLevel(p.rank)>=7).sort((a,b)=>rankLevel(b.rank)-rankLevel(a.rank));
- const fallbackNames = {};
- (ads || []).forEach(a => {
-  if (a.seller_id && a.seller_name && !fallbackNames[a.seller_id]) fallbackNames[a.seller_id] = a.seller_name;
- });
+ const fallbackNames={};(ads||[]).forEach(a=>{if(a.seller_id&&a.seller_name&&!fallbackNames[a.seller_id])fallbackNames[a.seller_id]=a.seller_name;});
+ const canManage=p=>myRank.level===10||rankLevel(p.rank)<myRank.level;
+ const manualLabel=p=>p.tenure_override?'<div class="small muted">🏷 Ручной статус: '+escapeHTML(p.tenure_override)+'</div>':'';
  const adminStaffHtml=adminsOnly.map(p=>{
-  const lv=rankLevel(p.rank),r=rankFor(p.rank);
-  const ok=lv<myRank.level||myRank.level===10;
-  const uid=String(p.user_id);
-  const resolvedName=p.display_name || fallbackNames[uid] || 'Администратор';
-  const avInner=p.avatar_url
-   ? '<img src="'+escapeHTML(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">'
-   : escapeHTML((String(resolvedName || 'А').trim().charAt(0) || 'А').toUpperCase());
+  const lv=rankLevel(p.rank),r=rankFor(p.rank),ok=canManage(p),uid=String(p.user_id),resolvedName=p.display_name||fallbackNames[uid]||'Администратор';
+  const avInner=p.avatar_url?'<img src="'+escapeHTML(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">':escapeHTML((String(resolvedName||'А').trim().charAt(0)||'А').toUpperCase());
   const avHtml='<div class="'+frameClassFor(p.avatar_frame)+'" style="width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:16px;color:#fff;background:'+avatarColorFor(uid)+';flex-shrink:0">'+avInner+'</div>';
-  const btn=ok?'<button type="button" class="inline-btn" data-pick-admin="'+escapeHTML(uid)+'" data-pick-level="'+lv+'">✏️ Изм.</button>':'<span class="muted">—</span>';
-  return '<div class="admin-player" style="align-items:center;gap:10px">'
-   + '<div data-open-admin-profile="'+escapeHTML(uid)+'" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;cursor:pointer" title="Открыть профиль">'
-   +   avHtml
-   +   '<div style="min-width:0;flex:1">'
-   +     '<div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(resolvedName)+' <span class="muted" style="font-weight:600">· '+escapeHTML(uid)+'</span></div>'
-   +     '<div style="margin-top:3px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+' ('+lv+'/10)</span></div>'
-   +   '</div>'
-   + '</div>'
-   + '<div style="flex-shrink:0">'+btn+'</div>'
-   + '</div>';
+  const btn=ok?'<button type="button" class="inline-btn" data-pick-admin="'+escapeHTML(uid)+'" data-pick-level="'+lv+'">✏️ Изм.</button> <button type="button" class="inline-btn" data-pick-tenure="'+escapeHTML(uid)+'">🏷</button>':'<span class="muted">—</span>';
+  return '<div class="admin-player" style="align-items:center;gap:10px"><div data-open-admin-profile="'+escapeHTML(uid)+'" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;cursor:pointer" title="Открыть профиль">'+avHtml+'<div style="min-width:0;flex:1"><div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(resolvedName)+' <span class="muted" style="font-weight:600">· '+escapeHTML(uid)+'</span></div><div style="margin-top:3px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+' ('+lv+'/10)</span></div>'+manualLabel(p)+'</div></div><div style="flex-shrink:0">'+btn+'</div></div>';
  }).join('')||'<div class="small muted">Админов 7+ ур. нет.</div>';
  const players=rolesCache.map(p=>{
-  const level=rankLevel(p.rank),r=rankFor(p.rank);
-  const canManage=level<myRank.level;
-  const nick=p.display_name?escapeHTML(p.display_name)+' · ':'';
-  return '<div class="admin-player"><div><b>'+nick+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div></div><div>'+(canManage?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button>':'<span class="muted">—</span>')+'</div></div>';
+  const level=rankLevel(p.rank),r=rankFor(p.rank),ok=canManage(p),nick=p.display_name?escapeHTML(p.display_name)+' · ':'';
+  return '<div class="admin-player"><div><b>'+nick+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div>'+manualLabel(p)+'</div><div>'+(ok?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button> <button class="inline-btn" data-pick-tenure="'+escapeHTML(p.user_id)+'">🏷</button>':'<span class="muted">—</span>')+'</div></div>';
  }).join('')||'<div class="small muted">Пока нет записей о ролях.</div>';
  showModal('👑 Админ-центр',`
   <div class="admin-stat"><div class="stat"><b>${count}</b><span>Объявлений на площадке</span></div><div class="stat"><b>${adminsOnly.length}</b><span>Админов (7–10 ур.)</span></div></div>
   <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛡️ Действующая администрация</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
   <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
   <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
+  <div class="panel" style="margin:12px 0"><b>🏷 Статус стажа (тег)</b><form id="tenureForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" id="tenureTargetId" required placeholder="ID пользователя"><label class="field-label">Статус</label><select class="field" name="tag" id="tenureTagSelect">${tenureOptions}</select><button class="btn" type="submit">Выдать статус</button></form></div>
   <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Пункт правил (быстрый выбор)</label><select class="field" id="banRuleSelect"><option value="">— Выберите нарушение или введите вручную —</option>${BAN_RULES.map(r=>'<option value="'+escapeHTML(r.code+' — '+r.title)+'">'+escapeHTML(r.code+' — '+r.title)+'</option>').join('')}</select><label class="field-label">Причина блокировки</label><input class="field" name="reason" placeholder="Причина (для бана)"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn danger" type="submit" style="margin:0">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="margin:0">Разбанить</button></div></form></div>
   <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🤝 Контроль успешных сделок</b><button type="button" class="inline-btn" id="openAdminDealsBtn">Открыть журнал</button></div><div class="small muted" style="margin-top:4px">Проверка на твинки и аннулирование накрученных сделок</div></div>
   <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
  `);
- document.querySelectorAll('[data-open-admin-profile]').forEach(el=>el.addEventListener('click',()=>{
-  const uid = el.dataset.openAdminProfile;
-  if (uid && typeof openPublicProfile === 'function') openPublicProfile(uid);
- }));
- if ($('openAdminDealsBtn') && typeof openAdminDealsLog === 'function') $('openAdminDealsBtn').onclick = openAdminDealsLog;
- document.querySelectorAll('[data-pick-admin]').forEach(b=>b.addEventListener('click',()=>{
-  const f=$('rankForm');if(!f)return;
-  f.querySelector('[name="user_id"]').value=b.dataset.pickAdmin||'';
-  if(b.dataset.pickLevel)f.querySelector('[name="rank"]').value=b.dataset.pickLevel;
-  f.scrollIntoView({behavior:'smooth',block:'center'});
-  toast('ID админа подставлен в форму');
- }));
- $('rankForm').addEventListener('submit',async e=>{
-  e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),level=Number(e.currentTarget.elements.rank.value);
-  if(!id||!(level<myRank.level||myRank.level===10)){toast('Недостаточно прав для назначения');return;}
-  try {await upsertRole(id,{rank:RANKS[level-1].name,is_banned:false,ban_reason:null});toast('Ранг обновлён');openAdminCenter();}
-  catch(err){toast('Ошибка: '+err.message);}
+ document.querySelectorAll('[data-open-admin-profile]').forEach(el=>el.addEventListener('click',()=>{const uid=el.dataset.openAdminProfile;if(uid&&typeof openPublicProfile==='function')openPublicProfile(uid);}));
+ if($('openAdminDealsBtn')&&typeof openAdminDealsLog==='function')$('openAdminDealsBtn').onclick=openAdminDealsLog;
+ document.querySelectorAll('[data-pick-admin]').forEach(b=>b.addEventListener('click',()=>{const f=$('rankForm');if(!f)return;f.querySelector('[name="user_id"]').value=b.dataset.pickAdmin||'';if(b.dataset.pickLevel)f.querySelector('[name="rank"]').value=b.dataset.pickLevel;f.scrollIntoView({behavior:'smooth',block:'center'});toast('ID админа подставлен в форму');}));
+ document.querySelectorAll('[data-pick-tenure]').forEach(b=>b.addEventListener('click',()=>{const f=$('tenureForm');if(!f)return;$('tenureTargetId').value=b.dataset.pickTenure||'';f.scrollIntoView({behavior:'smooth',block:'center'});toast('ID игрока подставлен в форму статуса');}));
+ $('rankForm').addEventListener('submit',async e=>{e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),level=Number(e.currentTarget.elements.rank.value);if(!id||!(level<myRank.level||myRank.level===10)){toast('Недостаточно прав для назначения');return;}const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;try{await upsertRole(id,{rank:RANKS[level-1].name,is_banned:false,ban_reason:null});toast('Ранг обновлён');await openAdminCenter();}catch(err){toast('Ошибка: '+err.message);}finally{if(btn)btn.disabled=false;}});
+ $('tenureForm').addEventListener('submit',async e=>{
+  e.preventDefault();const form=e.currentTarget,id=String(form.elements.user_id.value||'').trim(),tag=String(form.elements.tag.value||'');
+  if(!id){toast('Укажите Telegram ID');return;}if(id===String(meId)){toast('Нельзя менять собственный статус');return;}
+  const btn=form.querySelector('button[type="submit"]');if(btn){btn.disabled=true;btn.textContent='Сохраняем…';}
+  try{
+   const target=await getTargetRole(id),targetLevel=rankLevel(target.rank);
+   if(myRank.level!==10&&targetLevel>=myRank.level){toast('Нельзя менять статус игроку равного или старшего уровня');return;}
+   await api('rpc/admin_set_tenure',{method:'POST',body:{p_admin_id:String(meId),p_target_id:id,p_tag:tag}});
+   toast('Статус обновлён');await openAdminCenter();
+  }catch(err){toast('Ошибка: '+err.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='Выдать статус';}}
  });
- if($('banRuleSelect')) $('banRuleSelect').addEventListener('change',e=>{
-  if(e.target.value && $('banForm')) $('banForm').elements.reason.value=e.target.value;
- });
- $('banForm').addEventListener('submit',async e=>{
-  e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),reason=e.currentTarget.elements.reason.value.trim();
-  await changeBan(id,true,reason);
- });
- $('unbanBtn').addEventListener('click',async()=>{
-  const id=$('banForm').elements.user_id.value.trim();if(!id){toast('Укажите Telegram ID');return;}await changeBan(id,false,'');
- });
- $('playersList').querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',async()=>{
-  const id=b.dataset.remove;const player=rolesCache.find(p=>String(p.user_id)===id);
-  if(!player||rankLevel(player.rank)>=myRank.level){toast('Недостаточно прав');return;}
-  if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Точно снять?'; setTimeout(()=>{ if(b){ delete b.dataset.armed; b.textContent='Снять'; } }, 3500); return; }
-  try {await upsertRole(id,{rank:RANKS[0].name});toast('Должность снята');openAdminCenter();}
-  catch(err){toast('Ошибка: '+err.message);}
- }));
+ if($('banRuleSelect'))$('banRuleSelect').addEventListener('change',e=>{if(e.target.value&&$('banForm'))$('banForm').elements.reason.value=e.target.value;});
+ $('banForm').addEventListener('submit',async e=>{e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),reason=e.currentTarget.elements.reason.value.trim();await changeBan(id,true,reason);});
+ $('unbanBtn').addEventListener('click',async()=>{const id=$('banForm').elements.user_id.value.trim();if(!id){toast('Укажите Telegram ID');return;}await changeBan(id,false,'');});
+ $('playersList').querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.remove,player=rolesCache.find(p=>String(p.user_id)===id);if(!player||!canManage(player)){toast('Недостаточно прав');return;}if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Точно снять?';setTimeout(()=>{if(b){delete b.dataset.armed;b.textContent='Снять';}},3500);return;}try{await upsertRole(id,{rank:RANKS[0].name});toast('Должность снята');await openAdminCenter();}catch(err){toast('Ошибка: '+err.message);}}));
 }
+
 async function getTargetRole(id) {
  const rows=await api('roles',{query:'?select=*&user_id=eq.'+encodeURIComponent(id)+'&limit=1'});
  return rows&&rows[0]?rows[0]:{user_id:id,rank:RANKS[0].name,is_banned:false};
