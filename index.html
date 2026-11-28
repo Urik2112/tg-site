@@ -259,6 +259,20 @@
 .rp-cancel,.rp-send{flex:1;padding:15px;border-radius:18px;font-weight:800;font-size:16px;color:#fff}
 .rp-cancel{background:#17141f}.rp-send{background:linear-gradient(135deg,#6d28d9,#7c3aed)}
 .rp-send:disabled{opacity:.6}
+
+/* ===== Чат на весь экран, аватарки и ники ===== */
+#modalWrap.chat-fullscreen{padding:0!important;align-items:stretch!important;background:#120a2c!important}
+#modalWrap.chat-fullscreen>div{width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;border:0!important;border-radius:0!important;padding:max(calc(env(safe-area-inset-top,0px) + 10px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px) + 8px),var(--chat-min-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px))!important}
+.bubble.pv{display:block!important;padding:8px 12px 7px;font-size:16px;line-height:1.35}
+.bubble.pv .b-line{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.bubble.pv .b-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble.pv .msg-author{font-size:13px;font-weight:800;margin-bottom:2px;opacity:1;line-height:1.2}
+.av-spacer{width:36px;flex-shrink:0}
+#modalWrap.chat-fullscreen .msg-row{align-items:flex-start;gap:7px;margin-bottom:3px}
+#modalWrap.chat-fullscreen .msg-row.first{margin-top:10px}
+#modalWrap.chat-fullscreen .msg-row .cav{border:1px solid rgba(255,255,255,.14)}
+#modalWrap.chat-fullscreen .msg-row .bubble{max-width:calc(100% - 52px)}
+#modalWrap.chat-fullscreen .chat-head2{margin-top:2px}
 </style>
 </head>
 <body>
@@ -1807,7 +1821,7 @@ async function fetchProfiles(ids){
  (rows||[]).forEach(p=>chatProfilesCache.set(String(p.user_id),p));
  miss.forEach(id=>{if(!chatProfilesCache.has(id))chatProfilesCache.set(id,{user_id:id});});
 }
-function stopChat(){if(chatTimer){clearInterval(chatTimer);chatTimer=null;}activeChat=null;pending=[];curRows=[];}
+function stopChat(){if(chatTimer){clearInterval(chatTimer);chatTimer=null;}if(tgBackFn&&tg&&tg.BackButton){try{tg.BackButton.offClick(tgBackFn);tg.BackButton.hide();}catch(_){}tgBackFn=null;}activeChat=null;pending=[];curRows=[];}
 function openAdminDealsLog(){toast('Журнал сделок скоро будет доступен');}
 async function openPublicProfile(uid){
  uid=String(uid||'');if(!uid||uid==='support'||uid==='global')return;
@@ -1950,7 +1964,7 @@ function startPrivateChat(targetOrAd,nameOpt,titleOpt){
  closeModal();showPage('chatsPage');openChat(c);
 }
 
-let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true,doneDealsSeen=-1;
+let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true,doneDealsSeen=-1,tgBackFn=null;
 function chatDayLabel(iso){
  const d=new Date(iso);if(Number.isNaN(d.getTime()))return '';
  const t=new Date(),y=new Date(Date.now()-864e5);
@@ -1959,12 +1973,12 @@ function chatDayLabel(iso){
  return d.toLocaleDateString('ru-RU',d.getFullYear()===t.getFullYear()?{day:'numeric',month:'long'}:{day:'numeric',month:'long',year:'numeric'});
 }
 function lastSeenText(row){
- const v=row&&(row.last_seen_at||row.last_seen);
+ const v=row&&(row.last_seen_at||row.updated_at);
  const d=v?new Date(v):null;
- if(!d||Number.isNaN(d.getTime()))return 'был(а) в сети недавно';
- if(Date.now()-d.getTime()<120000)return 'в сети';
+ if(!d||Number.isNaN(d.getTime()))return 'не в сети';
+ if(Date.now()-d.getTime()<150000)return 'в сети';
  const hm=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),t=new Date(),y=new Date(Date.now()-864e5);
- if(d.toDateString()===t.toDateString())return 'был(а) в сети сегодня в '+hm;
+ if(d.toDateString()===t.toDateString())return 'был(а) в сети в '+hm;
  if(d.toDateString()===y.toDateString())return 'был(а) в сети вчера в '+hm;
  return 'был(а) в сети '+d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' в '+hm;
 }
@@ -1979,20 +1993,18 @@ async function refreshPeerSeen(chat){
   $('chatSub').textContent=txt;$('chatSub').classList.toggle('online',txt==='в сети');
  }catch(_){}
 }
-function msgHTML(m){
+function nickColor(id){let h=0;const t=String(id||'');for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;return 'hsl('+(h%360)+',85%,76%)';}
+function msgHTML(m,head){
  if(String(m.text||'').startsWith('[DEAL_')){const d=Array.from(curDeals.values()).find(x=>x.id===m.id);return d?dealCardHTML(d):'';}
  const sid=String(m.sender_id||''),mine=sid===String(meId),p=m._p;
- const priv=!!(activeChat&&!activeChat.global&&!activeChat.support);
- if(priv){
-  let meta;
-  if(p)meta=p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':'<span class="b-time">'+(p.state==='ok'?'отправлено':'отправляется…')+'</span>';
-  else meta='<span class="b-time">'+escapeHTML(formatChatTime(m.created_at))+(mine?' <span class="b-check">✓</span>':'')+'</span>';
-  return '<div class="msg-row'+(mine?' mine':'')+'"><div class="bubble pv'+(mine?' mine':'')+(p?' pending':'')+'"><span class="b-text">'+escapeHTML(m.text)+'</span>'+meta+'</div></div>';
- }
  const pr=mine?(myRole||{}):(chatProfilesCache.get(sid)||{});
  const name=pr.display_name||m.sender_name||(mine?meName:sid)||'Игрок';
- const tail=p?(p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':(p.state==='ok'?'<span class="msg-time">отправлено</span>':'<span class="msg-time">отправляется…</span>')):'<span class="msg-time">'+escapeHTML(formatChatTime(m.created_at))+'</span>';
- return '<div class="msg-row'+(mine?' mine':'')+'">'+avatarHTML(pr,sid,name,32)+'<div class="bubble'+(mine?' mine':'')+(p?' pending':'')+'"><div class="msg-author" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(name)+'</div>'+escapeHTML(m.text)+tail+'</div></div>';
+ let meta;
+ if(p)meta=p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':'<span class="b-time">'+(p.state==='ok'?'отправлено':'отправляется…')+'</span>';
+ else meta='<span class="b-time">'+escapeHTML(formatChatTime(m.created_at))+(mine?' <span class="b-check">✓</span>':'')+'</span>';
+ const av=head?avatarHTML(pr,sid,name,36):'<div class="av-spacer"></div>';
+ const nick=head?'<div class="msg-author" data-uid="'+escapeHTML(sid)+'" style="color:'+(mine?'#e6d6ff':nickColor(sid))+'">'+escapeHTML(name)+'</div>':'';
+ return '<div class="msg-row'+(mine?' mine':'')+(head?' first':'')+'">'+av+'<div class="bubble pv'+(mine?' mine':'')+(p?' pending':'')+'">'+nick+'<div class="b-line"><span class="b-text">'+escapeHTML(m.text)+'</span>'+meta+'</div></div></div>';
 }
 function trackDoneDeals(){
  const n=Array.from(curDeals.values()).filter(d=>d.st==='done').length;
@@ -2004,12 +2016,13 @@ function renderMsgs(stick){
  trackDoneDeals();
  const mineP=pending.filter(p=>p.key===activeChat.key).map(p=>({sender_id:meId,text:p.text,_p:p}));
  const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
- let lastDay='';
+ let lastSid='',lastTs=0;
  const html=curRows.concat(mineP).map(m=>{
-  const h=msgHTML(m);if(!h)return '';
-  const day=chatDayLabel(m.created_at||new Date().toISOString());
-  let sep='';if(day&&day!==lastDay){lastDay=day;sep='<div class="day-sep"><span>'+escapeHTML(day)+'</span></div>';}
-  return sep+h;
+  if(String(m.text||'').startsWith('[DEAL_')){const h=msgHTML(m,false);if(h)lastSid='';return h;}
+  const sid=String(m.sender_id||''),ts=m.created_at?new Date(m.created_at).getTime():Date.now();
+  const head=sid!==lastSid||(ts-lastTs)>300000;
+  lastSid=sid;lastTs=ts;
+  return msgHTML(m,head);
  }).join('');
  box.innerHTML=html||'<div class="empty">Начните общение первым 👋</div>';
  if(stick||near||stickBottom){box.scrollTop=box.scrollHeight;stickBottom=false;}
@@ -2054,22 +2067,22 @@ function openChat(chat){
  if(!chat.rooms||!chat.rooms.length)chat.rooms=[chat.room_id];
  if(!chat.global&&!chat.support&&chat.receiver_id&&!chat.rooms.includes(chat.room_id))chat.rooms.push(chat.room_id);
  showModal(chat.display_name,'');activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;doneDealsSeen=-1;
- const priv=!chat.global&&!chat.support,canDelete=!chat.global||!!(myRank&&myRank.level>=7),peer=String(chat.receiver_id||''),hasMenu=priv||canDelete;
+ const nativeBack=!!(tg&&tg.BackButton&&tg.platform&&tg.platform!=='unknown'),priv=!chat.global&&!chat.support,canDelete=!chat.global||!!(myRank&&myRank.level>=7),peer=String(chat.receiver_id||''),hasMenu=priv||canDelete;
  const pr=priv?(chatProfilesCache.get(peer)||{}):null;
  let av;
  if(chat.global)av='<div class="cav" style="width:46px;height:46px;background:linear-gradient(135deg,#7b42f6,#ec4899);font-size:22px;cursor:default">💬</div>';
  else if(chat.support&&!chat.staffView)av='<div class="cav" style="width:46px;height:46px;background:#2481cc;font-size:22px;cursor:default">🎧</div>';
  else av=avatarHTML(pr||{},peer,chat.display_name,46);
- const sub=chat.global?'Общение игроков маркетплейса':(chat.support?(chat.ad_title||'Техподдержка'):(pr&&pr.last_seen_at?lastSeenText(pr):'был(а) в сети недавно'));
+ const sub=chat.global?'Общение игроков маркетплейса':(chat.support?(chat.ad_title||'Техподдержка'):(pr&&(pr.last_seen_at||pr.updated_at)?lastSeenText(pr):''));
  const ad=priv?(ads||[]).find(a=>String(a.title||'')===String(chat.ad_title||'')):null;
  const img=ad&&((ad.images&&ad.images[0])||ad.image_url);
  const strip=priv?'<div class="deal-strip"><div class="ds-thumb">'+(img?'<img src="'+escapeHTML(img)+'" alt="">':escapeHTML((ad&&ad.emoji)||'💼'))+'</div><div class="ds-title">'+escapeHTML(chat.ad_title&&chat.ad_title!=='Личный чат'?chat.ad_title:'Личный диалог')+'</div>'+(ad?'<div class="ds-price">'+escapeHTML(formatPrice(ad.price))+'</div>':'')+'<button type="button" id="dealBtn" class="ds-btn">Договорились</button></div>':'';
  const menu='<div class="chat-menu" id="chatMenu">'+(priv?'<button type="button" id="chatProfileBtn">👤 Профиль собеседника</button><button type="button" id="chatReportBtn">🚩 Пожаловаться на диалог</button>':'')+(canDelete?'<button type="button" class="danger" id="deleteChatBtn">🗑️ Удалить чат</button>':'')+'</div>';
- $('modalBody').innerHTML='<div class="chat-head1"><button type="button" class="chat-back" id="chatBackBtn" aria-label="Закрыть чат">‹ Назад</button></div>'
+ $('modalBody').innerHTML=(nativeBack?'':'<div class="chat-head1"><button type="button" class="chat-back" id="chatBackBtn" aria-label="Закрыть чат">‹ Назад</button></div>')
   +'<div class="chat-head2">'+(hasMenu?'<div class="chat-menu-wrap"><button type="button" class="chat-menu-btn" id="chatMenuBtn" aria-label="Меню чата">⋮</button>'+menu+'</div>':'')
   +'<div class="chat-who"><strong>'+escapeHTML(chat.display_name||'Чат')+'</strong><span id="chatSub" class="chat-seen">'+escapeHTML(sub)+'</span></div><div id="chatHeadAv" class="chat-head-av">'+av+'</div></div>'
   +strip+'<div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Напишите сообщение..." autocomplete="off"><button type="submit" aria-label="Отправить">→</button></form>';
- $('chatBackBtn').onclick=closeModal;
+ if($('chatBackBtn'))$('chatBackBtn').onclick=closeModal;
  if($('dealBtn'))$('dealBtn').onclick=openProposeDealModal;
  const mb=$('chatMenuBtn'),mn=$('chatMenu');
  if(mb&&mn){mb.onclick=e=>{e.stopPropagation();mn.classList.toggle('open');};if(window.__chatMenuClose)$('modalBody').removeEventListener('click',window.__chatMenuClose);window.__chatMenuClose=e=>{if(!e.target.closest('#chatMenuBtn,#deleteChatBtn'))mn.classList.remove('open');};$('modalBody').addEventListener('click',window.__chatMenuClose);}
@@ -2085,6 +2098,8 @@ function openChat(chat){
  });
  $('sendMessageForm').addEventListener('submit',sendMessage);
  $('modalWrap').classList.add('chat-fullscreen');
+ if(nativeBack){tgBackFn=closeModal;try{tg.BackButton.onClick(tgBackFn);tg.BackButton.show();}catch(_){}}
+ if(tg&&tg.isFullscreen)document.documentElement.style.setProperty('--chat-min-top','96px');
  loadMessages();let tk=0;chatTimer=setInterval(()=>{loadMessages();if(++tk%10===0)refreshPeerSeen(chat);},3000);
  if(priv)refreshPeerSeen(chat);
 }
@@ -2271,9 +2286,13 @@ async function refreshMyDeals(){
  }catch(_){}finally{dealsBusy=false;}
 }
 let presenceOff=false;
+function sendPing(col){
+ return api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(meId),headers:{'Prefer':'return=minimal'},body:{[col]:new Date().toISOString()}});
+}
 function pingPresence(){
- if(presenceOff||!myRole||document.visibilityState!=='visible')return;
- api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(meId),headers:{'Prefer':'return=minimal'},body:{last_seen_at:new Date().toISOString()}}).catch(e=>{if(/last_seen_at|column/i.test(String(e&&e.message)))presenceOff=true;});
+ if(!myRole||document.visibilityState!=='visible')return;
+ if(presenceOff){sendPing('updated_at').catch(()=>{});return;}
+ sendPing('last_seen_at').catch(e=>{if(/last_seen_at|column/i.test(String(e&&e.message))){presenceOff=true;sendPing('updated_at').catch(()=>{});}});
 }
 function startPresence(){pingPresence();setInterval(pingPresence,60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pingPresence();});}
 async function confirmDeal(d,sys){
