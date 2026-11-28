@@ -1763,8 +1763,8 @@ async function loadChats() {
     }
     return;
    }
-   const isSup = rid.startsWith('support_');
-   const isMySupport = rid === ('support_' + meId);
+   const isSup = rid === 'support' || rid.startsWith('support_') || String(m.receiver_id) === 'support';
+   const isMySupport = rid === ('support_' + meId) || (rid === 'support' && String(m.sender_id) === String(meId));
    if (isSup && !isMySupport && !isStaff) return;
    if (!isSup && String(m.sender_id) !== String(meId) && String(m.receiver_id) !== String(meId)) return;
 
