@@ -209,80 +209,121 @@
 #modalWrap.chat-fullscreen .msg-av{width:32px;height:32px}
 
 
-/* ===== Новый вид чата ===== */
+/* ===== Чат (цвета берутся из выбранной темы) ===== */
+:root{--on-accent:#fff}
+#modalWrap.chat-fullscreen{padding:0!important;align-items:stretch!important;background:var(--bg)!important}
+#modalWrap.chat-fullscreen>div{width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;border:0!important;border-radius:0!important;background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.045' stroke-width='2'%3E%3Ccircle cx='30' cy='30' r='15'/%3E%3Cpath d='M92 18l14 14-14 14-14-14z'/%3E%3Crect x='22' y='80' width='24' height='20' rx='5'/%3E%3Cpath d='M88 82h20l-4 16H92z'/%3E%3C/g%3E%3Ctext x='24' y='36' font-size='17' font-weight='700' fill='%23ffffff' fill-opacity='.05'%3E%E2%82%BD%3C/text%3E%3C/svg%3E")!important;padding:max(calc(env(safe-area-inset-top,0px) + 10px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px) + 8px),var(--chat-min-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px))!important}
 #modalWrap.chat-fullscreen .modal-top{display:none!important}
-#modalWrap.chat-fullscreen>div{background:#120a2c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.045' stroke-width='2'%3E%3Ccircle cx='30' cy='30' r='15'/%3E%3Cpath d='M92 18l14 14-14 14-14-14z'/%3E%3Crect x='22' y='80' width='24' height='20' rx='5'/%3E%3Cpath d='M88 82h20l-4 16H92z'/%3E%3C/g%3E%3Ctext x='24' y='36' font-size='17' font-weight='700' fill='%23ffffff' fill-opacity='.05'%3E%E2%82%BD%3C/text%3E%3C/svg%3E")!important;border:1px solid rgba(123,66,246,.28)!important;border-radius:28px!important;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))!important}
 .chat-head1{margin-bottom:8px}
-.chat-back{height:44px;padding:0 18px;border-radius:22px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);font-weight:800;font-size:15px;color:#fff}
-.chat-head2{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chat-head2{display:flex;align-items:center;gap:8px;margin:2px 0 8px}
+.chat-back,.chat-menu-btn,.chat-who,.deal-strip{background:var(--card2);border:1px solid var(--line);color:var(--text)}
+.chat-back{height:44px;padding:0 18px;border-radius:22px;font-weight:800;font-size:15px}
 .chat-menu-wrap{position:relative;flex-shrink:0}
-.chat-menu-btn{width:46px;height:46px;border-radius:50%;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);font-size:22px;font-weight:900;color:#fff}
-.chat-menu{display:none;position:absolute;left:0;top:52px;z-index:8;min-width:240px;background:#1f1938;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.55)}
+.chat-menu-btn{width:46px;height:46px;border-radius:50%;font-size:22px;font-weight:900}
+.chat-menu{display:none;position:absolute;left:0;top:52px;z-index:8;min-width:240px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
 .chat-menu.open{display:block}
-.chat-menu button{display:block;width:100%;text-align:left;background:transparent;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff}
-.chat-menu button:active{background:rgba(255,255,255,.07)}
-.chat-menu button.danger{color:#ff8a98}
-#modalWrap.chat-fullscreen .chat-menu #deleteChatBtn{margin:0!important;padding:11px 12px!important;font-size:14px!important}
-.chat-who{flex:1;min-width:0;height:54px;border-radius:27px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;text-align:center}
+.chat-menu button{display:block;width:100%;text-align:left;background:transparent;padding:12px;border-radius:11px;font-size:14px;font-weight:700;color:var(--text)}
+.chat-menu button:active{background:var(--card2)}
+.chat-menu button.danger{color:var(--danger)}
+#modalWrap.chat-fullscreen .chat-menu #deleteChatBtn{margin:0!important;padding:12px!important;font-size:14px!important}
+.chat-who{flex:1;min-width:0;height:54px;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;text-align:center}
 .chat-who strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;font-weight:800}
-.chat-seen{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#8f86b8}
-.chat-seen.online{color:#52d6a0}
+.chat-seen{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)}
+.chat-seen.online{color:var(--green)}
 .chat-head-av{flex-shrink:0}
-.chat-head-av .cav{border:2px solid rgba(123,66,246,.45)}
-.deal-strip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:24px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.3);margin-bottom:6px}
-.ds-thumb{width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(0,0,0,.25)}
+.deal-strip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:24px;margin-bottom:6px}
+.ds-thumb{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(0,0,0,.25)}
 .ds-thumb img{width:100%;height:100%;object-fit:cover}
 .ds-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;font-size:14px}
 .ds-price{font-weight:850;color:var(--yellow);font-size:14px;white-space:nowrap}
-.ds-btn{padding:10px 14px;border-radius:18px;background:#0e0a1f;border:1px solid rgba(255,255,255,.1);font-weight:800;font-size:13px;color:#fff;white-space:nowrap;flex-shrink:0}
+.ds-btn{padding:10px 14px;border-radius:18px;background:var(--bg);border:1px solid var(--line);font-weight:800;font-size:13px;color:var(--text);white-space:nowrap;flex-shrink:0}
 #modalWrap.chat-fullscreen .messages{border:0!important;background:transparent!important;padding:6px 2px!important}
-.day-sep{display:flex;align-items:center;gap:12px;margin:12px 0 8px;color:#8f86b8;font-weight:800;font-size:15px}
-.day-sep:before,.day-sep:after{content:"";flex:1;height:1px;background:rgba(123,66,246,.4)}
-.bubble.pv{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;font-size:16px;line-height:1.35;padding:11px 14px;max-width:82%}
-.bubble.pv.mine{background:linear-gradient(135deg,#6d28d9,#7c3aed);border-radius:20px 20px 6px 20px;border:0}
-.bubble.pv:not(.mine){background:rgba(45,34,90,.92);border:1px solid rgba(123,66,246,.28);border-radius:20px 20px 20px 6px}
-.bubble.pv .b-time{font-size:12px;opacity:.7;margin-left:auto;white-space:nowrap}
-.bubble.pv .b-check{margin-left:2px}
-#modalWrap.chat-fullscreen .send-row .field{height:54px;border-radius:27px;background:rgba(41,30,84,.92);border:0;padding:0 20px;font-size:16px}
-#modalWrap.chat-fullscreen .send-row button{width:58px;height:54px;border-radius:27px;background:linear-gradient(135deg,#6d28d9,#7c3aed);font-size:24px;font-weight:700;color:#fff}
-.rp-ov{position:fixed;inset:0;z-index:50;background:rgba(5,3,12,.78);display:flex;align-items:center;justify-content:center;padding:18px}
-.rp-box{width:100%;max-width:440px;background:#0f0d14;border:1px solid #2a2740;border-radius:24px;padding:18px}
-.rp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:18px}
-.rp-x{width:44px;height:40px;border-radius:12px;background:#17141f;border:1px solid #2a2740;font-size:18px;color:#fff}
-.rp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.rp-chip{flex:1 1 44%;padding:13px 10px;border-radius:22px;background:transparent;border:1px solid #2f2b45;font-size:14px;color:#fff}
-.rp-chip.on{border-color:#7c3aed;background:rgba(124,58,237,.25)}
-.rp-add{width:100%;padding:14px;border-radius:16px;background:transparent;border:1px dashed #3a3657;font-size:15px;color:#fff;margin-bottom:8px}
-.rp-note{font-size:13px;color:#8f86b8;margin-bottom:8px}
-.rp-text{width:100%;min-height:90px;resize:none;background:#0a0810;border:1px solid #2f2b45;border-radius:16px;padding:12px;color:#fff;outline:none;margin-bottom:10px}
-.rp-actions{display:flex;gap:10px}
-.rp-cancel,.rp-send{flex:1;padding:15px;border-radius:18px;font-weight:800;font-size:16px;color:#fff}
-.rp-cancel{background:#17141f}.rp-send{background:linear-gradient(135deg,#6d28d9,#7c3aed)}
-.rp-send:disabled{opacity:.6}
-
-/* ===== Чат на весь экран, аватарки и ники ===== */
-#modalWrap.chat-fullscreen{padding:0!important;align-items:stretch!important;background:#120a2c!important}
-#modalWrap.chat-fullscreen>div{width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;border:0!important;border-radius:0!important;padding:max(calc(env(safe-area-inset-top,0px) + 10px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px) + 8px),var(--chat-min-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px))!important}
 .bubble.pv{display:block!important;padding:8px 12px 7px;font-size:16px;line-height:1.35}
 .bubble.pv .b-line{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
 .bubble.pv .b-text{white-space:pre-wrap;overflow-wrap:anywhere}
-.bubble.pv .msg-author{font-size:13px;font-weight:800;margin-bottom:2px;opacity:1;line-height:1.2}
+.bubble.pv .msg-author{font-size:13px;font-weight:800;margin-bottom:2px;line-height:1.2}
+.bubble.pv .b-time{font-size:12px;opacity:.7;margin-left:auto;white-space:nowrap}
+.bubble.pv.mine{background:var(--accent);background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));color:var(--on-accent);border:0;border-radius:20px 20px 6px 20px}
+.bubble.pv:not(.mine){background:var(--card2);border:1px solid var(--line);border-radius:20px 20px 20px 6px}
 .av-spacer{width:36px;flex-shrink:0}
 #modalWrap.chat-fullscreen .msg-row{align-items:flex-start;gap:7px;margin-bottom:3px}
 #modalWrap.chat-fullscreen .msg-row.first{margin-top:10px}
 #modalWrap.chat-fullscreen .msg-row .cav{border:1px solid rgba(255,255,255,.14)}
 #modalWrap.chat-fullscreen .msg-row .bubble{max-width:calc(100% - 52px)}
-#modalWrap.chat-fullscreen .chat-head2{margin-top:2px}
+#modalWrap.chat-fullscreen .send-row .field{height:54px;border-radius:27px;background:var(--card2);border:1px solid var(--line);padding:0 20px;font-size:16px;margin:0}
+#modalWrap.chat-fullscreen .send-row button{width:58px;height:54px;border-radius:27px;background:var(--accent);color:var(--on-accent);font-size:24px;font-weight:700}
+.rp-ov{position:fixed;inset:0;z-index:50;background:rgba(5,3,12,.78);display:flex;align-items:center;justify-content:center;padding:18px}
+.rp-box{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px}
+.rp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:18px}
+.rp-x{width:44px;height:40px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-size:18px;color:var(--text)}
+.rp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.rp-chip{flex:1 1 44%;padding:13px 10px;border-radius:22px;background:transparent;border:1px solid var(--line);font-size:14px;color:var(--text)}
+.rp-chip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 25%,transparent)}
+.rp-add{width:100%;padding:14px;border-radius:16px;background:transparent;border:1px dashed var(--line);font-size:15px;color:var(--text);margin-bottom:8px}
+.rp-note{font-size:13px;color:var(--muted);margin-bottom:8px}
+.rp-text{width:100%;min-height:90px;resize:none;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--text);outline:none;margin-bottom:10px}
+.rp-actions{display:flex;gap:10px}
+.rp-cancel,.rp-send{flex:1;padding:15px;border-radius:18px;font-weight:800;font-size:16px;color:var(--text)}
+.rp-cancel{background:var(--card2)}.rp-send{background:var(--accent);color:var(--on-accent)}
+.rp-send:disabled{opacity:.6}
+
+/* ===== Общий вид приложения ===== */
+.topbar{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.panel{border-radius:22px;background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.ad-card{border-radius:22px;box-shadow:0 10px 26px rgba(0,0,0,.2)}
+.ad-art{border-radius:0}
+.search{border-radius:26px;padding:15px 20px;background:var(--card2)}
+.field{border-radius:16px;padding:13px 14px}
+.btn{border-radius:20px;padding:14px 16px;color:var(--on-accent)}
+.btn.secondary,.btn.danger{color:var(--text)}
+.inline-btn{border-radius:14px;padding:9px 12px;border:1px solid var(--line)}
+.filter{border:1px solid var(--line);padding:10px 16px}
+.stat{border-radius:18px}
+.modal{border-radius:28px}
+.chat-item{border-radius:22px;padding:14px}
+.admin-player{padding:12px 0}
+.bottom-nav{border-radius:26px 26px 0 0;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.toast{border-radius:18px}
+.boost-badge{position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:12px}
+.coin-pill{display:flex;align-items:center;height:38px;padding:0 12px;border-radius:14px;background:var(--card2);border:1px solid var(--line);font-weight:800;font-size:13px;color:var(--yellow)}
+.coin-card .coin-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.coin-bal{font-size:30px;font-weight:900;color:var(--yellow);line-height:1.1}
+.coin-bal small{font-size:13px;color:var(--muted);font-weight:700}
+.coin-daily{width:auto;margin:0;padding:12px 16px;font-size:13px}
+.coin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.coin-actions .btn{margin:0}
+.shop-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:var(--card2);border:1px solid var(--line);margin-bottom:8px}
+.shop-item .si-ico{width:44px;height:44px;border-radius:14px;background:var(--bg);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.shop-item .si-txt{flex:1;min-width:0}
+.shop-item .si-txt b{display:block;font-size:14px}
+.shop-item .si-txt span{font-size:12px;color:var(--muted)}
+.shop-item button{padding:10px 14px;border-radius:14px;background:var(--accent);color:var(--on-accent);font-weight:800;font-size:13px;white-space:nowrap}
+.shop-item button:disabled{opacity:.45}
+.case-card{padding:14px;border-radius:20px;background:var(--card2);border:1px solid var(--line);margin-bottom:10px}
+.case-card .cc-head{display:flex;align-items:center;gap:12px}
+.case-card .cc-ico{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:30px;background:var(--bg)}
+.case-card .cc-odds{font-size:11px;color:var(--muted);margin:8px 0;line-height:1.5}
+.roll-view{overflow:hidden;border-radius:18px;background:var(--bg);border:1px solid var(--line);position:relative;height:84px;margin:10px 0}
+.roll-view:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--accent2);transform:translateX(-50%);z-index:2}
+.roll-strip{display:flex;gap:8px;padding:8px;will-change:transform}
+.roll-it{width:68px;height:68px;flex-shrink:0;border-radius:14px;background:var(--card2);display:grid;place-items:center;font-size:30px}
+.roll-res{text-align:center;padding:14px;border-radius:18px;background:var(--card2);border:1px solid var(--line);font-weight:800;font-size:16px}
+.frame-opt.locked{opacity:.6}
+.adm-av{width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:16px;color:#fff;flex-shrink:0}
+.adm-av img{width:100%;height:100%;object-fit:cover}
+.adm-name{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-row{padding:12px 0;border-bottom:1px solid var(--line);font-size:12px}
+.deal-row .flag{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:10px;background:rgba(255,101,122,.15);color:var(--danger);font-weight:800;font-size:11px}
 </style>
 </head>
 <body>
 <div id="app" class="app">
-  <header class="topbar"><div><div class="brand">RP <span>МАРКЕТ 08</span></div><div class="top-sub">Торговая площадка игроков</div></div><div class="avatar" id="topAvatar">M</div></header>
+  <header class="topbar"><div><div class="brand">RP <span>МАРКЕТ 08</span></div><div class="top-sub">Торговая площадка игроков</div></div><div style="display:flex;align-items:center;gap:8px"><button type="button" class="coin-pill" id="coinPill">🪙 0</button><div class="avatar" id="topAvatar">M</div></div></header>
 
   <main>
     <section id="marketPage" class="page active">
-      <div class="section-title">Найди свою сделку</div>
-      <input id="searchInput" class="search" placeholder="⌕  Поиск объявлений..." autocomplete="off">
+      <div class="section-title">Объявления</div>
+      <input id="searchInput" class="search" placeholder="Поиск по названию или нику" autocomplete="off">
       <div id="categories" class="categories"></div>
       <div id="dealFilters" class="filters"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px">
@@ -312,7 +353,7 @@
     </section>
 
     <section id="profilePage" class="page">
-      <div class="section-title">👤 Профиль</div>
+      <div class="section-title">Профиль</div>
       <div class="panel" id="profileMainPanel">
         <div class="profile-banner-bg" id="profileBannerBg" style="display:none"></div>
         <div class="profile-head">
@@ -332,23 +373,28 @@
           <div class="stat"><b id="profileLikesCount" style="color:#ff657a">0</b><span>❤️ Лайки</span></div>
           <div class="stat"><b id="profileGamePhone" style="font-size:15px">Не указан</b><span>📱 Игровой номер</span></div>
         </div>
-        <button class="btn secondary" id="editProfileBtn" style="margin-top:12px">✏️ Редактировать профиль</button>
+        <button class="btn secondary" id="editProfileBtn" style="margin-top:12px">Редактировать профиль</button>
         <div style="height:1px;background:var(--line);margin:16px 0"></div>
         <div class="small muted">Telegram ID</div><div id="profileId" style="font-weight:800;margin:4px 0 12px;overflow-wrap:anywhere"></div>
         <div class="small muted">Уровень доступа</div><div id="profileLevel" style="font-weight:850;margin-top:4px">1/10</div>
       </div>
+      <div class="panel coin-card" id="coinCard">
+        <div class="coin-top"><div><div class="small muted">Баланс</div><div class="coin-bal"><span id="coinBalance">0</span> <small>монет</small></div></div><button type="button" class="btn coin-daily" id="dailyBtn">Бонус за вход</button></div>
+        <div class="coin-actions"><button type="button" class="btn secondary" id="shopBtn">Магазин</button><button type="button" class="btn secondary" id="casesBtn">Кейсы</button></div>
+        <div class="small muted" id="coinHint" style="margin-top:10px">Монеты дают за вход, за подтверждённые сделки и из кейсов.</div>
+      </div>
       <div id="adminButtonWrap"></div>
       <div class="panel">
-        <div style="font-weight:800;margin-bottom:10px">🎨 Оформление приложения</div>
+        <div style="font-weight:800;margin-bottom:10px">Тема приложения</div>
         <div id="themePicker" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
       </div>
-      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Игровая доска объявлений CRMP/RP. Соблюдайте правила сервера и проверяйте условия сделки перед оплатой.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки</button></div>
+      <div class="panel"><div style="font-weight:800;margin-bottom:6px">RP Маркет 08</div><div class="small muted">Доска объявлений для игроков CRMP/RP. Перед оплатой проверяйте условия сделки.</div><button type="button" class="btn secondary" id="openRulesBtn" style="margin-top:10px">📜 Правила площадки</button></div>
     </section>
     <section id="pricesPage" class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <div>
-          <div class="section-title" style="margin-bottom:2px">📊 Справочник цен</div>
-          <div class="small muted" style="margin-bottom:10px">Реальная статистика закрытых сделок игроков</div>
+          <div class="section-title" style="margin-bottom:2px">Справочник цен</div>
+          <div class="small muted" style="margin-bottom:10px">Цены по закрытым сделкам игроков</div>
         </div>
         <div id="priceAdminTopWrap"></div>
       </div>
@@ -531,11 +577,11 @@ function renderAds() {
  if ($('profileDealsTotal') && typeof meId !== 'undefined') {
   $('profileDealsTotal').textContent = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
  }
- const q=$('searchInput').value.trim().toLowerCase();
+ const q=$('searchInput').value.trim().toLowerCase().replace(/^@/,'');
  const list=ads.filter(a=>{
   const cat=selectedCategory==='Все'||a.category===selectedCategory||(selectedCategory==='Бизнесы'&&a.category==='Предприятие');
   const deal=selectedDeal==='Все'||(selectedDeal==='❤️ Избранное'?favIds.has(String(a.id)):a.type===selectedDeal);
-  const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q);
+  const search=!q||String(a.title||'').toLowerCase().includes(q)||String(a.description||'').toLowerCase().includes(q)||String(a.seller_name||'').toLowerCase().includes(q)||String((chatProfilesCache.get(String(a.seller_id))||{}).display_name||'').toLowerCase().includes(q);
   return cat&&deal&&search;
  });
  const sortMode = $('sortSelect') ? $('sortSelect').value : 'new';
@@ -549,20 +595,70 @@ function renderAds() {
    return sortMode === 'cheap' ? pa - pb : pb - pa;
   });
  }
- $('marketStatus').textContent='Найдено объявлений: '+list.length;
- if (!list.length) { $('adsGrid').innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:8px">🪹</div>Объявлений пока нет.<br>Попробуйте изменить фильтры или создайте первое!</div>'; return; }
+ list.sort((a,b)=>(isBoost(b)?1:0)-(isBoost(a)?1:0));
+  $('marketStatus').textContent='Найдено объявлений: '+list.length;
+ if (!list.length) { $('adsGrid').innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:8px"></div>Объявлений не найдено.<br>Измените фильтры или разместите своё.</div>'; return; }
  $('adsGrid').innerHTML=list.map(a=>{
   const emoji=a.emoji||CATEGORY_EMOJI[a.category]||'📦';
   const dealClass=a.type==='Куплю'?'buy':a.type==='Обмен'?'exchange':'';
-  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span><button type="button" data-fav-id="'+escapeHTML(a.id)+'" style="position:absolute;top:8px;right:8px;z-index:3;width:28px;height:28px;border-radius:9px;background:#090611bb;font-size:14px;display:grid;place-items:center">'+(favIds.has(String(a.id))?'❤️':'🤍')+'</button>'+renderCategoryArt(a.category, emoji, false)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">'+(a.server==='Торг возможен'?'🤝 Торг возможен':(a.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости'))+'</div></div></article>';
+  return '<article class="ad-card" data-ad-id="'+escapeHTML(a.id)+'"><div class="ad-art">' + (isBoost(a)?'<span class="boost-badge">В топе</span>':'') + ((a.images && a.images[0] ? a.images[0] : a.image_url) ? '<img src="' + escapeHTML(a.images && a.images[0] ? a.images[0] : a.image_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">' : '') + (a.images && a.images.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;z-index:2;background:#090611cc;padding:3px 7px;border-radius:7px;font-size:10px;font-weight:800">📷 ' + a.images.length + '</span>' : '') + '<span style="z-index:2" class="deal '+dealClass+'">'+escapeHTML(a.type||'Продам')+'</span><button type="button" data-fav-id="'+escapeHTML(a.id)+'" style="position:absolute;top:8px;right:8px;z-index:3;width:28px;height:28px;border-radius:9px;background:#090611bb;font-size:14px;display:grid;place-items:center">'+(favIds.has(String(a.id))?'❤️':'🤍')+'</button>'+renderCategoryArt(a.category, emoji, false)+'</div><div class="ad-content"><div class="price">'+formatPrice(a.price,a.type)+'</div><div class="ad-title">'+escapeHTML(a.title)+'</div><div class="server">'+(a.server==='Торг возможен'?'🤝 Торг возможен':(a.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости'))+'</div></div></article>';
  }).join('');
  $('adsGrid').querySelectorAll('[data-fav-id]').forEach(b=>b.addEventListener('click',e=>toggleFav(b.dataset.favId,e)));
  $('adsGrid').querySelectorAll('[data-ad-id]').forEach(el=>el.addEventListener('click',()=>openAd(el.dataset.adId)));
 }
+let adsSoft = true;
+async function loadAdsRows() {
+ const base = '?select=*&order=id.desc&limit=60';
+ let rows;
+ try { rows = await api('ads', { query: base + (adsSoft ? '&deleted_at=is.null' : '') }) || []; }
+ catch (e) {
+  if (adsSoft && /deleted_at|column/i.test(String(e && e.message))) { adsSoft = false; rows = await api('ads', { query: base }) || []; }
+  else throw e;
+ }
+ if (adsSoft) {
+  try {
+   const top = await api('ads', { query: '?select=*&deleted_at=is.null&boost_until=gt.' + new Date().toISOString() + '&limit=20' }) || [];
+   const have = new Set(rows.map(a => String(a.id)));
+   top.forEach(a => { if (!have.has(String(a.id))) rows.push(a); });
+  } catch (_) {}
+ }
+ return rows;
+}
+async function removeAd(ad, reason, soldPrice) {
+ try {
+  const res = await api('ads', { method: 'PATCH', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=representation' }, body: { deleted_at: new Date().toISOString(), deleted_reason: reason, sold_price: soldPrice || null } });
+  if (Array.isArray(res) && res.length) return;
+ } catch (_) {}
+ await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=minimal' } });
+}
+async function openDeletedAdsModal() {
+ showModal('Удалённые лоты', '<div class="loading">Загружаем…</div>');
+ let rows = [];
+ try { rows = await api('ads', { query: '?select=*&seller_id=eq.' + encodeURIComponent(meId) + '&deleted_at=not.is.null&order=deleted_at.desc&limit=50' }) || []; }
+ catch (e) { $('modalBody').innerHTML = '<div class="empty">Этот раздел ещё не подключён на сервере. Нужно выполнить SQL из файла supabase_update.sql.</div>'; return; }
+ const body = $('modalBody');
+ if (!rows.length) { body.innerHTML = '<div class="empty">Удалённых объявлений нет.</div>'; return; }
+ body.innerHTML = '';
+ rows.forEach(ad => {
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px';
+  const when = new Date(ad.deleted_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const status = ad.deleted_reason === 'sold' && Number(ad.sold_price) > 0 ? 'Продано за ' + formatPrice(ad.sold_price) : 'Снято с публикации';
+  card.innerHTML = '<div style="font-weight:800;font-size:14px">' + escapeHTML(ad.title || 'Без названия') + '</div><div class="small muted">' + escapeHTML(ad.category || 'Товар') + ' · ' + escapeHTML(status) + ' · ' + escapeHTML(when) + '</div>';
+  const row = document.createElement('div'); row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px';
+  const bR = document.createElement('button'); bR.type = 'button'; bR.className = 'inline-btn'; bR.textContent = 'Вернуть';
+  bR.onclick = async () => { try { await api('ads', { method: 'PATCH', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=minimal' }, body: { deleted_at: null, deleted_reason: null } }); toast('Объявление возвращено'); await loadAds(); openDeletedAdsModal(); } catch (e) { toast('Ошибка: ' + e.message); } };
+  const bX = document.createElement('button'); bX.type = 'button'; bX.className = 'inline-btn'; bX.style.color = 'var(--danger)'; bX.textContent = 'Удалить навсегда';
+  let armed = false;
+  bX.onclick = async () => { if (!armed) { armed = true; bX.textContent = 'Точно удалить?'; setTimeout(() => { armed = false; bX.textContent = 'Удалить навсегда'; }, 3500); return; } try { await api('ads', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=minimal' } }); toast('Удалено навсегда'); openDeletedAdsModal(); } catch (e) { toast('Ошибка: ' + e.message); } };
+  row.append(bR, bX); card.appendChild(row); body.appendChild(card);
+ });
+}
 async function loadAds() {
  try {
-  ads = await api('ads', { query: '?select=*&order=id.desc&limit=45' }) || [];
-  renderAds();
+  ads = await loadAdsRows();
+   renderAds();
+   fetchProfiles(ads.map(a => a.seller_id)).then(() => { if ($('searchInput') && $('searchInput').value.trim()) renderAds(); }).catch(() => {});
  } catch(e) {
   const grid = $('adsGrid');
   if (!grid) return;
@@ -580,7 +676,7 @@ async function loadAds() {
   retryBtn.type = 'button';
   retryBtn.className = 'inline-btn';
   retryBtn.style.marginTop = '10px';
-  retryBtn.textContent = '🔄 Повторить загрузку';
+  retryBtn.textContent = 'Повторить загрузку';
   retryBtn.onclick = () => {
    grid.innerHTML = '<div class="loading">Загружаем объявления…</div>';
    loadAds();
@@ -674,15 +770,23 @@ function renderProfile() {
   bMyAds.id = 'myAdsProfileBtn';
   bMyAds.className = 'btn secondary';
   bMyAds.style.marginTop = '8px';
-  bMyAds.textContent = '📦 Мои лоты (' + myAdsCount + ')';
+  bMyAds.textContent = 'Мои объявления (' + myAdsCount + ')';
   bMyAds.onclick = openMyAdsModal;
   $('editProfileBtn').insertAdjacentElement('afterend', bMyAds);
+   const bDel = document.createElement('button'); bDel.type = 'button'; bDel.id = 'myDeletedBtn'; bDel.className = 'btn secondary'; bDel.style.marginTop = '8px'; bDel.textContent = 'Удалённые лоты'; bDel.onclick = openDeletedAdsModal; bMyAds.insertAdjacentElement('afterend', bDel);
  } else if ($('myAdsProfileBtn')) {
   const myAdsCount = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
-  $('myAdsProfileBtn').textContent = '📦 Мои лоты (' + myAdsCount + ')';
+  $('myAdsProfileBtn').textContent = 'Мои объявления (' + myAdsCount + ')';
  }
- $('adminButtonWrap').innerHTML = myRank.level>=8 ? '<button class="btn" id="openAdmin">👑 Админ-центр</button>' : '';
+ $('adminButtonWrap').innerHTML = myRank.level>=8 ? '<button class="btn" id="openAdmin">Админ-центр</button>' : '';
  if ($('openAdmin')) $('openAdmin').addEventListener('click', openAdminCenter);
+  renderCoins();
+  if ($('dailyBtn')) $('dailyBtn').onclick = claimDaily;
+  if ($('shopBtn')) $('shopBtn').onclick = openShop;
+  if ($('casesBtn')) $('casesBtn').onclick = openCases;
+  if ($('coinPill')) $('coinPill').onclick = openShop;
+  if ($('coinCard')) $('coinCard').style.display = currencyOn() ? '' : 'none';
+  if ($('coinPill')) $('coinPill').style.display = currencyOn() ? '' : 'none';
 }
 function openEditProfile() {
  if (myRole && myRole.is_banned) return;
@@ -707,7 +811,7 @@ function openEditProfile() {
    <label class="field-label">Рамка аватарки</label>
    <input type="hidden" name="avatar_frame" id="avatarFrameInput" value="${escapeHTML((myRole && myRole.avatar_frame) || 'default')}">
    <div class="frame-picker" id="framePicker">
-    ${AVATAR_FRAMES.map(fr => '<div class="frame-opt '+(((myRole && myRole.avatar_frame) || 'default')===fr.id?'selected':'')+'" data-fr="'+fr.id+'"><div class="frame-preview-dot av-frame-'+fr.id+'"></div>'+escapeHTML(fr.name)+'</div>').join('')}
+    ${AVATAR_FRAMES.map(fr => '<div class="frame-opt '+(((myRole && myRole.avatar_frame) || 'default')===fr.id?'selected':'')+(frameLocked(fr.id)?' locked':'')+'" data-fr="'+fr.id+'"><div class="frame-preview-dot av-frame-'+fr.id+'"></div>'+escapeHTML(fr.name)+(frameLocked(fr.id)?'<div class="small muted">'+FRAME_PRICES[fr.id]+' монет</div>':'')+'</div>').join('')}
    </div>
    <label class="field-label">📱 Игровой номер телефона</label>
    <input class="field" name="game_phone" maxlength="25" value="${escapeHTML((myRole && myRole.game_phone) || '')}" placeholder="Например: 12-34-56 или 777-888">
@@ -717,7 +821,7 @@ function openEditProfile() {
   </form>
  `);
  document.querySelectorAll('#framePicker .frame-opt').forEach(opt => {
-  opt.addEventListener('click', () => {
+  opt.addEventListener('click', () => { if (opt.classList.contains('locked')) { openShop(); return; }
    document.querySelectorAll('#framePicker .frame-opt').forEach(o => o.classList.remove('selected'));
    opt.classList.add('selected');
    if ($('avatarFrameInput')) $('avatarFrameInput').value = opt.dataset.fr;
@@ -764,7 +868,7 @@ function openEditProfile() {
      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'image/jpeg' },
      body: await compressImage(banFile, 1024, 0.85)
     });
-    if (up.ok) { newBannerUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; toast('Фон загружен в облако ✅'); } else { const t = await up.text(); alert('Ошибка Storage фона (' + up.status + '): ' + t); }
+    if (up.ok) { newBannerUrl = sbBase + '/storage/v1/object/public/avatars/' + fn; toast('Фон загружен в облако'); } else { const t = await up.text(); alert('Ошибка Storage фона (' + up.status + '): ' + t); }
    } catch (err) { alert('Сбой загрузки фона: ' + (err && err.message ? err.message : err)); }
    btn.textContent = 'Сохраняем…';
   }
@@ -934,9 +1038,9 @@ function renderPriceStats() {
   const box = document.createElement('div');
   box.className = 'panel';
   box.style.cssText = 'text-align:center;padding:24px 16px';
-  const ic = document.createElement('div'); ic.style.cssText = 'font-size:32px;margin-bottom:8px'; ic.textContent = '📉';
+  const ic = document.createElement('div'); ic.style.cssText = 'font-size:32px;margin-bottom:8px'; ic.textContent = '';
   const tt = document.createElement('div'); tt.style.cssText = 'font-weight:800;margin-bottom:4px'; tt.textContent = 'Пока нет данных по сделкам';
-  const sb = document.createElement('div'); sb.className = 'small muted'; sb.textContent = 'Когда продавцы закрывают объявления с указанием цены продажи, здесь формируется статистика рынка.';
+  const sb = document.createElement('div'); sb.className = 'small muted'; sb.textContent = 'Данные появятся, когда продавцы начнут закрывать объявления с ценой продажи.';
   box.append(ic, tt, sb);
   listEl.appendChild(box);
   return;
@@ -974,7 +1078,7 @@ function renderPriceStats() {
   top.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px';
   const left = document.createElement('div');
   const titleEl = document.createElement('div'); titleEl.style.cssText = 'font-weight:850;font-size:15px'; titleEl.textContent = g.title;
-  const subEl = document.createElement('div'); subEl.className = 'small muted'; subEl.textContent = g.category + ' · ' + srv;
+  const subEl = document.createElement('div'); subEl.className = 'small muted'; subEl.textContent = g.category;
   left.append(titleEl, subEl);
 
   const badge = document.createElement('span');
@@ -1045,7 +1149,7 @@ function openAddPriceModal(presetGroup = null) {
     method: 'POST',
     body: { p_admin_id: String(meId), p_action: 'add', p_title: title, p_category: category, p_price: price }
    });
-   toast('✅ Цена добавлена в справочник');
+   toast('Цена добавлена в справочник');
    closeModal();
    await loadPriceHistory(true);
   } catch (err) {
@@ -1206,7 +1310,7 @@ function openMergePriceModal(targetGroup) {
   return a.title.localeCompare(b.title, 'ru');
  });
 
- showModal('🔗 Умное объединение (EN + ИИ)', '');
+ showModal('Объединение товаров', '');
  const body = $('modalBody');
 
  const enLbl = document.createElement('label');
@@ -1315,7 +1419,7 @@ item.cb.checked = true;
 cnt++;
 }
 });
-toast('☑️ Выбрано позиций: ' + cnt);
+toast('Выбрано позиций: ' + cnt);
 };
 clearSelBtn.onclick = () => {
 checkboxes.forEach(item => { item.cb.checked = false; });
@@ -1348,7 +1452,7 @@ p_category: targetGroup.category,
 p_merge_titles: allToMerge
 }
 });
-toast('✅ Объединено в «' + finalEnTitle + '»');
+toast('Объединено в «' + finalEnTitle + '»');
 closeModal();
 await loadPriceHistory(true);
 } catch (err) {
@@ -1359,7 +1463,7 @@ subBtn.disabled = false; subBtn.textContent = '🔗 Объединить и со
 }
 function openEditPriceGroupModal(group) {
 if (!group) return;
-showModal('✏️ Управление ценой товара', '');
+showModal('Управление ценой товара', '');
 const body = $('modalBody');
 const mkLbl = t => { const l = document.createElement('label'); l.className = 'field-label'; l.textContent = t; return l; };
 const form = document.createElement('form');
@@ -1393,7 +1497,7 @@ p_category: category,
 p_price: replacePrice > 0 ? replacePrice : null
 }
 });
-toast('✅ Данные товара обновлены');
+toast('Данные товара обновлены');
 closeModal();
 await loadPriceHistory(true);
 } catch (err) {
@@ -1421,7 +1525,7 @@ await api('rpc/admin_manage_price', {
 method: 'POST',
 body: { p_admin_id: String(meId), p_action: 'delete_row', p_row_id: Number(r.id) }
 });
-toast('🗑 Запись цены удалена');
+toast('Запись цены удалена');
 closeModal();
 await loadPriceHistory(true);
 } catch (err) {
@@ -1445,7 +1549,7 @@ await api('rpc/admin_manage_price', {
 method: 'POST',
 body: { p_admin_id: String(meId), p_action: 'delete_group', p_title: group.title }
 });
-toast('🗑 Товар удалён из справочника');
+toast('Товар удалён из справочника');
 closeModal();
 await loadPriceHistory(true);
 } catch (err) {
@@ -1502,13 +1606,13 @@ async function deleteAd(ad) {
  btnSold.type = 'button';
  btnSold.className = 'btn';
  btnSold.style.marginTop = '12px';
- btnSold.textContent = '✅ Продал — записать в базу цен';
+ btnSold.textContent = 'Продал — записать в справочник цен';
 
  const btnDel = document.createElement('button');
  btnDel.type = 'button';
  btnDel.className = 'btn danger';
  btnDel.style.marginTop = '8px';
- btnDel.textContent = '🗑️ Просто снять без записи';
+ btnDel.textContent = 'Просто снять без записи';
 
  body.append(desc, lbl, inp, btnSold, btnDel);
 
@@ -1538,18 +1642,14 @@ async function deleteAd(ad) {
      seller_id: String(ad.seller_id || meId)
     }
    });
-   await api('ads', {
-    method: 'DELETE',
-    query: '?id=eq.' + encodeURIComponent(ad.id),
-    headers: { 'Prefer': 'return=minimal' }
-   });
-   priceHistoryCache = [];
+   await removeAd(ad, 'sold', finalPrice);
+    priceHistoryCache = [];
    finishRemoveLocally();
    closeModal();
-   toast('✅ Сделка записана в справочник цен!');
+   toast('Сделка записана в справочник цен!');
   } catch (e) {
    btnSold.disabled = false; btnDel.disabled = false;
-   btnSold.textContent = '✅ Продал — записать в базу цен';
+   btnSold.textContent = 'Продал — записать в справочник цен';
    toast('Ошибка: ' + e.message);
   }
  };
@@ -1558,17 +1658,13 @@ async function deleteAd(ad) {
   btnSold.disabled = true; btnDel.disabled = true;
   btnDel.textContent = 'Снимаем…';
   try {
-   await api('ads', {
-    method: 'DELETE',
-    query: '?id=eq.' + encodeURIComponent(ad.id),
-    headers: { 'Prefer': 'return=minimal' }
-   });
-   finishRemoveLocally();
-   closeModal();
-   toast('🗑️ Объявление снято');
+   await removeAd(ad, 'removed', null);
+    finishRemoveLocally();
+    closeModal();
+    toast('Объявление снято');
   } catch (e) {
    btnSold.disabled = false; btnDel.disabled = false;
-   btnDel.textContent = '🗑️ Просто снять без записи';
+   btnDel.textContent = 'Просто снять без записи';
    toast('Ошибка: ' + e.message);
   }
  };
@@ -1785,7 +1881,7 @@ function openSellModal() {
     }
    });
    closeModal();
-   toast('✅ Объявление опубликовано!');
+   toast('Объявление опубликовано!');
    await loadAds();
   } catch (err) {
    toast('Ошибка: ' + err.message);
@@ -1814,15 +1910,116 @@ function avatarHTML(pr,uid,name,size){
  const fr=frameClassFor(pr&&pr.avatar_frame);
  return '<div class="cav '+fr+'" data-uid="'+escapeHTML(uid)+'" style="width:'+size+'px;height:'+size+'px;background:'+avatarColorFor(uid)+'">'+(pr&&pr.avatar_url?'<img src="'+escapeHTML(pr.avatar_url)+'" alt="">':escapeHTML(letter))+'</div>';
 }
+const profilesFresh=new Set();
+function loadProfilesCache(){try{const o=JSON.parse(localStorage.getItem('mt_profiles_v1')||'{}');Object.keys(o).forEach(k=>{if(!chatProfilesCache.has(k))chatProfilesCache.set(k,o[k]);});}catch(_){}}
+function saveProfilesCache(){try{const o={};let n=0;for(const [k,v] of chatProfilesCache){if(n>=200)break;if(v&&(v.display_name||v.avatar_url)){o[k]={user_id:v.user_id,display_name:v.display_name,avatar_url:v.avatar_url,avatar_frame:v.avatar_frame,rank:v.rank};n++;}}localStorage.setItem('mt_profiles_v1',JSON.stringify(o));}catch(_){}}
+function saveChatsCache(me,list){try{localStorage.setItem('mt_chats_v2_'+me,JSON.stringify(list.slice(0,60)));}catch(_){}}
 async function fetchProfiles(ids){
- const miss=Array.from(new Set(ids.map(String))).filter(id=>id&&id!=='support'&&id!=='global'&&!chatProfilesCache.has(id));
+ const miss=Array.from(new Set(ids.map(String))).filter(id=>id&&id!=='support'&&id!=='global'&&!profilesFresh.has(id));
  if(!miss.length)return;
- const rows=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank&user_id=in.('+miss.map(encodeURIComponent).join(',')+')'}).catch(()=>[]);
- (rows||[]).forEach(p=>chatProfilesCache.set(String(p.user_id),p));
- miss.forEach(id=>{if(!chatProfilesCache.has(id))chatProfilesCache.set(id,{user_id:id});});
+ const rows=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank&user_id=in.('+miss.map(encodeURIComponent).join(',')+')'}).catch(()=>null);
+ if(!rows)return;
+ rows.forEach(p=>{const k=String(p.user_id);chatProfilesCache.set(k,Object.assign({},chatProfilesCache.get(k)||{},p));profilesFresh.add(k);});
+ miss.forEach(id=>{profilesFresh.add(id);if(!chatProfilesCache.has(id))chatProfilesCache.set(id,{user_id:id});});
 }
 function stopChat(){if(chatTimer){clearInterval(chatTimer);chatTimer=null;}if(tgBackFn&&tg&&tg.BackButton){try{tg.BackButton.offClick(tgBackFn);tg.BackButton.hide();}catch(_){}tgBackFn=null;}activeChat=null;pending=[];curRows=[];}
-function openAdminDealsLog(){toast('Журнал сделок скоро будет доступен');}
+const BROADCAST_URL='https://zhakfkqqurjlqdthsnhz.supabase.co/functions/v1/broadcast-tg';
+const SYNC_URL='https://zhakfkqqurjlqdthsnhz.supabase.co/functions/v1/sync-tg-profiles';
+const fnHeaders=()=>({'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY});
+function openBroadcastModal(){
+ showModal('Рассылка всем игрокам','');
+ $('modalBody').innerHTML='<label class="field-label">Текст сообщения (до 1000 символов)</label><textarea class="field textarea" id="bcText" maxlength="1000" rows="7" placeholder="Что написать игрокам"></textarea><div class="small muted" id="bcCount" style="text-align:right">0 / 1000</div><div class="small muted" style="margin:6px 0 10px">Сообщение придёт в личные сообщения бота всем игрокам со звуковым уведомлением.</div><button type="button" class="btn" id="bcSend">Отправить всем</button>';
+ const ta=$('bcText'),btn=$('bcSend');
+ ta.addEventListener('input',()=>{$('bcCount').textContent=ta.value.length+' / 1000';});
+ let armed=false,timer=null,sending=false;
+ btn.onclick=async()=>{
+  if(sending)return;
+  const text=ta.value.trim();if(!text){toast('Введите текст рассылки');return;}
+  if(!armed){armed=true;btn.textContent='Точно разослать всем игрокам?';timer=setTimeout(()=>{armed=false;btn.textContent='Отправить всем';},4000);return;}
+  clearTimeout(timer);armed=false;sending=true;btn.disabled=true;ta.disabled=true;btn.textContent='Отправляем рассылку…';
+  try{
+   const res=await fetch(BROADCAST_URL,{method:'POST',headers:fnHeaders(),body:JSON.stringify({admin_id:String(meId),text:text,app_url:window.location.origin+window.location.pathname})});
+   const d=await res.json().catch(()=>({}));
+   if(res.status===403)toast('Нет прав на рассылку');
+   else if(res.ok&&d.ok){toast('Рассылка завершена: доставлено '+d.sent+' из '+d.total);ta.value='';$('bcCount').textContent='0 / 1000';}
+   else toast('Ошибка рассылки: '+(d.error||res.status));
+  }catch(e){toast('Не удалось связаться с функцией рассылки. Она развёрнута?');}
+  finally{sending=false;btn.disabled=false;ta.disabled=false;btn.textContent='Отправить всем';}
+ };
+}
+async function syncTgProfiles(){
+ const btn=$('syncTgBtn');if(btn){btn.disabled=true;btn.textContent='Обновляем…';}
+ try{
+  const res=await fetch(SYNC_URL,{method:'POST',headers:fnHeaders(),body:JSON.stringify({admin_id:String(meId)})});
+  const d=await res.json().catch(()=>({}));
+  if(res.status===403)toast('Нет прав');
+  else if(res.ok&&d.ok)toast('Обновлено профилей: '+d.updated+' из '+d.total+(d.left>0?'. Осталось '+d.left+', нажмите ещё раз':''));
+  else toast('Ошибка: '+(d.error||res.status));
+ }catch(e){toast('Не удалось связаться с функцией. Она развёрнута?');}
+ finally{if(btn){btn.disabled=false;btn.textContent='Подтянуть ники и аватарки из Telegram';}}
+}
+function bindAdminExtras(){
+ if($('broadcastBtn'))$('broadcastBtn').onclick=openBroadcastModal;
+ if($('syncTgBtn'))$('syncTgBtn').onclick=syncTgProfiles;
+ const ps=$('adminPlayerSearch');
+ if(ps)ps.addEventListener('input',()=>{const q=ps.value.trim().toLowerCase().replace(/^@/,'');document.querySelectorAll('#playersList [data-q]').forEach(r=>{r.style.display=(!q||r.dataset.q.includes(q))?'':'none';});});
+ document.querySelectorAll('[data-pick-coins]').forEach(b=>b.addEventListener('click',()=>{const f=$('coinForm');if(!f)return;f.elements.user_id.value=b.dataset.pickCoins||'';f.scrollIntoView({behavior:'smooth',block:'center'});}));
+ const cf=$('coinForm');
+ if(cf)cf.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const f=e.currentTarget,id=f.elements.user_id.value.trim(),amount=Math.trunc(Number(f.elements.amount.value));
+  if(!id||!amount){toast('Укажите ID и сумму');return;}
+  const r=await coinRpc('admin_grant_coins',{p_admin_id:String(meId),p_target_id:id,p_amount:amount,p_note:f.elements.note.value.trim()});
+  if(!r)return;
+  if(r.ok){toast((amount>0?'Выдано ':'Списано ')+Math.abs(amount)+' монет. Баланс игрока: '+r.coins);if(id===String(meId)){myRole.coins=r.coins;renderCoins();}f.reset();}
+  else toast(r.error==='forbidden'?'Недостаточно прав':r.error==='no_user'?'Игрок не найден':'Не удалось выполнить');
+ });
+}
+async function openAdminDealsLog(){
+ if(!myRank||myRank.level<8){toast('Нужен 8 уровень');return;}
+ showModal('Контроль сделок','<div class="loading">Загружаем сделки…</div>');
+ let rows=[];
+ try{rows=await api('messages',{query:'?select=id,sender_id,receiver_id,text,created_at&text=like.'+encodeURIComponent('[DEAL_*')+'&order=id.asc&limit=2000'})||[];}
+ catch(e){$('modalBody').innerHTML='<div class="empty">Не удалось загрузить сделки: '+escapeHTML(e.message)+'</div>';return;}
+ const D=dealState(rows),doneAt=new Map();
+ rows.forEach(m=>{const x=String(m.text||'').match(/^\[DEAL_DONE:(\w+)\]$/);if(x)doneAt.set(x[1],m.created_at);});
+ const deals=Array.from(D.values()).filter(d=>d.st==='done').map(d=>({id:String(d.o.offer_id),s:String(d.o.seller_id),b:String(d.o.buyer_id),title:String(d.o.ad_title||''),price:Number(d.o.price)||0,at:doneAt.get(String(d.o.offer_id))||null})).sort((a,b)=>new Date(b.at||0)-new Date(a.at||0));
+ await fetchProfiles(deals.flatMap(d=>[d.s,d.b]));
+ const nameOf=u=>(chatProfilesCache.get(String(u))||{}).display_name||('ID '+u);
+ const pairTimes=new Map(),dayCount=new Map();
+ deals.forEach(d=>{
+  const k=[d.s,d.b].sort().join('|');if(!pairTimes.has(k))pairTimes.set(k,[]);pairTimes.get(k).push(new Date(d.at||0).getTime());
+  [d.s,d.b].forEach(u=>{const key=u+'|'+mskDay(d.at||0);dayCount.set(key,(dayCount.get(key)||0)+1);});
+ });
+ deals.forEach(d=>{
+  const t=new Date(d.at||0).getTime(),k=[d.s,d.b].sort().join('|'),same=pairTimes.get(k).filter(x=>Math.abs(x-t)<=7*864e5).length;
+  d.flags=[];
+  if(d.s===d.b)d.flags.push('Продавец и покупатель — один игрок');
+  if(same>2)d.flags.push('Одна пара: '+same+' сделок за 7 дней');
+  [d.s,d.b].forEach(u=>{const n=dayCount.get(u+'|'+mskDay(d.at||0));if(n>10)d.flags.push(nameOf(u)+': '+n+' сделок за сутки');});
+ });
+ const flagged=deals.filter(d=>d.flags.length).length;
+ const body=$('modalBody');
+ body.innerHTML='<div class="admin-stat"><div class="stat"><b>'+deals.length+'</b><span>Подтверждённых сделок</span></div><div class="stat"><b style="color:var(--danger)">'+flagged+'</b><span>С подозрением</span></div></div><input class="field" id="dealsSearch" placeholder="Поиск по нику, ID или товару" style="margin-top:12px"><label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:0 0 8px"><input type="checkbox" id="dealsOnlyFlag"> Только подозрительные</label><div id="dealsList"></div>';
+ const draw=()=>{
+  const q=($('dealsSearch').value||'').trim().toLowerCase().replace(/^@/,''),only=$('dealsOnlyFlag').checked;
+  const list=deals.filter(d=>(!only||d.flags.length)&&(!q||(nameOf(d.s)+' '+nameOf(d.b)+' '+d.s+' '+d.b+' '+d.title).toLowerCase().includes(q))).slice(0,150);
+  const box=$('dealsList');
+  if(!list.length){box.innerHTML='<div class="empty">Сделок не найдено.</div>';return;}
+  box.innerHTML=list.map(d=>'<div class="deal-row"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+escapeHTML(d.title||'Без названия')+'</b><span class="price" style="margin:0;font-size:14px">'+escapeHTML(formatPrice(d.price))+'</span></div><div class="small">'+escapeHTML(nameOf(d.s))+' (продавец) · '+escapeHTML(nameOf(d.b))+' (покупатель)</div><div class="small muted">'+escapeHTML(d.at?new Date(d.at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'дата неизвестна')+'</div>'+d.flags.map(f=>'<div class="flag">'+escapeHTML(f)+'</div>').join(' ')+'<div style="margin-top:8px"><button type="button" class="inline-btn" data-annul="'+escapeHTML(d.id)+'" style="color:var(--danger)">Аннулировать</button></div></div>').join('');
+  box.querySelectorAll('[data-annul]').forEach(b=>{
+   let armed=false;
+   b.onclick=async()=>{
+    if(!armed){armed=true;b.textContent='Точно аннулировать?';setTimeout(()=>{armed=false;b.textContent='Аннулировать';},3500);return;}
+    b.disabled=true;
+    const r=await api('rpc/admin_annul_deal',{method:'POST',body:{p_admin_id:String(meId),p_offer_id:b.dataset.annul}}).catch(e=>{toast(/function|does not exist|schema cache/i.test(String(e&&e.message))?'Аннулирование ещё не подключено на сервере: нужно выполнить SQL':'Ошибка: '+(e&&e.message));return null;});
+    if(r&&r.ok){toast('Сделка аннулирована');priceHistoryCache=[];openAdminDealsLog();}
+    else{b.disabled=false;if(r)toast(r.error==='forbidden'?'Недостаточно прав':r.error==='not_found'?'Сделка не найдена':'Не удалось аннулировать');}
+   };
+  });
+ };
+ $('dealsSearch').addEventListener('input',draw);$('dealsOnlyFlag').addEventListener('change',draw);draw();
+}
 async function openPublicProfile(uid){
  uid=String(uid||'');if(!uid||uid==='support'||uid==='global')return;
  showModal('Профиль','<div class="loading">Загружаем профиль…</div>');
@@ -1857,8 +2054,8 @@ function chatAvatar(pr,uid,name,kind){
 function chatPinned(){
  const me=String(meId);
  return [
-  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'Общий чат',ad_title:'Общение игроков маркетплейса',last_text:'Нажмите, чтобы открыть общий чат',last_id:0,unread:false,pinned:true},
-  {key:'support_'+me,room_id:'support_'+me,rooms:['support_'+me],global:false,support:true,staffView:false,receiver_id:'support',display_name:'Техподдержка',ad_title:'Свяжитесь с поддержкой RP Маркет 08',last_text:'Нажмите, чтобы написать в поддержку',last_id:0,unread:false,pinned:true}
+  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'Общий чат',ad_title:'Общение игроков',last_text:'Общий чат игроков',last_id:0,unread:false,pinned:true},
+  {key:'support_'+me,room_id:'support_'+me,rooms:['support_'+me],global:false,support:true,staffView:false,receiver_id:'support',display_name:'Техподдержка',ad_title:'Свяжитесь с поддержкой RP Маркет 08',last_text:'Написать в поддержку',last_id:0,unread:false,pinned:true}
  ];
 }
 function renderChatList(items,note){
@@ -1900,12 +2097,13 @@ async function loadChats(){
  initChatListControls();
  const seq=++chatsSeq,me=String(meId),isStaff=!!(myRank&&myRank.level>=7),seen=JSON.parse(localStorage.getItem('mt_seen_chats')||'{}');
  const [pg,ps]=chatPinned();
+ if(!chatsCache){try{const c=JSON.parse(localStorage.getItem('mt_chats_v2_'+me)||'null');if(Array.isArray(c)&&c.length)chatsCache=c;}catch(_){}}
  renderChatList(chatsCache||[pg,ps]);
  const sel='?select=id,room_id,sender_id,receiver_id,sender_name,ad_title,text,created_at&order=id.desc';
  try{
   const [g,mine,tick]=await Promise.all([
    api('messages',{query:sel+'&room_id=eq.global&limit=1'}).catch(()=>[]),
-   api('messages',{query:sel+'&room_id=neq.global&or=(sender_id.eq.'+encodeURIComponent(me)+',receiver_id.eq.'+encodeURIComponent(me)+')&limit=500'}),
+   api('messages',{query:sel+'&room_id=neq.global&or=(sender_id.eq.'+encodeURIComponent(me)+',receiver_id.eq.'+encodeURIComponent(me)+')&limit=300'}),
    isStaff?api('messages',{query:sel+'&room_id=like.support_*&limit=300'}).catch(()=>[]):Promise.resolve([])
   ]);
   const [globalChat,supportChat]=chatPinned(),dms=new Map(),tickets=new Map();
@@ -1940,10 +2138,12 @@ async function loadChats(){
    c.myAd=matching.some(a=>String(a.seller_id)===me);c.isBuying=!c.myAd&&c.first_sender===me;
   }
   const list=[globalChat,supportChat,...Array.from(tickets.values()).sort((a,b)=>b.last_id-a.last_id),...Array.from(dms.values()).sort((a,b)=>b.last_id-a.last_id)];
-  await fetchProfiles(list.filter(c=>c.receiver_id&&chatIsRealUserId(c.receiver_id)).map(c=>c.receiver_id));
   if(seq!==chatsSeq)return;
-  list.forEach(c=>{if(c.staffView){const pr=chatProfilesCache.get(String(c.receiver_id))||{};c.display_name='Тикет: '+(pr.display_name||c.receiver_id);}});
-  chatsCache=list;renderChatList(list);
+   chatsCache=list;renderChatList(list);saveChatsCache(me,list);
+   await fetchProfiles(list.filter(c=>c.receiver_id&&chatIsRealUserId(c.receiver_id)).map(c=>c.receiver_id));
+   if(seq!==chatsSeq)return;
+   list.forEach(c=>{if(c.staffView){const pr=chatProfilesCache.get(String(c.receiver_id))||{};c.display_name='Тикет: '+(pr.display_name||c.receiver_id);}else if(!c.global&&!c.support){const pr=chatProfilesCache.get(String(c.receiver_id));if(pr&&pr.display_name)c.display_name=pr.display_name;}});
+   chatsCache=list;renderChatList(list);saveChatsCache(me,list);saveProfilesCache();
  }catch(e){if(seq===chatsSeq)renderChatList(chatsCache||chatPinned(),'Не удалось обновить список — откройте вкладку ещё раз');}
 }
 async function deleteCurrentChat(){
@@ -1952,7 +2152,7 @@ async function deleteCurrentChat(){
  if(chat.global&&(!myRank||myRank.level<7))return;
  try{
   for(const rid of (chat.rooms||[chat.room_id]))await api('rpc/delete_chat_room',{method:'POST',body:{p_user_id:String(meId),p_room_id:String(rid)}});
-  chatsCache=null;toast('Чат удалён 🗑️');closeModal();await loadChats();
+  chatsCache=null;toast('Чат удалён');closeModal();await loadChats();
  }catch(e){toast('Ошибка удаления чата: '+e.message);}
 }
 function startPrivateChat(targetOrAd,nameOpt,titleOpt){
@@ -2024,7 +2224,7 @@ function renderMsgs(stick){
   lastSid=sid;lastTs=ts;
   return msgHTML(m,head);
  }).join('');
- box.innerHTML=html||'<div class="empty">Начните общение первым 👋</div>';
+ box.innerHTML=html||'<div class="empty">Сообщений пока нет</div>';
  if(stick||near||stickBottom){box.scrollTop=box.scrollHeight;stickBottom=false;}
 }
 async function uploadReportPhoto(file){
@@ -2032,6 +2232,15 @@ async function uploadReportPhoto(file){
  const up=await fetch(base+'/storage/v1/object/avatars/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'image/jpeg'},body:await compressImage(file,1280,0.8)});
  if(!up.ok)throw new Error('не удалось загрузить фото ('+up.status+')');
  return base+'/storage/v1/object/public/avatars/'+fn;
+}
+async function submitDialogReport(chat,reason,comment,photos){
+ const full={reporter_id:String(meId),reporter_name:String(meName),target_id:String(chat.receiver_id||''),target_name:String(chat.display_name||''),room_id:String(chat.room_id||''),ad_title:String(chat.ad_title||''),reason:reason,comment:comment,photos:photos};
+ try{await api('dialog_reports',{method:'POST',headers:{'Prefer':'return=minimal'},body:full});return;}
+ catch(e1){
+  const row={ad_title:'Диалог с '+(chat.display_name||chat.receiver_id),reason:reason+(comment?': '+comment:'')+(photos.length?' | фото: '+photos.join(' '):''),seller_id:String(chat.receiver_id||''),reporter_id:String(meId)};
+  for(const id of [0,'dialog']){try{await api('reports',{method:'POST',headers:{'Prefer':'return=minimal'},body:Object.assign({ad_id:id},row)});return;}catch(_){}}
+  throw e1;
+ }
 }
 function openDialogReport(chat){
  const old=$('rpOv');if(old)old.remove();
@@ -2057,8 +2266,8 @@ function openDialogReport(chat){
   try{
    const photos=[];
    for(const f of files)photos.push(await uploadReportPhoto(f));
-   await api('dialog_reports',{method:'POST',headers:{'Prefer':'return=minimal'},body:{reporter_id:String(meId),reporter_name:String(meName),target_id:String(chat.receiver_id||''),target_name:String(chat.display_name||''),room_id:String(chat.room_id||''),ad_title:String(chat.ad_title||''),reason:reason,comment:($('rpText').value||'').trim().slice(0,500),photos:photos}});
-   toast('Жалоба отправлена администрации ✅');close();
+   await submitDialogReport(chat,reason,($('rpText').value||'').trim().slice(0,500),photos);
+   toast('Жалоба отправлена администрации');close();
   }catch(e){toast('Не удалось отправить жалобу: '+(e&&e.message||'ошибка'));if($('rpSend')){btn.disabled=false;btn.textContent='Отправить';}}
  };
 }
@@ -2073,7 +2282,7 @@ function openChat(chat){
  if(chat.global)av='<div class="cav" style="width:46px;height:46px;background:linear-gradient(135deg,#7b42f6,#ec4899);font-size:22px;cursor:default">💬</div>';
  else if(chat.support&&!chat.staffView)av='<div class="cav" style="width:46px;height:46px;background:#2481cc;font-size:22px;cursor:default">🎧</div>';
  else av=avatarHTML(pr||{},peer,chat.display_name,46);
- const sub=chat.global?'Общение игроков маркетплейса':(chat.support?(chat.ad_title||'Техподдержка'):(pr&&(pr.last_seen_at||pr.updated_at)?lastSeenText(pr):''));
+ const sub=chat.global?'Общение игроков':(chat.support?(chat.ad_title||'Техподдержка'):(pr&&(pr.last_seen_at||pr.updated_at)?lastSeenText(pr):''));
  const ad=priv?(ads||[]).find(a=>String(a.title||'')===String(chat.ad_title||'')):null;
  const img=ad&&((ad.images&&ad.images[0])||ad.image_url);
  const strip=priv?'<div class="deal-strip"><div class="ds-thumb">'+(img?'<img src="'+escapeHTML(img)+'" alt="">':escapeHTML((ad&&ad.emoji)||'💼'))+'</div><div class="ds-title">'+escapeHTML(chat.ad_title&&chat.ad_title!=='Личный чат'?chat.ad_title:'Личный диалог')+'</div>'+(ad?'<div class="ds-price">'+escapeHTML(formatPrice(ad.price))+'</div>':'')+'<button type="button" id="dealBtn" class="ds-btn">Договорились</button></div>':'';
@@ -2210,7 +2419,7 @@ function startTenure(){
  localStorage.setItem(fk,tenure.first);
  const automaticStored=TENURE.findIndex(t=>t.name===myRole.tenure_tag),lv=tenureLevel(tenure.active,tenure.first).i;
  const hasManual=TENURE.some(t=>t.name===String(myRole.tenure_override||''));
- if(!hasManual&&automaticStored>=0&&lv>automaticStored)toast('🎉 Вы получили новый тег: '+TENURE[lv].name+'!');
+ if(!hasManual&&automaticStored>=0&&lv>automaticStored)toast('Вы получили новый тег: '+TENURE[lv].name+'!');
  tenure.lvl=lv;tenure.synced=Number(myRole.active_seconds)||0;
  if(!myRole.first_seen_at||(!hasManual&&automaticStored!==lv))syncTenure(true);
  renderTenure();
@@ -2218,7 +2427,7 @@ function startTenure(){
   if(document.visibilityState!=='visible')return;
   tenure.active+=60;localStorage.setItem(lk,String(tenure.active));
   const x=tenureLevel(tenure.active,tenure.first).i;
-  if(x>tenure.lvl){tenure.lvl=x;if(!TENURE.some(t=>t.name===String(myRole&&myRole.tenure_override||'')))toast('🎉 Вы получили новый тег: '+TENURE[x].name+'!');syncTenure(true);}
+  if(x>tenure.lvl){tenure.lvl=x;if(!TENURE.some(t=>t.name===String(myRole&&myRole.tenure_override||'')))toast('Вы получили новый тег: '+TENURE[x].name+'!');syncTenure(true);}
   else if(tenure.active-tenure.synced>=150)syncTenure(false);
   renderTenure();
  },60000);
@@ -2283,18 +2492,130 @@ async function refreshMyDeals(){
   const stored=Number(myRole.deals_success)||0,n=Math.max(stored,await recountDeals(meId));
   if(n!==stored){myRole.deals_success=n;patchRole(meId,{deals_success:n,deals_total:Math.max(Number(myRole.deals_total)||0,n)});}
   const el=$('profileDealsSuccess');if(el)el.textContent=n;
+  if(currencyOn())api('rpc/sync_deal_rewards',{method:'POST',body:{p_user_id:String(meId)}}).then(r=>{if(r&&r.added>0){myRole.coins=r.coins;renderCoins();toast('+'+r.added+' монет за сделки');}}).catch(()=>{});
  }catch(_){}finally{dealsBusy=false;}
 }
 let presenceOff=false;
 function sendPing(col){
  return api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(meId),headers:{'Prefer':'return=minimal'},body:{[col]:new Date().toISOString()}});
 }
+let presenceRpcOff=false;
 function pingPresence(){
  if(!myRole||document.visibilityState!=='visible')return;
- if(presenceOff){sendPing('updated_at').catch(()=>{});return;}
- sendPing('last_seen_at').catch(e=>{if(/last_seen_at|column/i.test(String(e&&e.message))){presenceOff=true;sendPing('updated_at').catch(()=>{});}});
+ const direct=()=>{
+  if(presenceOff){sendPing('updated_at').catch(()=>{});return;}
+  sendPing('last_seen_at').catch(e=>{if(/last_seen_at|column/i.test(String(e&&e.message))){presenceOff=true;sendPing('updated_at').catch(()=>{});}});
+ };
+ if(presenceRpcOff){direct();return;}
+ api('rpc/ping_presence',{method:'POST',body:{p_user_id:String(meId)}}).catch(()=>{presenceRpcOff=true;direct();});
 }
 function startPresence(){pingPresence();setInterval(pingPresence,60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pingPresence();});}
+const FRAME_PRICES={neon:300,gold:500,emerald:300,fire:400,cyber:450};
+const BOOST_PRICE=100;
+const CASES=[
+ {id:'basic',name:'Обычный кейс',price:60,ico:'📦',odds:'55% — 30–59 монет · 28% — 60–99 монет · 11% — билет на поднятие · 6% — рамка (если она уже есть, вернём 120 монет)'},
+ {id:'rare',name:'Редкий кейс',price:200,ico:'🎁',odds:'40% — 120–199 монет · 30% — 200–299 монет · 15% — 2 билета · 10% — рамка (дубликат: 250 монет) · 5% — 400 монет'},
+ {id:'legend',name:'Легендарный кейс',price:600,ico:'💎',odds:'30% — 400–599 монет · 30% — 600–899 монет · 15% — 3 билета · 15% — рамка (дубликат: 700 монет) · 10% — 1500 монет'}
+];
+const coins=()=>Number(myRole&&myRole.coins)||0;
+const currencyOn=()=>!!(myRole&&myRole.coins!==undefined);
+function mskDay(d){return new Date(d).toLocaleDateString('en-CA',{timeZone:'Europe/Moscow'});}
+function dailyDone(){return !!(myRole&&myRole.daily_at&&mskDay(myRole.daily_at)===mskDay(Date.now()));}
+function renderCoins(){
+ const n=coins();
+ if($('coinPill'))$('coinPill').textContent='🪙 '+formatSpacedDigits(n);
+ if($('coinBalance'))$('coinBalance').textContent=formatSpacedDigits(n);
+ const d=$('dailyBtn');if(d){const done=dailyDone();d.disabled=done;d.textContent=done?'Бонус получен':'Забрать бонус';}
+ if($('coinHint'))$('coinHint').textContent='Билетов на поднятие: '+(Number(myRole&&myRole.boost_tickets)||0)+'. Монеты дают за вход, за подтверждённые сделки и из кейсов.';
+}
+async function coinRpc(name,body){
+ try{return await api('rpc/'+name,{method:'POST',body:body});}
+ catch(e){
+  const m=String(e&&e.message||'');
+  toast(/function|does not exist|PGRST202|schema cache/i.test(m)?'Монеты ещё не подключены на сервере: нужно выполнить SQL':'Ошибка: '+m);
+  return null;
+ }
+}
+async function claimDaily(){
+ const r=await coinRpc('claim_daily',{p_user_id:String(meId)});if(!r)return;
+ if(r.ok){myRole.coins=r.coins;myRole.daily_at=new Date().toISOString();myRole.daily_streak=r.streak;renderCoins();toast('+'+r.reward+' монет, дней подряд: '+r.streak);}
+ else if(r.error==='already'){myRole.daily_at=new Date().toISOString();renderCoins();toast('Сегодня бонус уже получен');}
+ else toast('Не удалось получить бонус');
+}
+function ownedFrames(){const o=new Set((myRole&&myRole.owned_frames)||[]);if(myRole&&myRole.avatar_frame)o.add(myRole.avatar_frame);o.add('default');return o;}
+function frameLocked(id){return currencyOn()&&id!=='default'&&!!FRAME_PRICES[id]&&!ownedFrames().has(id)&&!(myRank&&myRank.level>=8);}
+async function buyFrame(id){
+ const r=await coinRpc('buy_frame',{p_user_id:String(meId),p_frame:id});if(!r)return;
+ if(r.ok){myRole.coins=r.coins;myRole.owned_frames=(myRole.owned_frames||[]).concat(id);myRole.avatar_frame=id;renderProfile();toast('Рамка куплена и надета');openShop();}
+ else toast(r.error==='no_money'?'Не хватает монет':r.error==='owned'?'Эта рамка уже у вас':'Не удалось купить');
+}
+function isBoost(a){return !!(a&&a.boost_until&&new Date(a.boost_until).getTime()>Date.now());}
+function openBoostModal(ad){
+ const tk=Number(myRole&&myRole.boost_tickets)||0;
+ showModal('Поднять в топ','');
+ $('modalBody').innerHTML='<div class="small muted" style="margin-bottom:10px">Объявление «'+escapeHTML(ad.title||'')+'» будет первым в ленте 24 часа'+(isBoost(ad)?'. Сейчас оно уже в топе, время добавится.':'.')+'</div><button type="button" class="btn" id="bstCoins">За '+BOOST_PRICE+' монет</button>'+(tk>0?'<button type="button" class="btn secondary" id="bstTicket">Использовать билет (осталось '+tk+')</button>':'');
+ const go=async t=>{
+  const r=await coinRpc('buy_boost',{p_user_id:String(meId),p_ad_id:String(ad.id),p_use_ticket:t});if(!r)return;
+  if(r.ok){myRole.coins=r.coins;myRole.boost_tickets=r.tickets;ad.boost_until=r.boost_until;renderAds();renderCoins();toast('Объявление в топе до '+new Date(r.boost_until).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}));openMyAdsModal();}
+  else toast(r.error==='no_money'?'Не хватает монет':r.error==='no_ticket'?'Билетов нет':'Не удалось поднять объявление');
+ };
+ $('bstCoins').onclick=()=>go(false);
+ if($('bstTicket'))$('bstTicket').onclick=()=>go(true);
+}
+function openShop(){
+ const own=ownedFrames(),staff=!!(myRank&&myRank.level>=8),tk=Number(myRole&&myRole.boost_tickets)||0;
+ showModal('Магазин','');
+ const frames=AVATAR_FRAMES.filter(f=>f.id!=='default').map(f=>{
+  const has=own.has(f.id)||staff;
+  return '<div class="shop-item"><div class="si-ico"><div class="frame-preview-dot av-frame-'+f.id+'" style="width:26px;height:26px"></div></div><div class="si-txt"><b>Рамка «'+escapeHTML(f.name)+'»</b><span>'+(has?'Уже доступна':'Для аватарки в профиле')+'</span></div>'+(has?'':'<button type="button" data-buyframe="'+f.id+'">'+FRAME_PRICES[f.id]+' монет</button>')+'</div>';
+ }).join('');
+ $('modalBody').innerHTML='<div class="small muted" style="margin-bottom:12px">Баланс: <b style="color:var(--yellow)">'+formatSpacedDigits(coins())+'</b> монет · билетов на поднятие: '+tk+'</div>'
+  +'<div class="shop-item"><div class="si-ico">🔥</div><div class="si-txt"><b>Поднять объявление в топ</b><span>На 24 часа, '+BOOST_PRICE+' монет или билет</span></div><button type="button" id="shopBoost">Выбрать</button></div>'
+  +frames
+  +'<div class="shop-item"><div class="si-ico">📦</div><div class="si-txt"><b>Кейсы</b><span>Монеты, билеты и рамки</span></div><button type="button" id="shopCases">Открыть</button></div>';
+ $('shopBoost').onclick=openMyAdsModal;
+ $('shopCases').onclick=openCases;
+ $('modalBody').querySelectorAll('[data-buyframe]').forEach(b=>b.onclick=()=>buyFrame(b.dataset.buyframe));
+}
+function openCases(){
+ showModal('Кейсы','');
+ $('modalBody').innerHTML='<div class="small muted" style="margin-bottom:10px">Баланс: <b style="color:var(--yellow)">'+formatSpacedDigits(coins())+'</b> монет. Шансы указаны под каждым кейсом.</div>'
+  +CASES.map(c=>'<div class="case-card"><div class="cc-head"><div class="cc-ico">'+c.ico+'</div><div style="flex:1"><b>'+c.name+'</b><div class="small muted">'+c.price+' монет</div></div><button type="button" class="inline-btn" data-case="'+c.id+'" style="background:var(--accent);color:var(--on-accent)">Открыть</button></div><div class="cc-odds">'+c.odds+'</div></div>').join('');
+ $('modalBody').querySelectorAll('[data-case]').forEach(x=>x.onclick=()=>openCase(x.dataset.case));
+}
+async function openCase(id){
+ const c=CASES.find(x=>x.id===id);if(!c)return;
+ if(coins()<c.price){toast('Не хватает монет');return;}
+ const r=await coinRpc('open_case',{p_user_id:String(meId),p_case:id});if(!r)return;
+ if(!r.ok){toast(r.error==='no_money'?'Не хватает монет':'Не удалось открыть кейс');return;}
+ myRole.coins=r.coins;myRole.boost_tickets=r.tickets;
+ if(r.type==='frame'&&r.is_new)myRole.owned_frames=(myRole.owned_frames||[]).concat(r.value);
+ renderCoins();
+ showModal(c.name,'');
+ const pool=['🪙','🪙','🎟','🪙','🖼','🪙','🎟','🪙'],ico=r.type==='frame'?'🖼':r.type==='ticket'?'🎟':'🪙',items=[];
+ for(let i=0;i<34;i++)items.push(pool[Math.floor(Math.random()*pool.length)]);
+ items[28]=ico;
+ $('modalBody').innerHTML='<div class="roll-view"><div class="roll-strip" id="rollStrip">'+items.map(x=>'<div class="roll-it">'+x+'</div>').join('')+'</div></div><div id="rollRes"></div>';
+ const strip=$('rollStrip'),w=strip.parentElement.clientWidth,target=Math.max(0,8+28*76+34-w/2);
+ strip.style.transform='translateX(0)';
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{strip.style.transition='transform 3.2s cubic-bezier(.12,.7,.15,1)';strip.style.transform='translateX(-'+target+'px)';}));
+ setTimeout(()=>{
+  if(!$('rollRes'))return;
+  $('rollRes').innerHTML='<div class="roll-res">'+escapeHTML(r.label)+'</div><button type="button" class="btn" id="rollAgain">Открыть ещё раз</button><button type="button" class="btn secondary" id="rollBack">Назад к кейсам</button>';
+  $('rollAgain').onclick=()=>openCase(id);$('rollBack').onclick=openCases;
+ },3400);
+}
+async function initTgProfile(){
+ const u=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;if(!u||!myRole)return;
+ const nick=u.username||[u.first_name,u.last_name].filter(Boolean).join(' ');
+ const needName=!myRole.display_name&&!!nick,needAv=!myRole.avatar_url&&!!u.photo_url;
+ if(!needName&&!needAv)return;
+ try{
+  const saved=await api('rpc/update_own_profile',{method:'POST',body:{p_user_id:String(meId),p_display_name:needName?nick:(myRole.display_name||null),p_bio:myRole.bio||null,p_avatar_url:needAv?u.photo_url:(myRole.avatar_url||null),p_avatar_frame:myRole.avatar_frame||'default',p_banner_url:myRole.banner_url||null,p_game_phone:myRole.game_phone||null}});
+  if(Array.isArray(saved)&&saved[0])myRole=saved[0];else{if(needName)myRole.display_name=nick;if(needAv)myRole.avatar_url=u.photo_url;}
+  renderProfile();
+ }catch(_){}
+}
 async function confirmDeal(d,sys){
  const o=d.o,a=String(o.seller_id),b=String(o.buyer_id),now=Date.now();
  try{
@@ -2326,7 +2647,7 @@ async function dealAction(k,oid,btn){
   else if(k==='confirm'){if(!(await confirmDeal(d,sys))){btn.disabled=false;return;}}
   else if(k==='review'){
    const stars=Number(card.querySelector('.deal-stars').dataset.val)||0;
-   if(!stars){toast('Выберите оценку от 1 до 5 ⭐');btn.disabled=false;return;}
+   if(!stars){toast('Выберите оценку от 1 до 5');btn.disabled=false;return;}
    await sys('[DEAL_REVIEW:'+JSON.stringify({offer_id:oid,to:other,stars:stars,text:card.querySelector('input').value.trim().slice(0,200)})+']');
    toast('Спасибо за отзыв!');
   }
@@ -2354,7 +2675,7 @@ async function loadReportsAdmin() {
  try { reps = await api('reports', { query: '?select=*&order=id.desc&limit=30' }) || []; } catch (e) { repsErr = true; }
  try { dreps = await api('dialog_reports', { query: '?select=*&order=id.desc&limit=30' }) || []; } catch (e) { dreps = []; }
  if (repsErr && !dreps.length) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; return; }
- if (!reps.length && !dreps.length) { box.innerHTML = '<div class="small muted">Активных жалоб нет ✅</div>'; return; }
+ if (!reps.length && !dreps.length) { box.innerHTML = '<div class="small muted">Активных жалоб нет</div>'; return; }
  const adRows = reps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>Лот #'+escapeHTML(r.ad_id)+': '+escapeHTML(r.ad_title||'Без названия')+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'" data-tbl="reports">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div><div class="small muted">Продавец: '+escapeHTML(r.seller_id)+' · От: '+escapeHTML(r.reporter_id)+'</div></div>').join('');
  const dlgRows = dreps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>💬 Жалоба на диалог: '+escapeHTML(r.target_name||r.target_id)+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'" data-tbl="dialog_reports">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div>'+(r.comment?'<div style="margin:3px 0">'+escapeHTML(r.comment)+'</div>':'')+'<div class="small muted">На игрока: '+escapeHTML(r.target_id)+' · От: '+escapeHTML(r.reporter_name||'')+' ('+escapeHTML(r.reporter_id)+')'+(r.ad_title?' · Лот: '+escapeHTML(r.ad_title):'')+'</div>'+((Array.isArray(r.photos)&&r.photos.length)?'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+r.photos.map(u=>'<a href="'+escapeHTML(u)+'" target="_blank" rel="noopener"><img src="'+escapeHTML(u)+'" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></a>').join('')+'</div>':'')+'</div>').join('');
  box.innerHTML = dlgRows + adRows;
@@ -2395,7 +2716,7 @@ function openRulesModal() {
    <div style="font-size:11px;color:var(--yellow);font-weight:700">⚖️ Наказание: ${escapeHTML(r.punish)}</div>
   </div>
  `).join('');
- showModal('📜 Правила RP Маркет 08', `
+ showModal('Правила RP Маркет 08', `
   <div style="font-weight:850;font-size:14px;margin-bottom:8px;color:#fff">1.1. Положение о сделках</div>
   ${termsHtml}
   <div style="font-weight:850;font-size:14px;margin:14px 0 8px;color:#fff">1.5. Нарушения и наказания</div>
@@ -2408,8 +2729,8 @@ if ($('openRulesBtn')) $('openRulesBtn').addEventListener('click', openRulesModa
 
 async function openAdminCenter() {
  if(!myRank || myRank.level<8){toast('Админ-центр доступен с 8 уровня');return;}
- showModal('👑 Админ-центр','<div class="loading">Загружаем панель управления…</div>');
- try{rolesCache=await api('roles',{query:'?select=user_id,display_name,rank,is_banned,ban_reason,deals_success,updated_at,tenure_override&order=updated_at.desc&limit=300'})||[];}
+ showModal('Админ-центр','<div class="loading">Загружаем панель управления…</div>');
+ try{rolesCache=await api('roles',{query:'?select=*&order=updated_at.desc&limit=500'})||[];}
  catch(e){rolesCache=[];toast('Не удалось загрузить список ролей: '+e.message);}
  const count=ads.length;
  const rankOptions=RANKS.filter(r=>r.level<myRank.level||myRank.level===10).map(r=>'<option value="'+r.level+'">'+escapeHTML(r.name)+' ('+r.level+')</option>').join('');
@@ -2425,19 +2746,24 @@ async function openAdminCenter() {
   const btn=ok?'<button type="button" class="inline-btn" data-pick-admin="'+escapeHTML(uid)+'" data-pick-level="'+lv+'">✏️ Изм.</button> <button type="button" class="inline-btn" data-pick-tenure="'+escapeHTML(uid)+'">🏷</button>':'<span class="muted">—</span>';
   return '<div class="admin-player" style="align-items:center;gap:10px"><div data-open-admin-profile="'+escapeHTML(uid)+'" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;cursor:pointer" title="Открыть профиль">'+avHtml+'<div style="min-width:0;flex:1"><div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHTML(resolvedName)+' <span class="muted" style="font-weight:600">· '+escapeHTML(uid)+'</span></div><div style="margin-top:3px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+' ('+lv+'/10)</span></div>'+manualLabel(p)+'</div></div><div style="flex-shrink:0">'+btn+'</div></div>';
  }).join('')||'<div class="small muted">Админов 7+ ур. нет.</div>';
- const players=rolesCache.map(p=>{
-  const level=rankLevel(p.rank),r=rankFor(p.rank),ok=canManage(p),nick=p.display_name?escapeHTML(p.display_name)+' · ':'';
-  return '<div class="admin-player"><div><b>'+nick+escapeHTML(p.user_id)+'</b><div style="color:'+r.color+'">'+escapeHTML(r.name)+(p.is_banned?' · 🚫 Бан':'')+'</div>'+manualLabel(p)+'</div><div>'+(ok?'<button class="inline-btn" data-remove="'+escapeHTML(p.user_id)+'">Снять</button> <button class="inline-btn" data-pick-tenure="'+escapeHTML(p.user_id)+'">🏷</button>':'<span class="muted">—</span>')+'</div></div>';
- }).join('')||'<div class="small muted">Пока нет записей о ролях.</div>';
- showModal('👑 Админ-центр',`
+ const adminAv=p=>{const uid=String(p.user_id),nm=p.display_name||fallbackNames[uid]||'';const inner=p.avatar_url?'<img src="'+escapeHTML(p.avatar_url)+'" alt="">':escapeHTML((Array.from(nm||'И')[0]||'И').toUpperCase());return '<div class="adm-av '+frameClassFor(p.avatar_frame)+'" style="background:'+avatarColorFor(uid)+'">'+inner+'</div>';};
+  const players=rolesCache.map(p=>{
+   const lv=rankLevel(p.rank),r=rankFor(p.rank),ok=canManage(p),uid=String(p.user_id),nm=p.display_name||fallbackNames[uid]||'Без ника';
+   const q=(nm+' '+uid).toLowerCase();
+   const btns=ok?'<button type="button" class="inline-btn" data-pick-admin="'+escapeHTML(uid)+'" data-pick-level="'+lv+'">Ранг</button><button type="button" class="inline-btn" data-pick-tenure="'+escapeHTML(uid)+'">Тег</button><button type="button" class="inline-btn" data-pick-coins="'+escapeHTML(uid)+'">Монеты</button><button type="button" class="inline-btn" data-remove="'+escapeHTML(uid)+'">Снять</button>':'';
+   return '<div class="admin-player" data-q="'+escapeHTML(q)+'" style="align-items:flex-start;gap:10px"><div data-open-admin-profile="'+escapeHTML(uid)+'" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;cursor:pointer">'+adminAv(p)+'<div style="min-width:0;flex:1"><div class="adm-name">'+escapeHTML(nm)+'</div><div class="small muted">ID '+escapeHTML(uid)+(Number(p.coins)>0?' · '+formatSpacedDigits(p.coins)+' монет':'')+'</div><div><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'+(p.is_banned?' <span class="rank" style="color:var(--danger);background:rgba(255,101,122,.15)">Бан</span>':'')+'</div>'+manualLabel(p)+'</div></div><div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:150px">'+btns+'</div></div>';
+  }).join('')||'<div class="small muted">Пока нет записей о ролях.</div>';
+ showModal('Админ-центр',`
   <div class="admin-stat"><div class="stat"><b>${count}</b><span>Объявлений на площадке</span></div><div class="stat"><b>${adminsOnly.length}</b><span>Админов (7–10 ур.)</span></div></div>
-  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛡️ Действующая администрация</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
+  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Администрация</b><span class="small muted">7–10 ур.</span></div><div style="display:flex;flex-direction:column;gap:8px">${adminStaffHtml}</div></div>
   <div class="notice" style="margin:12px 0">Доступные действия зависят от иерархии. Нельзя изменять игроков равного или более высокого уровня, кроме Владельца.</div>
-  <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
-  <div class="panel" style="margin:12px 0"><b>🏷 Статус стажа (тег)</b><form id="tenureForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" id="tenureTargetId" required placeholder="ID пользователя"><label class="field-label">Статус</label><select class="field" name="tag" id="tenureTagSelect">${tenureOptions}</select><button class="btn" type="submit">Выдать статус</button></form></div>
+  <div class="panel" style="margin:12px 0"><button class="btn" type="button" id="broadcastBtn" style="margin-top:0">Рассылка всем игрокам</button><button class="btn secondary" type="button" id="syncTgBtn">Подтянуть ники и аватарки из Telegram</button></div>
+   <div class="panel" style="margin:12px 0"><b>Монеты игроку</b><form id="coinForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Сколько (со знаком минус — списать)</label><input class="field" name="amount" type="number" required placeholder="Например 500"><label class="field-label">Причина</label><input class="field" name="note" maxlength="80" placeholder="Необязательно"><button class="btn" type="submit">Применить</button></form></div>
+   <div class="panel" style="margin:12px 0"><b>Выдать должность</b><form id="rankForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Новый ранг</label><select class="field" name="rank">${rankOptions}</select><button class="btn" type="submit">Выдать ранг</button></form></div>
+  <div class="panel" style="margin:12px 0"><b>Статус стажа</b><form id="tenureForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" id="tenureTargetId" required placeholder="ID пользователя"><label class="field-label">Статус</label><select class="field" name="tag" id="tenureTagSelect">${tenureOptions}</select><button class="btn" type="submit">Выдать статус</button></form></div>
   <div class="panel" style="margin:12px 0"><b>Бан / разбан</b><form id="banForm" style="margin-top:10px"><label class="field-label">Telegram ID игрока</label><input class="field" name="user_id" required placeholder="ID пользователя"><label class="field-label">Пункт правил (быстрый выбор)</label><select class="field" id="banRuleSelect"><option value="">— Выберите нарушение или введите вручную —</option>${BAN_RULES.map(r=>'<option value="'+escapeHTML(r.code+' — '+r.title)+'">'+escapeHTML(r.code+' — '+r.title)+'</option>').join('')}</select><label class="field-label">Причина блокировки</label><input class="field" name="reason" placeholder="Причина (для бана)"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn danger" type="submit" style="margin:0">Забанить</button><button class="btn secondary" type="button" id="unbanBtn" style="margin:0">Разбанить</button></div></form></div>
-  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🤝 Контроль успешных сделок</b><button type="button" class="inline-btn" id="openAdminDealsBtn">Открыть журнал</button></div><div class="small muted" style="margin-top:4px">Проверка на твинки и аннулирование накрученных сделок</div></div>
-  <div class="panel" style="margin:12px 0"><b>Игроки и должности</b><div id="playersList">${players}</div></div>
+  <div class="panel" style="margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>Контроль сделок</b><button type="button" class="inline-btn" id="openAdminDealsBtn">Открыть журнал</button></div><div class="small muted" style="margin-top:4px">Проверка на твинки и аннулирование накрученных сделок</div></div>
+  <div class="panel" style="margin:12px 0"><b>Игроки и должности</b> <span class="small muted">(${rolesCache.length})</span><input class="field" id="adminPlayerSearch" placeholder="Поиск по нику или ID" style="margin-top:10px"><div id="playersList">${players}</div></div>
  `);
  document.querySelectorAll('[data-open-admin-profile]').forEach(el=>el.addEventListener('click',()=>{const uid=el.dataset.openAdminProfile;if(uid&&typeof openPublicProfile==='function')openPublicProfile(uid);}));
  if($('openAdminDealsBtn')&&typeof openAdminDealsLog==='function')$('openAdminDealsBtn').onclick=openAdminDealsLog;
@@ -2460,6 +2786,7 @@ async function openAdminCenter() {
  $('banForm').addEventListener('submit',async e=>{e.preventDefault();const id=e.currentTarget.elements.user_id.value.trim(),reason=e.currentTarget.elements.reason.value.trim();await changeBan(id,true,reason);});
  $('unbanBtn').addEventListener('click',async()=>{const id=$('banForm').elements.user_id.value.trim();if(!id){toast('Укажите Telegram ID');return;}await changeBan(id,false,'');});
  $('playersList').querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.remove,player=rolesCache.find(p=>String(p.user_id)===id);if(!player||!canManage(player)){toast('Недостаточно прав');return;}if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Точно снять?';setTimeout(()=>{if(b){delete b.dataset.armed;b.textContent='Снять';}},3500);return;}try{await upsertRole(id,{rank:RANKS[0].name});toast('Должность снята');await openAdminCenter();}catch(err){toast('Ошибка: '+err.message);}}));
+ bindAdminExtras();
 }
 
 async function getTargetRole(id) {
@@ -2498,6 +2825,7 @@ const THEMES = [
  {id:'yellow_orange',name:'Жёлтый — Оранжевый',   c1:'#eab308', c2:'#fb923c', vars:{'--bg':'#17130a','--card':'#262011','--card2':'#362d18','--accent':'#eab308','--accent2':'#fb923c','--line':'#4d4022','--muted':'#cfc19f'}},
  {id:'black_gray',   name:'Чёрный — Серый',       c1:'#52525b', c2:'#a1a1aa', vars:{'--bg':'#09090b','--card':'#141417','--card2':'#202025','--accent':'#52525b','--accent2':'#a1a1aa','--line':'#2e2e35','--muted':'#9ca3af'}}
 ];
+THEMES.forEach(t => { t.vars['--on-accent'] = t.id === 'yellow_orange' ? '#1b1403' : '#fff'; });
 function applyTheme(id) {
  const t = THEMES.find(x => x.id === id) || THEMES.at(0);
  Object.entries(t.vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
@@ -2539,7 +2867,7 @@ if ($('sortSelect')) $('sortSelect').addEventListener('change', renderAds);
 
 function openMyAdsModal() {
  const myAds = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)) : [];
- showModal('📦 Мои объявления (' + myAds.length + ')', '');
+ showModal('Мои объявления (' + myAds.length + ')', '');
  const body = $('modalBody');
  if (!myAds.length) {
   body.innerHTML = '<div class="empty">У вас пока нет активных объявлений.</div>';
@@ -2550,10 +2878,10 @@ function openMyAdsModal() {
   card.style.cssText = 'background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px';
   const title = document.createElement('div'); title.style.cssText = 'font-weight:800;font-size:14px'; title.textContent = ad.title;
   const sub = document.createElement('div'); sub.className = 'small muted'; sub.textContent = (ad.category || 'Товар') + ' · ' + formatPrice(ad.price, ad.type);
-  const row = document.createElement('div'); row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px';
-  const bP = document.createElement('button'); bP.type = 'button'; bP.className = 'inline-btn'; bP.textContent = '✏️ Цена';
+  const row = document.createElement('div'); row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px';
+  const bP = document.createElement('button'); bP.type = 'button'; bP.className = 'inline-btn'; bP.textContent = 'Цена';
   bP.onclick = () => {
-   showModal('✏️ Изменить цену', '');
+   showModal('Изменить цену', '');
    const mb = $('modalBody');
    const inp = document.createElement('input'); inp.className = 'field'; inp.inputMode = 'numeric'; inp.value = Number(ad.price) > 0 ? formatSpacedDigits(ad.price) : '';
    inp.oninput = () => { inp.value = formatSpacedDigits(inp.value); };
@@ -2561,20 +2889,21 @@ function openMyAdsModal() {
    sv.onclick = async () => {
     let d = ''; for (let i = 0; i < inp.value.length; i++) { const c = inp.value.charAt(i); if (c >= '0' && c <= '9') d += c; }
     await api('ads', { method: 'PATCH', query: '?id=eq.' + encodeURIComponent(ad.id), headers: { 'Prefer': 'return=minimal' }, body: { price: Number(d || 0) } });
-    ad.price = Number(d || 0); renderAds(); toast('✅ Обновлено'); openMyAdsModal();
+    ad.price = Number(d || 0); renderAds(); toast('Обновлено'); openMyAdsModal();
    };
    mb.append(inp, sv);
   };
-  const bD = document.createElement('button'); bD.type = 'button'; bD.className = 'inline-btn'; bD.style.color = '#ff657a'; bD.textContent = '🗑️ Снять';
+  const bD = document.createElement('button'); bD.type = 'button'; bD.className = 'inline-btn'; bD.style.color = '#ff657a'; bD.textContent = 'Снять';
   bD.onclick = () => deleteAd(ad);
-  row.append(bP, bD); card.append(title, sub, row); body.appendChild(card);
+  const bB = document.createElement('button'); bB.type = 'button'; bB.className = 'inline-btn'; bB.textContent = isBoost(ad) ? 'В топе' : 'В топ'; bB.onclick = () => openBoostModal(ad); row.append(bP, bB, bD); card.append(title, sub, row); body.appendChild(card);
  });
 }
 
 async function init() {
  renderCategories();renderDealFilters();
  loadAds();
- loadRole().then(ok => { if (ok) { startTenure(); startPresence(); refreshMyDeals(); } });
+ loadProfilesCache();
+  loadRole().then(ok => { if (ok) { startTenure(); startPresence(); refreshMyDeals(); initTgProfile(); setTimeout(() => { if (typeof loadChats === 'function') loadChats(); }, 700); } });
 }
 init();
 })();
