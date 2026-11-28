@@ -170,6 +170,44 @@
 .deal-form{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;max-height:45vh;overflow:auto}
 .deal-form .field{margin:8px 0 0}
 .ten-bar{height:8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);margin:7px 0;overflow:hidden}.ten-bar i{display:block;height:100%;border-radius:6px}
+
+/* Telegram-like chat list: intentionally scoped to the chats page and chat modal */
+#chatsPage .chats-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 4px}
+#chatsPage .section-title{font-size:27px;font-weight:850;margin:0}
+.chat-search-toggle{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.09);color:#eaf4ff;font-size:19px;display:grid;place-items:center;transition:background .2s,transform .2s}
+.chat-search-toggle:active{transform:scale(.94)}
+.chat-search-wrap{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .22s ease,opacity .22s ease}
+.chat-search-wrap.open{grid-template-rows:1fr;opacity:1;margin:8px 0}
+.chat-search-wrap>input{min-height:0;overflow:hidden}
+.chat-search-input{width:100%;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:#151d28;color:#fff;padding:12px 14px;outline:none}
+.chat-tabs{display:flex;align-items:center;gap:24px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.07);margin:12px -2px 8px;padding:0 2px}
+.chat-tabs::-webkit-scrollbar{display:none}
+.chat-tab{position:relative;flex:0 0 auto;background:transparent;color:#9da8ba;padding:13px 2px 14px;font-size:14px;font-weight:750}
+.chat-tab.active{color:#f7fbff}
+.chat-tab.active:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:#229ed9}
+#chatsPage .chat-list{display:flex;flex-direction:column;gap:0}
+#chatsPage .chat-item{width:100%;min-height:82px;display:flex;align-items:center;gap:12px;padding:11px 5px;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.06);border-radius:0;text-align:left}
+#chatsPage .chat-item:active{background:rgba(255,255,255,.035)}
+#chatsPage .chat-item.unread{background:transparent;border-color:rgba(255,255,255,.06)}
+#chatsPage .chat-avatar{width:48px;height:48px;min-width:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:21px;font-weight:800;color:#fff;background:#2481cc}
+#chatsPage .chat-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+#chatsPage .chat-avatar .cav{width:100%!important;height:100%!important}
+#chatsPage .chat-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+#chatsPage .chat-meta strong{font-size:15px;font-weight:750;color:#f5f7fb;line-height:1.25}
+#chatsPage .chat-meta span{font-size:12px;color:#64b5f6;line-height:1.3}
+#chatsPage .chat-topline{display:flex;align-items:center;gap:5px;min-width:0}
+#chatsPage .chat-topline strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#chatsPage .verified-mark{color:#8ab8dc;font-size:13px;font-weight:800}
+#chatsPage .chat-side{min-width:42px;max-width:52px;align-self:stretch;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:3px 0}
+#chatsPage .chat-time{font-size:11px;color:#8490a2;white-space:nowrap}
+#chatsPage .chat-pin{font-size:14px;line-height:1}
+#chatsPage .chat-unread{min-width:9px;height:9px;border-radius:50%;background:#229ed9;box-shadow:0 0 7px rgba(34,158,217,.5)}
+#chatsPage .chat-empty{padding:34px 12px;text-align:center;color:#8f9bad;font-size:13px}
+#chatsPage .cav{border-radius:50%;width:48px;height:48px}
+#modalWrap.chat-fullscreen .chat-top{gap:7px;flex-wrap:wrap}
+#modalWrap.chat-fullscreen .chat-top #modalClose{flex:0 0 40px}
+#modalWrap.chat-fullscreen .msg-av{width:32px;height:32px}
+
 </style>
 </head>
 <body>
@@ -194,7 +232,17 @@
     </section>
 
     <section id="chatsPage" class="page">
-      <div class="section-title">Чаты</div>
+      <div class="chats-header">
+        <div class="section-title">Чаты</div>
+        <button type="button" class="chat-search-toggle" id="chatSearchToggle" aria-label="Поиск чатов">🔍</button>
+      </div>
+      <div class="chat-search-wrap" id="chatSearchWrap"><input id="chatSearchInput" class="chat-search-input" type="search" placeholder="Поиск по имени или объявлению…" autocomplete="off"></div>
+      <div class="chat-tabs" id="chatTabs">
+        <button type="button" class="chat-tab active" data-chat-tab="all">Все</button>
+        <button type="button" class="chat-tab" data-chat-tab="selling">Продаю</button>
+        <button type="button" class="chat-tab" data-chat-tab="buying">Покупаю</button>
+        <button type="button" class="chat-tab" data-chat-tab="support" id="supportChatTab" style="display:none">🛟 Поддержка</button>
+      </div>
       <div id="chatList" class="chat-list"><div class="loading">Загружаем чаты…</div></div>
     </section>
 
@@ -1724,104 +1772,127 @@ async function openPublicProfile(uid){
  loadReviews(uid);
 }
 
-let chatsSeq=0,chatsCache=null;
-function drawChats(items,note){
+let chatsSeq=0,chatsCache=null,chatTab='all',chatSearchOpen=false;
+function chatIsRealUserId(id){return /^\d+$/.test(String(id||''))&&String(id)!==String(meId);}
+function chatDateTime(value){
+ const d=value?new Date(value):null;if(!d||Number.isNaN(d.getTime()))return '';
+ const now=new Date(),same=d.toDateString()===now.toDateString();
+ return same?d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+}
+function chatAvatar(pr,uid,name,kind){
+ if(kind==='global')return '<div class="chat-avatar">☷</div>';
+ if(kind==='support')return '<div class="chat-avatar">🎧</div>';
+ const inner=avatarHTML(pr||{},uid,name,48);
+ return '<div class="chat-avatar">'+inner+'</div>';
+}
+function chatPinned(){
+ const me=String(meId);
+ return [
+  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'💬 Общий чат',ad_title:'Общение игроков маркетплейса',last_text:'Нажмите, чтобы открыть общий чат',last_id:0,unread:false,pinned:true},
+  {key:'support_'+me,room_id:'support_'+me,rooms:['support_'+me],global:false,support:true,staffView:false,receiver_id:'support',display_name:'Техподдержка',ad_title:'Свяжитесь с поддержкой RP Маркет 08',last_text:'Нажмите, чтобы написать в поддержку',last_id:0,unread:false,pinned:true}
+ ];
+}
+function renderChatList(items,note){
  const el=$('chatList');if(!el)return;
+ const q=String($('chatSearchInput')?.value||'').trim().toLocaleLowerCase('ru');
+ let visible=items.slice();
+ if(chatTab==='support')visible=visible.filter(c=>c.support&&c.staffView);
+ else if(chatTab==='selling')visible=visible.filter(c=>!c.global&&!c.support&&c.myAd);
+ else if(chatTab==='buying')visible=visible.filter(c=>!c.global&&!c.support&&c.isBuying);
+ if(chatTab==='all')visible=visible.filter(c=>!c.staffView);
+ if(q)visible=visible.filter(c=>(c.display_name+' '+(c.ad_title||'')+' '+(c.last_text||'')).toLocaleLowerCase('ru').includes(q));
  el.innerHTML='';
- items.forEach(c=>{
-  const pr=(!c.global&&(!c.support||c.staffView)&&c.receiver_id)?(chatProfilesCache.get(String(c.receiver_id))||{}):null;
-  const name=pr&&pr.display_name?(c.staffView?'🛟 Тикет: '+pr.display_name:pr.display_name):c.display_name;
-  const av=pr?avatarHTML(pr,c.receiver_id,name,44):'<div class="cav" style="width:44px;height:44px;background:var(--card2);font-size:21px">'+(c.global?'🌍':'🛟')+'</div>';
+ if(!visible.length){el.innerHTML='<div class="chat-empty">Ничего не найдено</div>';return;}
+ visible.forEach(c=>{
+  const uid=String(c.receiver_id||'');
+  const pr=(!c.global&&!c.support&&uid)?(chatProfilesCache.get(uid)||{}):(c.staffView?chatProfilesCache.get(uid)||{}:null);
+  const name=c.display_name||((pr&&pr.display_name)||'Игрок');
+  const verified=pr&&rankLevel(pr.rank)>=3?'<span class="verified-mark">✓</span>':'';
+  const prefix=c.global?'💬 ': '';
+  const subtitle=(c.ad_title||'Личный чат')+': '+(c.last_text||'Нет сообщений');
+  const avatar=chatAvatar(pr,uid,name,c.global?'global':(c.support&&!c.staffView?'support':null));
   const b=document.createElement('button');b.type='button';b.className='chat-item'+(c.unread?' unread':'');
-  b.innerHTML=av+'<div class="chat-meta"><strong>'+escapeHTML(name)+'</strong><span>'+escapeHTML((!c.global&&!c.support&&c.ad_title?c.ad_title+' · ':'')+c.last_text)+'</span></div>'+(c.unread?'<i class="ud"></i>':'');
+  b.innerHTML=avatar+'<div class="chat-meta"><div class="chat-topline"><strong>'+escapeHTML(prefix+name)+'</strong>'+verified+'</div><span>'+escapeHTML(subtitle)+'</span></div><div class="chat-side"><span class="chat-time">'+escapeHTML(chatDateTime(c.last_at))+'</span>'+(c.pinned?'<span class="chat-pin">📌</span>':(c.unread?'<i class="chat-unread"></i>':''))+'</div>';
   b.onclick=()=>openChat(Object.assign({},c,{display_name:name}));
   el.appendChild(b);
  });
- if(note){const d=document.createElement('div');d.className='small muted';d.style.textAlign='center';d.textContent=note;el.appendChild(d);}
+ if(note){const d=document.createElement('div');d.className='small muted';d.style.textAlign='center';d.style.padding='12px';d.textContent=note;el.appendChild(d);}
+}
+function initChatListControls(){
+ const toggle=$('chatSearchToggle'),wrap=$('chatSearchWrap'),input=$('chatSearchInput');
+ if(toggle&&!toggle.dataset.bound){toggle.dataset.bound='1';toggle.onclick=()=>{chatSearchOpen=!chatSearchOpen;wrap.classList.toggle('open',chatSearchOpen);if(chatSearchOpen)setTimeout(()=>input&&input.focus(),180);else if(input)input.value='';renderChatList(chatsCache||chatPinned());};}
+ if(input&&!input.dataset.bound){input.dataset.bound='1';input.addEventListener('input',()=>renderChatList(chatsCache||chatPinned()));}
+ const tabs=$('chatTabs');
+ if(tabs&&!tabs.dataset.bound){tabs.dataset.bound='1';tabs.addEventListener('click',e=>{const b=e.target.closest('[data-chat-tab]');if(!b)return;chatTab=b.dataset.chatTab;tabs.querySelectorAll('.chat-tab').forEach(x=>x.classList.toggle('active',x===b));renderChatList(chatsCache||chatPinned());});}
+ const support=$('supportChatTab');if(support)support.style.display=myRank&&myRank.level>=7?'':'none';
 }
 async function loadChats(){
  if(!$('chatList'))return;
- const seq=++chatsSeq,me=String(meId),isStaff=!!(myRank&&myRank.level>=7);
- const seen=JSON.parse(localStorage.getItem('mt_seen_chats')||'{}');
- const pinned=()=>[
-  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'🌍 Общий чат игроков',ad_title:'Общение и торговля 08 сервера',last_text:'Нажмите, чтобы открыть общий чат',last_id:0,unread:false},
-  {key:'support_'+me,room_id:'support_'+me,rooms:['support_'+me],global:false,support:true,staffView:false,receiver_id:'support',display_name:'🛟 Техподдержка RP Маркет 08',ad_title:'Помощь и вопросы администрации',last_text:'Нажмите, чтобы написать в поддержку',last_id:0,unread:false}
- ];
- drawChats(chatsCache||pinned());
- const sel='?select=id,room_id,sender_id,receiver_id,sender_name,ad_title,text&order=id.desc';
+ initChatListControls();
+ const seq=++chatsSeq,me=String(meId),isStaff=!!(myRank&&myRank.level>=7),seen=JSON.parse(localStorage.getItem('mt_seen_chats')||'{}');
+ const [pg,ps]=chatPinned();
+ renderChatList(chatsCache||[pg,ps]);
+ const sel='?select=id,room_id,sender_id,receiver_id,sender_name,ad_title,text,created_at&order=id.desc';
  try{
   const [g,mine,tick]=await Promise.all([
    api('messages',{query:sel+'&room_id=eq.global&limit=1'}).catch(()=>[]),
-   api('messages',{query:sel+'&room_id=neq.global&or=(sender_id.eq.'+encodeURIComponent(me)+',receiver_id.eq.'+encodeURIComponent(me)+')&limit=300'}),
-   isStaff?api('messages',{query:sel+'&room_id=like.support_*&limit=200'}).catch(()=>[]):Promise.resolve([])
+   api('messages',{query:sel+'&room_id=neq.global&or=(sender_id.eq.'+encodeURIComponent(me)+',receiver_id.eq.'+encodeURIComponent(me)+')&limit=500'}),
+   isStaff?api('messages',{query:sel+'&room_id=like.support_*&limit=300'}).catch(()=>[]):Promise.resolve([])
   ]);
-  const [pg,ps]=pinned(),dms=new Map(),tickets=new Map();
+  const [globalChat,supportChat]=chatPinned(),dms=new Map(),tickets=new Map();
   const gm=g&&g[0];
-  if(gm){pg.last_id=gm.id;pg.last_text=(gm.sender_name||'Игрок')+': '+String(gm.text||'');pg.unread=(seen.global||0)<gm.id&&String(gm.sender_id)!==me;}
+  if(gm){globalChat.last_id=Number(gm.id)||0;globalChat.last_text=prevText(gm.text);globalChat.last_at=gm.created_at;globalChat.unread=(Number(seen.global)||0)<globalChat.last_id&&String(gm.sender_id)!==me;}
   const add=m=>{
-   const rid=String(m.room_id||'');if(!rid||rid==='support'||rid==='global')return;
-   const mid=Number(m.id)||0,fromMe=String(m.sender_id)===me;let c;
+   const rid=String(m.room_id||''),sid=String(m.sender_id||''),receiver=String(m.receiver_id||'');
+   if(!rid||rid==='support'||rid==='global'||rid.startsWith('sup_'))return;
+   const mid=Number(m.id)||0,fromMe=sid===me;let c;
    if(rid.startsWith('support_')){
-    if(rid===ps.room_id)c=ps;
-    else if(isStaff){
-     c=tickets.get(rid);
-     if(!c){const owner=rid.slice(8);c={key:rid,room_id:rid,rooms:[rid],global:false,support:true,staffView:true,receiver_id:owner,display_name:'🛟 Тикет #'+owner,ad_title:'Обращение игрока',last_text:'',last_id:0,unread:false};tickets.set(rid,c);}
-    }else return;
+    const owner=rid.slice(8);if(!chatIsRealUserId(owner))return;
+    if(rid===supportChat.room_id){c=supportChat;}
+    else if(isStaff){c=tickets.get(rid);if(!c){c={key:rid,room_id:rid,rooms:[rid],global:false,support:true,staffView:true,receiver_id:owner,display_name:'Тикет #'+owner,ad_title:'Обращение игрока',last_text:'',last_id:0,last_at:null,unread:false};tickets.set(rid,c);}}
+    else return;
    }else{
-    const other=fromMe?String(m.receiver_id):String(m.sender_id);
-    if(!other||other===me)return;
+    const other=fromMe?receiver:sid;
+    if(!chatIsRealUserId(other))return;
     c=dms.get(other);
-    if(!c){const cr=roomIdFor(me,other);c={key:'dm_'+other,room_id:cr,rooms:[cr],global:false,support:false,receiver_id:other,display_name:'Игрок '+other,ad_title:m.ad_title||'Личный чат',last_text:'',last_id:0,unread:false};dms.set(other,c);}
+    if(!c){c={key:'dm_user_'+other,room_id:rid,rooms:[],global:false,support:false,receiver_id:other,display_name:'Игрок '+other,ad_title:m.ad_title||'Личный чат',last_text:'',last_id:0,last_at:null,first_id:Number.MAX_SAFE_INTEGER,first_sender:'',unread:false,myAd:false,isBuying:false};dms.set(other,c);}
     if(!c.rooms.includes(rid))c.rooms.push(rid);
     if(!fromMe&&m.sender_name)c.display_name=m.sender_name;
+    if(m.ad_title&&!c.ad_title)c.ad_title=m.ad_title;
    }
-   if(mid>c.last_id){c.last_id=mid;c.last_text=prevText(m.text);c.unread=(seen[c.key]||0)<mid&&!fromMe;if(!c.support&&m.ad_title)c.ad_title=m.ad_title;}
+   if(!c)return;
+   if(!c.support&&!c.global&&mid<c.first_id){c.first_id=mid;c.first_sender=sid;}
+   if(mid>c.last_id){c.last_id=mid;c.last_text=prevText(m.text);c.last_at=m.created_at;c.unread=(Number(seen[c.key]||seen[c.room_id]||0)<mid)&&!fromMe;if(m.ad_title&&(!c.support||c.staffView))c.ad_title=m.ad_title;}
   };
   (mine||[]).forEach(add);(tick||[]).forEach(add);
-  const byLast=(a,b)=>b.last_id-a.last_id;
-  const list=[pg,ps].concat(Array.from(tickets.values()).sort(byLast),Array.from(dms.values()).sort(byLast));
-  await fetchProfiles(list.filter(c=>!c.global&&(!c.support||c.staffView)&&c.receiver_id).map(c=>c.receiver_id));
+  // Determine whether the conversation concerns one of the current user's own ads.
+  for(const c of dms.values()){
+   const matching=(ads||[]).filter(a=>String(a.title||'')===String(c.ad_title||''));
+   c.myAd=matching.some(a=>String(a.seller_id)===me);c.isBuying=!c.myAd&&c.first_sender===me;
+  }
+  const list=[globalChat,supportChat,...Array.from(tickets.values()).sort((a,b)=>b.last_id-a.last_id),...Array.from(dms.values()).sort((a,b)=>b.last_id-a.last_id)];
+  await fetchProfiles(list.filter(c=>c.receiver_id&&chatIsRealUserId(c.receiver_id)).map(c=>c.receiver_id));
   if(seq!==chatsSeq)return;
-  chatsCache=list;drawChats(list);
- }catch(e){
-  if(seq===chatsSeq)drawChats(chatsCache||pinned(),'Не удалось обновить список — откройте вкладку ещё раз');
- }
+  list.forEach(c=>{if(c.staffView){const pr=chatProfilesCache.get(String(c.receiver_id))||{};c.display_name='Тикет: '+(pr.display_name||c.receiver_id);}});
+  chatsCache=list;renderChatList(list);
+ }catch(e){if(seq===chatsSeq)renderChatList(chatsCache||chatPinned(),'Не удалось обновить список — откройте вкладку ещё раз');}
 }
 async function deleteCurrentChat(){
  if(!activeChat)return;
  const chat=activeChat;
  if(chat.global&&(!myRank||myRank.level<7))return;
  try{
-  for(const rid of (chat.rooms||[chat.room_id])){
-   await api('rpc/delete_chat_room',{method:'POST',body:{p_user_id:String(meId),p_room_id:String(rid)}});
-  }
+  for(const rid of (chat.rooms||[chat.room_id]))await api('rpc/delete_chat_room',{method:'POST',body:{p_user_id:String(meId),p_room_id:String(rid)}});
   chatsCache=null;toast('Чат удалён 🗑️');closeModal();await loadChats();
  }catch(e){toast('Ошибка удаления чата: '+e.message);}
 }
-
-function startPrivateChat(targetOrAd, nameOpt, titleOpt) {
- let uid = '', name = '', title = 'Личный чат';
- if (targetOrAd && typeof targetOrAd === 'object') {
-  uid = String(targetOrAd.seller_id || targetOrAd.user_id || '');
-  name = targetOrAd.seller_name || targetOrAd.display_name || ('Игрок ' + uid);
-  title = targetOrAd.title || 'Объявление';
- } else {
-  uid = String(targetOrAd || '');
-  name = nameOpt || ('Игрок ' + uid);
-  title = titleOpt || 'Личный чат';
- }
- if (!uid || uid === String(meId)) { toast('Нельзя написать самому себе'); return; }
- const c = {
-  room_id: roomIdFor(meId, uid),
-  receiver_id: uid,
-  ad_title: title,
-  display_name: name,
-  support: false,
-  global: false
- };
- closeModal();
- showPage('chatsPage');
- openChat(c);
+function startPrivateChat(targetOrAd,nameOpt,titleOpt){
+ let uid='',name='',title='Личный чат';
+ if(targetOrAd&&typeof targetOrAd==='object'){uid=String(targetOrAd.seller_id||targetOrAd.user_id||'');name=targetOrAd.seller_name||targetOrAd.display_name||('Игрок '+uid);title=targetOrAd.title||'Личный чат';}
+ else{uid=String(targetOrAd||'');name=nameOpt||('Игрок '+uid);title=titleOpt||'Личный чат';}
+ if(!chatIsRealUserId(uid)){toast('Не удалось определить собеседника');return;}
+ const c={key:'dm_user_'+uid,room_id:roomIdFor(meId,uid),rooms:[roomIdFor(meId,uid)],receiver_id:uid,ad_title:title,display_name:name,support:false,global:false};
+ closeModal();showPage('chatsPage');openChat(c);
 }
 
 let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true;
@@ -1842,69 +1913,55 @@ function renderMsgs(stick){
  if(stick||near||stickBottom){box.scrollTop=box.scrollHeight;stickBottom=false;}
 }
 function openChat(chat){
- chat.key=chat.key||(chat.global?'global':(chat.support?chat.room_id:'dm_'+chat.receiver_id));
+ chat.key=chat.key||(chat.global?'global':(chat.support?chat.room_id:'dm_user_'+chat.receiver_id));
  if(!chat.rooms||!chat.rooms.length)chat.rooms=[chat.room_id];
- else if(!chat.global&&!chat.support&&!chat.rooms.includes(chat.room_id))chat.rooms.push(chat.room_id);
- showModal(chat.display_name,'');
- activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;
- const canDelete=!chat.global||(myRank&&myRank.level>=7);
- $('modalBody').innerHTML='<div class="chat-top"><div class="small muted chat-sub" id="chatSub"></div>'+((!chat.global&&!chat.support)?'<button type="button" class="inline-btn deal-btn" id="dealBtn">🤝 Сделка</button>':'')+(canDelete?'<button type="button" class="inline-btn chat-del" id="deleteChatBtn"></button>':'')+'</div><div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Сообщение…" autocomplete="off"><button type="submit">➤</button></form>';
+ if(!chat.global&&!chat.support&&chat.receiver_id&&!chat.rooms.includes(chat.room_id))chat.rooms.push(chat.room_id);
+ showModal(chat.display_name,'');activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;
+ const canDelete=!chat.global||!!(myRank&&myRank.level>=7);
+ $('modalBody').innerHTML='<div class="chat-top"><button type="button" class="close" id="chatBackBtn" aria-label="Закрыть чат">✕</button><div class="small muted chat-sub" id="chatSub"></div>'+((!chat.global&&!chat.support)?'<button type="button" class="inline-btn deal-btn" id="dealBtn">🤝 Сделка</button>':'')+(canDelete?'<button type="button" class="inline-btn chat-del" id="deleteChatBtn">🗑️ Удалить чат</button>':'')+'</div><div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Сообщение…" autocomplete="off"><button type="submit">➤</button></form>';
  $('chatSub').textContent=chat.ad_title||'Личный чат';
+ if($('chatBackBtn'))$('chatBackBtn').onclick=closeModal;
  if($('dealBtn'))$('dealBtn').onclick=openProposeDealModal;
  const delBtn=$('deleteChatBtn');
- if(delBtn){
-  const label=chat.global?'🧹 Очистить':'🗑️ Удалить чат';let armed=false,t=null;
-  delBtn.textContent=label;
-  delBtn.onclick=()=>{
-   if(!armed){armed=true;delBtn.textContent='Точно? Нажмите ещё раз';t=setTimeout(()=>{armed=false;delBtn.textContent=label;},3500);return;}
-   clearTimeout(t);deleteCurrentChat();
-  };
- }
+ if(delBtn){let armed=false,timer=null;delBtn.onclick=()=>{if(!armed){armed=true;delBtn.textContent='Точно удалить? Нажмите ещё раз';timer=setTimeout(()=>{armed=false;if($('deleteChatBtn'))$('deleteChatBtn').textContent='🗑️ Удалить чат';},3500);return;}clearTimeout(timer);deleteCurrentChat();};}
  $('messagesBox').addEventListener('click',e=>{
   const db=e.target.closest('[data-deal]');if(db){dealClick(db);return;}
   const a=e.target.closest('[data-uid]');if(a){openPublicProfile(a.dataset.uid);return;}
-  const r=e.target.closest('[data-retry]');
-  if(r){const p=pending.find(x=>x.id===r.dataset.retry);if(p){p.state='send';renderMsgs();deliver(p);}}
+  const r=e.target.closest('[data-retry]');if(r){const p=pending.find(x=>x.id===r.dataset.retry);if(p){p.state='send';renderMsgs();deliver(p);}}
  });
  $('sendMessageForm').addEventListener('submit',sendMessage);
  $('modalWrap').classList.add('chat-fullscreen');
- loadMessages();
- chatTimer=setInterval(()=>loadMessages(),3000);
+ loadMessages();chatTimer=setInterval(()=>loadMessages(),3000);
 }
 async function loadMessages(){
  if(!activeChat||msgBusy)return;
- const chat=activeChat;msgBusy=true;
- const okAtStart=pending.filter(p=>p.state==='ok');
+ const chat=activeChat;msgBusy=true;const okAtStart=pending.filter(p=>p.state==='ok');
  try{
-  const rows=await api('messages',{query:'?select=*&room_id=in.('+chat.rooms.map(encodeURIComponent).join(',')+')&order=id.asc&limit=300'})||[];
-  if(activeChat!==chat)return;
-  await fetchProfiles(rows.map(r=>r.sender_id));
-  if(activeChat!==chat||!$('messagesBox'))return;
-  const last=rows.length?Number(rows[rows.length-1].id)||0:0;
-  if(last){
-   const seen=JSON.parse(localStorage.getItem('mt_seen_chats')||'{}');
-   if(seen[chat.key]!==last){seen[chat.key]=last;localStorage.setItem('mt_seen_chats',JSON.stringify(seen));chatsCache=null;}
+  let query;
+  if(chat.global)query='?select=*&room_id=eq.global&order=id.asc&limit=500';
+  else if(chat.support)query='?select=*&room_id=eq.'+encodeURIComponent(chat.room_id)+'&order=id.asc&limit=500';
+  else{
+   const me=encodeURIComponent(String(meId)),other=encodeURIComponent(String(chat.receiver_id));
+   const roomTerms=(chat.rooms||[chat.room_id]).map(r=>'room_id.eq.'+encodeURIComponent(r));
+   const pairTerms=['and(sender_id.eq.'+me+',receiver_id.eq.'+other+')','and(sender_id.eq.'+other+',receiver_id.eq.'+me+')'];
+   query='?select=*&or=('+roomTerms.concat(pairTerms).join(',')+')&order=id.asc&limit=500';
   }
+  const rows=await api('messages',{query})||[];
+  if(activeChat!==chat)return;
+  const filtered=chat.global||chat.support?rows:rows.filter(r=>{
+   const sid=String(r.sender_id||''),rid=String(r.receiver_id||'');
+   return (sid===String(meId)&&rid===String(chat.receiver_id))||(sid===String(chat.receiver_id)&&rid===String(meId));
+  });
+  await fetchProfiles(filtered.map(r=>r.sender_id));
+  if(activeChat!==chat||!$('messagesBox'))return;
+  const last=filtered.length?Number(filtered[filtered.length-1].id)||0:0;
+  if(last){const seen=JSON.parse(localStorage.getItem('mt_seen_chats')||'{}');seen[chat.key]=last;localStorage.setItem('mt_seen_chats',JSON.stringify(seen));chatsCache=null;}
   pending=pending.filter(p=>!okAtStart.includes(p));
-  const sig=rows.length+':'+last+':'+pending.map(p=>p.state).join('');
+  const sig=filtered.length+':'+last+':'+pending.map(p=>p.state).join('');
   if(sig===lastSig)return;
-  lastSig=sig;curRows=rows;renderMsgs(false);
- }catch(e){
-  const box=$('messagesBox');
-  if(box&&!curRows.length&&!box.querySelector('.msg-row'))box.innerHTML='<div class="empty">Нет соединения. Пробуем снова…</div>';
- }finally{msgBusy=false;}
-}
-async function deliver(p){
- const c=p.chat;
- const receiver=c.global?'global':(c.support?(c.staffView?String(c.room_id).replace('support_',''):'support'):String(c.receiver_id||''));
- const body={room_id:String(c.room_id),ad_title:c.ad_title||'Личный чат',sender_id:String(meId),sender_name:meName,receiver_id:receiver,text:p.text};
- let ok=false;
- for(let i=0;i<2&&!ok;i++){
-  try{await api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body});ok=true;}
-  catch(_){await new Promise(r=>setTimeout(r,700));}
- }
- p.state=ok?'ok':'fail';
- if(activeChat&&activeChat.key===p.key){if(ok){lastSig='';await loadMessages();}else renderMsgs();}
+  lastSig=sig;curRows=filtered;renderMsgs(false);
+ }catch(e){const box=$('messagesBox');if(box&&!curRows.length&&!box.querySelector('.msg-row'))box.innerHTML='<div class="empty">Нет соединения. Пробуем снова…</div>';}
+ finally{msgBusy=false;}
 }
 async function sendMessage(e){
  e.preventDefault();
