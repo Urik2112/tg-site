@@ -163,6 +163,13 @@
 .bubble.mine{border-radius:15px 15px 4px 15px}.bubble:not(.mine){border:1px solid var(--line);border-radius:15px 15px 15px 4px}
 .bubble.pending{opacity:.65}
 .msg-fail{display:block;color:#ffd0d6;font-size:10px;cursor:pointer;margin-top:4px;text-align:right}
+.deal-btn{color:#52d6a0;border:1px solid rgba(82,214,160,.4);flex-shrink:0}
+.deal-card{background:var(--card2);border:1px solid var(--accent);border-radius:14px;padding:11px 12px;margin:2px auto;width:92%;font-size:13px}
+.deal-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.deal-ok{background:rgba(82,214,160,.18);color:#52d6a0}
+.deal-stars{margin-top:8px}.deal-stars button{background:none;font-size:26px;color:var(--muted);padding:0 3px}.deal-stars button.on{color:var(--yellow)}
+.deal-form{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:8px;max-height:45vh;overflow:auto}
+.deal-form .field{margin:8px 0 0}
+.ten-bar{height:8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);margin:7px 0;overflow:hidden}.ten-bar i{display:block;height:100%;border-radius:6px}
 </style>
 </head>
 <body>
@@ -202,6 +209,7 @@
             <div id="profileRank"></div>
           </div>
         </div>
+        <div id="tenureBox" style="margin-top:12px"></div>
         <div id="profileBio" class="small" style="margin-top:12px;color:#ded8f1;white-space:pre-wrap;line-height:1.45"></div>
         <div class="admin-stat" style="margin-top:14px">
           <div class="stat"><b id="profileDealsTotal">0</b><span>Выложено объявлений</span></div>
@@ -542,6 +550,7 @@ function renderProfile() {
  $('profileId').textContent = meId;
  $('profileLevel').textContent = myRank.level + '/10';
  setRankBadge($('profileRank'), myRole && myRole.rank);
+ renderTenure();
  if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfile;
  if ($('editProfileBtn') && !$('myAdsProfileBtn')) {
   const myAdsCount = Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(meId)).length : 0;
@@ -697,7 +706,7 @@ function openAd(id) {
   <div style="font-size:18px;font-weight:850;margin-bottom:8px">${escapeHTML(ad.title)}</div>
   <div class="small muted">${ad.server==='Торг возможен'?'🤝 Торг возможен':(ad.server==='Без торга'?'🔒 Без торга':'🤝 Торг по договорённости')}</div>
   <div class="detail-desc" style="margin-top:14px">${escapeHTML(ad.desc||ad.description||'Продавец не добавил описание.')}</div>
-  <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
+  <div class="seller-row" id="sellerInfoBox"><div style="display:flex;align-items:center;gap:10px"><div id="sellerAvatarBox" class="avatar" style="overflow:hidden;flex-shrink:0">${escapeHTML((ad.seller_name||'И')[0].toUpperCase())}</div><div><div class="small muted">Продавец</div><b>${escapeHTML(ad.seller_name||'Игрок')}</b><div id="sellerStatsLine" class="small muted" style="margin-top:2px">Загрузка статистики…</div><div><span class="rank" style="color:${sellerRank.color};background:${sellerRank.bg}">${escapeHTML(sellerRank.name)}</span><span id="sellerTenure"></span></div></div></div><div class="small muted">ID: ${escapeHTML(ad.seller_id)}</div></div>
   <div id="sellerBioBox" class="small muted" style="margin-top:8px;padding:0 4px"></div>
   <div id="adMarketPriceHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-size:12px"></div>
   <button class="btn secondary" id="modalFavBtn">${favIds.has(String(ad.id))?'❤️ В избранном (убрать)':'🤍 Добавить в избранное'}</button>
@@ -729,11 +738,12 @@ function openAd(id) {
   box.style.display = 'block';
   box.innerHTML = `📊 <b>Средняя цена по рынку:</b> ${formatMoneyShort(avg)} <span class="muted">(${nums.length} сдел.)</span>${diffBadge}`;
  }).catch(() => {});
- api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
+ api('roles',{query:'?select=display_name,avatar_url,bio,deals_total,deals_success,first_seen_at,active_seconds,tenure_tag&user_id=eq.'+encodeURIComponent(ad.seller_id)+'&limit=1'}).then(r=>{
   const sr = Array.isArray(r) ? r.at(0) : r;
   if (sr) {
    if (sr.avatar_url && $('sellerAvatarBox')) $('sellerAvatarBox').innerHTML = '<img src="'+escapeHTML(sr.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">';
    if ($('sellerStatsLine')) $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: '+(sr.deals_success||0);
+   if ($('sellerTenure')) $('sellerTenure').innerHTML = tenureChip(tenureOf(sr));
    if (sr.bio && $('sellerBioBox')) $('sellerBioBox').textContent = 'О продавце: ' + sr.bio;
   } else if ($('sellerStatsLine')) {
    $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: 0';
@@ -1701,16 +1711,17 @@ async function openPublicProfile(uid){
  uid=String(uid||'');if(!uid||uid==='support'||uid==='global')return;
  showModal('Профиль','<div class="loading">Загружаем профиль…</div>');
  let p=null,likes=0;
- try{const r=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,game_phone,deals_success&user_id=eq.'+encodeURIComponent(uid)+'&limit=1'});p=r&&r[0]||null;}catch(_){}
+ try{const r=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,game_phone,deals_success,first_seen_at,active_seconds,tenure_tag&user_id=eq.'+encodeURIComponent(uid)+'&limit=1'});p=r&&r[0]||null;}catch(_){}
  try{const l=await api('profile_likes',{query:'?select=from_user_id&to_user_id=eq.'+encodeURIComponent(uid)});likes=Array.isArray(l)?l.length:0;}catch(_){}
  p=p||{user_id:uid};
  const mineAds=(ads||[]).filter(a=>String(a.seller_id)===uid),name=p.display_name||(mineAds[0]&&mineAds[0].seller_name)||'Игрок',r=rankFor(p.rank);
- $('modalBody').innerHTML='<div style="text-align:center">'+avatarHTML(p,uid,name,84)+'<div style="font-size:19px;font-weight:850;margin-top:10px;overflow-wrap:anywhere">'+escapeHTML(name)+'</div><div style="margin-top:4px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span></div></div>'
+ $('modalBody').innerHTML='<div style="text-align:center">'+avatarHTML(p,uid,name,84)+'<div style="font-size:19px;font-weight:850;margin-top:10px;overflow-wrap:anywhere">'+escapeHTML(name)+'</div><div style="margin-top:4px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'+tenureChip(tenureOf(p))+'</div></div>'
   +(p.bio?'<div class="detail-desc" style="margin-top:12px;text-align:center">'+escapeHTML(p.bio)+'</div>':'')
   +'<div class="admin-stat" style="margin-top:14px"><div class="stat"><b>'+mineAds.length+'</b><span>Объявлений</span></div><div class="stat"><b style="color:var(--green)">'+(p.deals_success||0)+'</b><span>Успешных сделок</span></div></div>'
   +'<div class="admin-stat" style="margin-top:10px"><div class="stat"><b style="color:#ff657a">'+likes+'</b><span>❤️ Лайки</span></div><div class="stat"><b style="font-size:15px">'+escapeHTML(p.game_phone||'Не указан')+'</b><span>📱 Игровой номер</span></div></div>'
-  +(uid!==String(meId)?'<button class="btn" id="ppWrite">💬 Написать</button>':'');
+  +'<div id="ppReviews"></div>'+(uid!==String(meId)?'<button class="btn" id="ppWrite">💬 Написать</button>':'');
  if($('ppWrite'))$('ppWrite').onclick=()=>startPrivateChat(uid,name);
+ loadReviews(uid);
 }
 
 let chatsSeq=0,chatsCache=null;
@@ -1764,7 +1775,7 @@ async function loadChats(){
     if(!c.rooms.includes(rid))c.rooms.push(rid);
     if(!fromMe&&m.sender_name)c.display_name=m.sender_name;
    }
-   if(mid>c.last_id){c.last_id=mid;c.last_text=String(m.text||'');c.unread=(seen[c.key]||0)<mid&&!fromMe;if(!c.support&&m.ad_title)c.ad_title=m.ad_title;}
+   if(mid>c.last_id){c.last_id=mid;c.last_text=prevText(m.text);c.unread=(seen[c.key]||0)<mid&&!fromMe;if(!c.support&&m.ad_title)c.ad_title=m.ad_title;}
   };
   (mine||[]).forEach(add);(tick||[]).forEach(add);
   const byLast=(a,b)=>b.last_id-a.last_id;
@@ -1815,6 +1826,7 @@ function startPrivateChat(targetOrAd, nameOpt, titleOpt) {
 
 let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true;
 function msgHTML(m){
+ if(String(m.text||'').startsWith('[DEAL_')){const d=Array.from(curDeals.values()).find(x=>x.id===m.id);return d?dealCardHTML(d):'';}
  const sid=String(m.sender_id||''),mine=sid===String(meId),p=m._p;
  const pr=mine?(myRole||{}):(chatProfilesCache.get(sid)||{});
  const name=pr.display_name||m.sender_name||(mine?meName:sid)||'Игрок';
@@ -1823,6 +1835,7 @@ function msgHTML(m){
 }
 function renderMsgs(stick){
  const box=$('messagesBox');if(!box||!activeChat)return;
+ curDeals=(activeChat.global||activeChat.support)?new Map():dealState(curRows);
  const mineP=pending.filter(p=>p.key===activeChat.key).map(p=>({sender_id:meId,text:p.text,_p:p}));
  const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
  box.innerHTML=curRows.concat(mineP).map(msgHTML).join('')||'<div class="empty">Начните общение первым 👋</div>';
@@ -1835,8 +1848,9 @@ function openChat(chat){
  showModal(chat.display_name,'');
  activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;
  const canDelete=!chat.global||(myRank&&myRank.level>=7);
- $('modalBody').innerHTML='<div class="chat-top"><div class="small muted chat-sub" id="chatSub"></div>'+(canDelete?'<button type="button" class="inline-btn chat-del" id="deleteChatBtn"></button>':'')+'</div><div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Сообщение…" autocomplete="off"><button type="submit">➤</button></form>';
+ $('modalBody').innerHTML='<div class="chat-top"><div class="small muted chat-sub" id="chatSub"></div>'+((!chat.global&&!chat.support)?'<button type="button" class="inline-btn deal-btn" id="dealBtn">🤝 Сделка</button>':'')+(canDelete?'<button type="button" class="inline-btn chat-del" id="deleteChatBtn"></button>':'')+'</div><div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Сообщение…" autocomplete="off"><button type="submit">➤</button></form>';
  $('chatSub').textContent=chat.ad_title||'Личный чат';
+ if($('dealBtn'))$('dealBtn').onclick=openProposeDealModal;
  const delBtn=$('deleteChatBtn');
  if(delBtn){
   const label=chat.global?'🧹 Очистить':'🗑️ Удалить чат';let armed=false,t=null;
@@ -1847,6 +1861,7 @@ function openChat(chat){
   };
  }
  $('messagesBox').addEventListener('click',e=>{
+  const db=e.target.closest('[data-deal]');if(db){dealClick(db);return;}
   const a=e.target.closest('[data-uid]');if(a){openPublicProfile(a.dataset.uid);return;}
   const r=e.target.closest('[data-retry]');
   if(r){const p=pending.find(x=>x.id===r.dataset.retry);if(p){p.state='send';renderMsgs();deliver(p);}}
@@ -1898,8 +1913,173 @@ async function sendMessage(e){
  if(!text)return;
  input.value='';
  const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,5),key:activeChat.key,text:text,chat:activeChat,state:'send'};
- pending.push(p);renderMsgs(true);input.focus();
+ pending.push(p);renderMsgs(true);
+ const sb=e.currentTarget.querySelector('button[type="submit"]');if(sb)sb.disabled=true;
  await deliver(p);
+ if(sb)sb.disabled=false;input.focus();
+}
+const TENURE=[
+ {name:'🌱 Новичок',h:0,d:0,col:'#22c55e',bg:'rgba(34,197,94,.14)',bd:'rgba(34,197,94,.35)'},
+ {name:'👤 Участник',h:2,d:3,col:'#22c55e',bg:'rgba(34,197,94,.14)',bd:'rgba(34,197,94,.35)'},
+ {name:'🤓 Матёрый',h:8,d:10,col:'#eab308',bg:'rgba(234,179,8,.14)',bd:'rgba(234,179,8,.35)'},
+ {name:'💯 Свояк',h:20,d:21,col:'#eab308',bg:'rgba(234,179,8,.14)',bd:'rgba(234,179,8,.35)'},
+ {name:'😎 Бывалый',h:45,d:45,col:'#a855f7',bg:'rgba(168,85,247,.16)',bd:'rgba(168,85,247,.38)'},
+ {name:'✌️ Олдовый',h:90,d:90,col:'#a855f7',bg:'rgba(168,85,247,.16)',bd:'rgba(168,85,247,.38)'},
+ {name:'🏆 Легенда',h:180,d:180,col:'#ef4444',bg:'rgba(239,68,68,.16)',bd:'rgba(239,68,68,.4)'}
+];
+let tenure={first:null,active:0,lvl:0,synced:0,timer:null},curDeals=new Map();
+function tenureLevel(sec,first){
+ const h=(Number(sec)||0)/3600,t=first?new Date(first).getTime():NaN,d=Number.isNaN(t)?0:Math.max(0,(Date.now()-t)/864e5);
+ let L=0;TENURE.forEach((x,i)=>{if(h>=x.h||d>=x.d)L=i;});
+ return {i:L,h:h,d:d};
+}
+function tenureOf(row){return TENURE[tenureLevel(row&&row.active_seconds,row&&row.first_seen_at).i];}
+function tenureChip(t){return '<span class="rank tenure-chip" style="color:'+t.col+';background:'+t.bg+';border:1px solid '+t.bd+';margin-left:6px">'+escapeHTML(t.name)+'</span>';}
+function fmtDur(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return (h?h+' ч ':'')+m+' мин';}
+function renderTenure(){
+ const x=tenureLevel(tenure.active,tenure.first),t=TENURE[x.i],n=TENURE[x.i+1];
+ const pr=$('profileRank');
+ if(pr){pr.querySelectorAll('.tenure-chip').forEach(e=>e.remove());pr.insertAdjacentHTML('beforeend',tenureChip(t));}
+ const box=$('tenureBox');if(!box)return;
+ const frac=n?Math.min(1,Math.max(x.h/n.h,x.d/n.d)):1;
+ const next=n?'До «'+n.name+'»: ещё '+Math.max(0,Math.ceil(n.h-x.h))+' ч онлайна или '+Math.max(0,Math.ceil(n.d-x.d))+' дн.':'Максимальный тег достигнут 🏆';
+ box.innerHTML='<div class="small muted">⏱ В маркете: <b style="color:var(--text)">'+fmtDur(tenure.active)+'</b> онлайн · '+Math.floor(x.d)+' дн. с первого входа</div><div class="ten-bar"><i style="width:'+Math.round(frac*100)+'%;background:'+t.col+'"></i></div><div class="small muted">'+next+'</div>';
+}
+async function patchRole(uid,fields,rpc,rpcBody){
+ try{const r=await api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(uid),headers:{'Prefer':'return=representation'},body:fields});if(Array.isArray(r)&&r.length)return true;}catch(_){}
+ if(rpc){try{await api('rpc/'+rpc,{method:'POST',body:rpcBody});return true;}catch(_){}}
+ return false;
+}
+async function syncTenure(force){
+ if(!force&&tenure.active===tenure.synced)return;
+ const tag=TENURE[tenureLevel(tenure.active,tenure.first).i].name;
+ const f={first_seen_at:tenure.first,active_seconds:Math.floor(tenure.active),tenure_tag:tag};
+ const ok=await patchRole(meId,f,'sync_tenure',{p_user_id:String(meId),p_first_seen_at:f.first_seen_at,p_active_seconds:f.active_seconds,p_tenure_tag:tag});
+ if(ok){tenure.synced=tenure.active;if(myRole)Object.assign(myRole,f);}
+}
+function startTenure(){
+ if(tenure.timer||!myRole)return;
+ const lk='mt_active_'+meId,fk='mt_first_'+meId;
+ tenure.active=Math.max(Number(myRole.active_seconds)||0,Number(localStorage.getItem(lk))||0);
+ tenure.first=myRole.first_seen_at||localStorage.getItem(fk)||new Date().toISOString();
+ localStorage.setItem(fk,tenure.first);
+ const stored=TENURE.findIndex(t=>t.name===myRole.tenure_tag),lv=tenureLevel(tenure.active,tenure.first).i;
+ if(stored>=0&&lv>stored)toast('🎉 Вы получили новый тег: '+TENURE[lv].name+'!');
+ tenure.lvl=lv;tenure.synced=Number(myRole.active_seconds)||0;
+ if(!myRole.first_seen_at||stored!==lv)syncTenure(true);
+ renderTenure();
+ tenure.timer=setInterval(()=>{
+  if(document.visibilityState!=='visible')return;
+  tenure.active+=60;localStorage.setItem(lk,String(tenure.active));
+  const x=tenureLevel(tenure.active,tenure.first).i;
+  if(x>tenure.lvl){tenure.lvl=x;toast('🎉 Вы получили новый тег: '+TENURE[x].name+'!');syncTenure(true);}
+  else if(tenure.active-tenure.synced>=150)syncTenure(false);
+  renderTenure();
+ },60000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')syncTenure(false);});
+}
+
+function prevText(t){t=String(t||'');return t.startsWith('[DEAL_OFFER')?'🤝 Предложение сделки':t.startsWith('[DEAL_REVIEW')?'⭐ Отзыв о сделке':t.startsWith('[DEAL_')?'🤝 Сделка':t;}
+function profName(id){id=String(id);if(id===String(meId))return meName;const p=chatProfilesCache.get(id);return (p&&p.display_name)||(activeChat&&String(activeChat.receiver_id)===id?activeChat.display_name:'Игрок');}
+function dealState(rows){
+ const D=new Map();
+ rows.forEach(m=>{
+  const t=String(m.text||''),sid=String(m.sender_id);let x=t.match(/^\[DEAL_OFFER:(\{.*\})\]$/s);
+  if(x){try{const o=JSON.parse(x[1]);if(o.offer_id&&[String(o.seller_id),String(o.buyer_id)].includes(sid))D.set(String(o.offer_id),{o:o,init:sid,st:'pending',rev:[],id:m.id});}catch(_){}return;}
+  x=t.match(/^\[DEAL_(DONE|CANCEL|DECLINE):(\w+)\]$/);
+  if(x){const d=D.get(x[2]);if(d&&d.st==='pending'){const own=sid===d.init;if(x[1]==='CANCEL'&&own)d.st='cancel';else if(x[1]!=='CANCEL'&&!own&&[String(d.o.seller_id),String(d.o.buyer_id)].includes(sid))d.st=x[1]==='DONE'?'done':'decline';}return;}
+  x=t.match(/^\[DEAL_REVIEW:(\{.*\})\]$/s);
+  if(x){try{const r=JSON.parse(x[1]),d=D.get(String(r.offer_id));if(d&&d.st==='done'&&!d.rev.some(v=>v.by===sid)&&[String(d.o.seller_id),String(d.o.buyer_id)].includes(sid))d.rev.push({by:sid,stars:Math.max(1,Math.min(5,+r.stars||5)),text:String(r.text||'').slice(0,200)});}catch(_){}}
+ });
+ return D;
+}
+function dealCardHTML(d){
+ const o=d.o,me=String(meId),party=me===String(o.seller_id)||me===String(o.buyer_id),mine=d.init===me;
+ const st={pending:'⏳ Ожидает подтверждения',done:'✅ Сделка подтверждена',cancel:'❌ Отменено',decline:'✕ Отклонено'}[d.st];
+ const who=d.init===String(o.seller_id)?'продавец (передал товар)':'покупатель (оплатил товар)';
+ let act='';
+ if(party&&d.st==='pending')act=mine?'<button type="button" class="inline-btn" data-deal="cancel">❌ Отменить</button>':'<button type="button" class="inline-btn deal-ok" data-deal="confirm">✅ Подтвердить получение</button><button type="button" class="inline-btn" data-deal="decline">✕ Отклонить</button>';
+ let rev=d.rev.map(r=>'<div class="small" style="margin-top:5px">'+'⭐'.repeat(r.stars)+' <b>'+escapeHTML(profName(r.by))+'</b>'+(r.text?': '+escapeHTML(r.text):'')+'</div>').join('');
+ if(party&&d.st==='done'&&!d.rev.some(r=>r.by===me))rev+='<div class="deal-stars" data-val="0">'+[1,2,3,4,5].map(n=>'<button type="button" data-deal="star" data-star="'+n+'">★</button>').join('')+'</div><div style="display:flex;gap:6px"><input class="field" style="margin:0" maxlength="200" placeholder="Короткий отзыв (необязательно)"><button type="button" class="inline-btn" data-deal="review">Отправить</button></div>';
+ return '<div class="deal-card" data-oid="'+escapeHTML(o.offer_id)+'"><b>🤝 Предложение сделки</b><div style="margin-top:6px;font-weight:800">'+escapeHTML(o.ad_title)+'</div><div class="price" style="margin:4px 0">'+formatPrice(o.price)+'</div><div class="small muted">Инициатор: '+who+'</div><div class="small" style="margin:4px 0">'+st+'</div>'+(act?'<div class="deal-act">'+act+'</div>':'')+rev+'</div>';
+}
+function openProposeDealModal(){
+ const chat=activeChat,panel=$('dealPanel');if(!chat||!panel)return;
+ if(panel.innerHTML){panel.innerHTML='';return;}
+ const other=String(chat.receiver_id),me=String(meId);
+ const titles=Array.from(new Set((ads||[]).filter(a=>[me,other].includes(String(a.seller_id))).map(a=>a.title).filter(Boolean)));
+ const t0=chat.ad_title&&chat.ad_title!=='Личный чат'?chat.ad_title:'';
+ panel.innerHTML='<div class="deal-form"><b>🤝 Предложение сделки</b><input class="field" id="dlTitle" list="dlTitles" maxlength="70" placeholder="Товар / объявление" value="'+escapeHTML(t0)+'"><datalist id="dlTitles">'+titles.map(t=>'<option value="'+escapeHTML(t)+'">').join('')+'</datalist><input class="field" id="dlPrice" inputmode="numeric" placeholder="Итоговая сумма, например 15 000 000"><select class="field" id="dlRole"><option value="seller">Я продавец (передал товар)</option><option value="buyer">Я покупатель (оплатил товар)</option></select><div style="display:flex;gap:8px"><button type="button" class="btn" id="dlSend" style="margin:0">Отправить предложение</button><button type="button" class="btn secondary" id="dlCancel" style="margin:0;width:auto;padding:12px 16px">✕</button></div></div>';
+ $('dlPrice').oninput=()=>{$('dlPrice').value=formatSpacedDigits($('dlPrice').value);};
+ $('dlCancel').onclick=()=>{panel.innerHTML='';};
+ $('dlSend').onclick=async()=>{
+  const title=$('dlTitle').value.trim();if(!title){toast('Укажите товар');return;}
+  const price=Number($('dlPrice').value.replace(/\D/g,''))||0,isSeller=$('dlRole').value==='seller';
+  const o={offer_id:String(Date.now()),ad_title:title,price:price,seller_id:isSeller?me:other,buyer_id:isSeller?other:me};
+  $('dlSend').disabled=true;
+  try{
+   await api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:{room_id:String(chat.room_id),ad_title:chat.ad_title||'Личный чат',sender_id:me,sender_name:meName,receiver_id:other,text:'[DEAL_OFFER:'+JSON.stringify(o)+']'}});
+   panel.innerHTML='';lastSig='';loadMessages();
+  }catch(e){toast('Не удалось отправить: '+e.message);if($('dlSend'))$('dlSend').disabled=false;}
+ };
+}
+async function confirmDeal(d,sys){
+ const o=d.o,a=String(o.seller_id),b=String(o.buyer_id),now=Date.now();
+ try{
+  const rows=await api('messages',{query:'?select=sender_id,receiver_id,created_at&text=like.'+encodeURIComponent('[DEAL_DONE:*')+'&created_at=gte.'+encodeURIComponent(new Date(now-7*864e5).toISOString())+'&limit=1000'})||[];
+  const inv=(r,u)=>String(r.sender_id)===u||String(r.receiver_id)===u;
+  const day=u=>rows.filter(r=>inv(r,u)&&now-new Date(r.created_at).getTime()<864e5).length;
+  if(rows.filter(r=>inv(r,a)&&inv(r,b)).length>=2){toast('Лимит: не более 2 сделок с одним игроком за 7 дней');return false;}
+  if(day(a)>=10||day(b)>=10){toast('Лимит: не более 10 сделок в сутки');return false;}
+ }catch(_){}
+ await sys('[DEAL_DONE:'+o.offer_id+']');
+ const rs=await api('roles',{query:'?select=user_id,deals_success,deals_total&user_id=in.('+[a,b].map(encodeURIComponent).join(',')+')'}).catch(()=>[]);
+ for(const u of [a,b]){
+  const r=(rs||[]).find(x=>String(x.user_id)===u)||{},f={deals_success:(r.deals_success||0)+1,deals_total:(r.deals_total||0)+1};
+  const ok=await patchRole(u,f,'bump_deals',{p_user_id:u});
+  if(ok&&u===String(meId)&&myRole)Object.assign(myRole,f);
+ }
+ if(Number(o.price)>0){
+  try{
+   const ad=(ads||[]).find(x=>String(x.title)===String(o.ad_title));
+   await api('price_history',{method:'POST',headers:{'Prefer':'return=minimal'},body:{ad_id:String(o.offer_id),category:(ad&&ad.category)||'Другое',title:String(o.ad_title||'').trim(),server:'08 сервер',price:Number(o.price),seller_id:a}});
+   priceHistoryCache=[];
+  }catch(_){}
+ }
+ return true;
+}
+async function dealAction(k,oid,btn){
+ const chat=activeChat,d=curDeals.get(oid);if(!chat||!d)return;
+ const card=btn.closest('.deal-card'),other=String(chat.receiver_id);
+ const sys=text=>api('messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:{room_id:String(chat.room_id),ad_title:chat.ad_title||'Личный чат',sender_id:String(meId),sender_name:meName,receiver_id:other,text:text}});
+ btn.disabled=true;
+ try{
+  if(k==='cancel')await sys('[DEAL_CANCEL:'+oid+']');
+  else if(k==='decline')await sys('[DEAL_DECLINE:'+oid+']');
+  else if(k==='confirm'){if(!(await confirmDeal(d,sys))){btn.disabled=false;return;}}
+  else if(k==='review'){
+   const stars=Number(card.querySelector('.deal-stars').dataset.val)||0;
+   if(!stars){toast('Выберите оценку от 1 до 5 ⭐');btn.disabled=false;return;}
+   await sys('[DEAL_REVIEW:'+JSON.stringify({offer_id:oid,to:other,stars:stars,text:card.querySelector('input').value.trim().slice(0,200)})+']');
+   toast('Спасибо за отзыв!');
+  }
+ }catch(e){toast('Не удалось: '+e.message);btn.disabled=false;return;}
+ lastSig='';loadMessages();
+}
+function dealClick(el){
+ const k=el.dataset.deal;
+ if(k==='star'){el.parentNode.querySelectorAll('[data-deal="star"]').forEach(b=>b.classList.toggle('on',Number(b.dataset.star)<=Number(el.dataset.star)));el.parentNode.dataset.val=el.dataset.star;return;}
+ const c=el.closest('[data-oid]');if(c)dealAction(k,c.dataset.oid,el);
+}
+async function loadReviews(uid){
+ if(!$('ppReviews'))return;
+ try{
+  const rows=await api('messages',{query:'?select=text,sender_id,sender_name&receiver_id=eq.'+encodeURIComponent(uid)+'&text=like.'+encodeURIComponent('[DEAL_REVIEW:*')+'&order=id.desc&limit=40'})||[],list=[];
+  rows.forEach(m=>{try{const r=JSON.parse(String(m.text).slice(13,-1));if(String(r.to)===uid&&String(m.sender_id)!==uid)list.push({n:m.sender_name||'Игрок',s:Math.max(1,Math.min(5,+r.stars||5)),t:String(r.text||'')});}catch(_){}});
+  const box=$('ppReviews');if(!list.length||!box)return;
+  const avg=(list.reduce((a,x)=>a+x.s,0)/list.length).toFixed(1);
+  box.innerHTML='<div style="margin-top:14px;font-weight:800">⭐ '+avg+' <span class="muted small">('+list.length+' отзывов)</span></div>'+list.slice(0,5).map(x=>'<div class="deal-card" style="margin-top:6px"><div class="small">'+'⭐'.repeat(x.s)+' <b>'+escapeHTML(x.n)+'</b></div>'+(x.t?'<div class="small" style="margin-top:3px">'+escapeHTML(x.t)+'</div>':'')+'</div>').join('');
+ }catch(_){}
 }
 async function loadReportsAdmin() {
  const box = $('adminReportsBox'); if (!box) return;
@@ -2153,7 +2333,7 @@ function openMyAdsModal() {
 async function init() {
  renderCategories();renderDealFilters();
  loadAds();
- loadRole();
+ loadRole().then(ok => { if (ok) startTenure(); });
 }
 init();
 })();
