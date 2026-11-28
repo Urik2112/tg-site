@@ -208,6 +208,57 @@
 #modalWrap.chat-fullscreen .chat-top #modalClose{flex:0 0 40px}
 #modalWrap.chat-fullscreen .msg-av{width:32px;height:32px}
 
+
+/* ===== Новый вид чата ===== */
+#modalWrap.chat-fullscreen .modal-top{display:none!important}
+#modalWrap.chat-fullscreen>div{background:#120a2c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.045' stroke-width='2'%3E%3Ccircle cx='30' cy='30' r='15'/%3E%3Cpath d='M92 18l14 14-14 14-14-14z'/%3E%3Crect x='22' y='80' width='24' height='20' rx='5'/%3E%3Cpath d='M88 82h20l-4 16H92z'/%3E%3C/g%3E%3Ctext x='24' y='36' font-size='17' font-weight='700' fill='%23ffffff' fill-opacity='.05'%3E%E2%82%BD%3C/text%3E%3C/svg%3E")!important;border:1px solid rgba(123,66,246,.28)!important;border-radius:28px!important;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))!important}
+.chat-head1{margin-bottom:8px}
+.chat-back{height:44px;padding:0 18px;border-radius:22px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);font-weight:800;font-size:15px;color:#fff}
+.chat-head2{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chat-menu-wrap{position:relative;flex-shrink:0}
+.chat-menu-btn{width:46px;height:46px;border-radius:50%;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);font-size:22px;font-weight:900;color:#fff}
+.chat-menu{display:none;position:absolute;left:0;top:52px;z-index:8;min-width:240px;background:#1f1938;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.55)}
+.chat-menu.open{display:block}
+.chat-menu button{display:block;width:100%;text-align:left;background:transparent;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff}
+.chat-menu button:active{background:rgba(255,255,255,.07)}
+.chat-menu button.danger{color:#ff8a98}
+#modalWrap.chat-fullscreen .chat-menu #deleteChatBtn{margin:0!important;padding:11px 12px!important;font-size:14px!important}
+.chat-who{flex:1;min-width:0;height:54px;border-radius:27px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;text-align:center}
+.chat-who strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;font-weight:800}
+.chat-seen{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#8f86b8}
+.chat-seen.online{color:#52d6a0}
+.chat-head-av{flex-shrink:0}
+.chat-head-av .cav{border:2px solid rgba(123,66,246,.45)}
+.deal-strip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:24px;background:rgba(41,30,84,.9);border:1px solid rgba(123,66,246,.3);margin-bottom:6px}
+.ds-thumb{width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(0,0,0,.25)}
+.ds-thumb img{width:100%;height:100%;object-fit:cover}
+.ds-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;font-size:14px}
+.ds-price{font-weight:850;color:var(--yellow);font-size:14px;white-space:nowrap}
+.ds-btn{padding:10px 14px;border-radius:18px;background:#0e0a1f;border:1px solid rgba(255,255,255,.1);font-weight:800;font-size:13px;color:#fff;white-space:nowrap;flex-shrink:0}
+#modalWrap.chat-fullscreen .messages{border:0!important;background:transparent!important;padding:6px 2px!important}
+.day-sep{display:flex;align-items:center;gap:12px;margin:12px 0 8px;color:#8f86b8;font-weight:800;font-size:15px}
+.day-sep:before,.day-sep:after{content:"";flex:1;height:1px;background:rgba(123,66,246,.4)}
+.bubble.pv{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;font-size:16px;line-height:1.35;padding:11px 14px;max-width:82%}
+.bubble.pv.mine{background:linear-gradient(135deg,#6d28d9,#7c3aed);border-radius:20px 20px 6px 20px;border:0}
+.bubble.pv:not(.mine){background:rgba(45,34,90,.92);border:1px solid rgba(123,66,246,.28);border-radius:20px 20px 20px 6px}
+.bubble.pv .b-time{font-size:12px;opacity:.7;margin-left:auto;white-space:nowrap}
+.bubble.pv .b-check{margin-left:2px}
+#modalWrap.chat-fullscreen .send-row .field{height:54px;border-radius:27px;background:rgba(41,30,84,.92);border:0;padding:0 20px;font-size:16px}
+#modalWrap.chat-fullscreen .send-row button{width:58px;height:54px;border-radius:27px;background:linear-gradient(135deg,#6d28d9,#7c3aed);font-size:24px;font-weight:700;color:#fff}
+.rp-ov{position:fixed;inset:0;z-index:50;background:rgba(5,3,12,.78);display:flex;align-items:center;justify-content:center;padding:18px}
+.rp-box{width:100%;max-width:440px;background:#0f0d14;border:1px solid #2a2740;border-radius:24px;padding:18px}
+.rp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:18px}
+.rp-x{width:44px;height:40px;border-radius:12px;background:#17141f;border:1px solid #2a2740;font-size:18px;color:#fff}
+.rp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.rp-chip{flex:1 1 44%;padding:13px 10px;border-radius:22px;background:transparent;border:1px solid #2f2b45;font-size:14px;color:#fff}
+.rp-chip.on{border-color:#7c3aed;background:rgba(124,58,237,.25)}
+.rp-add{width:100%;padding:14px;border-radius:16px;background:transparent;border:1px dashed #3a3657;font-size:15px;color:#fff;margin-bottom:8px}
+.rp-note{font-size:13px;color:#8f86b8;margin-bottom:8px}
+.rp-text{width:100%;min-height:90px;resize:none;background:#0a0810;border:1px solid #2f2b45;border-radius:16px;padding:12px;color:#fff;outline:none;margin-bottom:10px}
+.rp-actions{display:flex;gap:10px}
+.rp-cancel,.rp-send{flex:1;padding:15px;border-radius:18px;font-weight:800;font-size:16px;color:#fff}
+.rp-cancel{background:#17141f}.rp-send{background:linear-gradient(135deg,#6d28d9,#7c3aed)}
+.rp-send:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -793,6 +844,7 @@ function openAd(id) {
   if (sr) {
    if (sr.avatar_url && $('sellerAvatarBox')) $('sellerAvatarBox').innerHTML = '<img src="'+escapeHTML(sr.avatar_url)+'" style="width:100%;height:100%;object-fit:cover">';
    if ($('sellerStatsLine')) $('sellerStatsLine').textContent = 'Объявлений: '+(Array.isArray(ads) ? ads.filter(a => String(a.seller_id) === String(ad.seller_id)).length : 0)+' · Успешных: '+(sr.deals_success||0);
+   recountDeals(ad.seller_id).then(n=>{const v=Math.max(Number(sr.deals_success)||0,n);if($('sellerStatsLine'))$('sellerStatsLine').textContent=$('sellerStatsLine').textContent.replace(/Успешных: \d+/,'Успешных: '+v);}).catch(()=>{});
    if ($('sellerTenure')) $('sellerTenure').innerHTML = tenureChip(tenureOf(sr));
    if (sr.bio && $('sellerBioBox')) $('sellerBioBox').textContent = 'О продавце: ' + sr.bio;
   } else if ($('sellerStatsLine')) {
@@ -1764,6 +1816,7 @@ async function openPublicProfile(uid){
  try{const r=await api('roles',{query:'?select=user_id,display_name,avatar_url,avatar_frame,rank,bio,game_phone,deals_success,first_seen_at,active_seconds,tenure_tag,tenure_override&user_id=eq.'+encodeURIComponent(uid)+'&limit=1'});p=r&&r[0]||null;}catch(_){}
  try{const l=await api('profile_likes',{query:'?select=from_user_id&to_user_id=eq.'+encodeURIComponent(uid)});likes=Array.isArray(l)?l.length:0;}catch(_){}
  p=p||{user_id:uid};
+ try{p.deals_success=Math.max(Number(p.deals_success)||0,await recountDeals(uid));}catch(_){}
  const mineAds=(ads||[]).filter(a=>String(a.seller_id)===uid),name=p.display_name||(mineAds[0]&&mineAds[0].seller_name)||'Игрок',r=rankFor(p.rank);
  $('modalBody').innerHTML='<div style="text-align:center">'+avatarHTML(p,uid,name,84)+'<div style="font-size:19px;font-weight:850;margin-top:10px;overflow-wrap:anywhere">'+escapeHTML(name)+'</div><div style="margin-top:4px"><span class="rank" style="color:'+r.color+';background:'+r.bg+'">'+escapeHTML(r.name)+'</span>'+tenureChip(tenureOf(p))+'</div></div>'
   +(p.bio?'<div class="detail-desc" style="margin-top:12px;text-align:center">'+escapeHTML(p.bio)+'</div>':'')
@@ -1782,7 +1835,7 @@ function chatDateTime(value){
  return same?d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
 }
 function chatAvatar(pr,uid,name,kind){
- if(kind==='global')return '<div class="chat-avatar">☷</div>';
+ if(kind==='global')return '<div class="chat-avatar" style="background:linear-gradient(135deg,#7b42f6,#ec4899)">💬</div>';
  if(kind==='support')return '<div class="chat-avatar">🎧</div>';
  const inner=avatarHTML(pr||{},uid,name,48);
  return '<div class="chat-avatar">'+inner+'</div>';
@@ -1790,7 +1843,7 @@ function chatAvatar(pr,uid,name,kind){
 function chatPinned(){
  const me=String(meId);
  return [
-  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'💬 Общий чат',ad_title:'Общение игроков маркетплейса',last_text:'Нажмите, чтобы открыть общий чат',last_id:0,unread:false,pinned:true},
+  {key:'global',room_id:'global',rooms:['global'],global:true,support:false,display_name:'Общий чат',ad_title:'Общение игроков маркетплейса',last_text:'Нажмите, чтобы открыть общий чат',last_id:0,unread:false,pinned:true},
   {key:'support_'+me,room_id:'support_'+me,rooms:['support_'+me],global:false,support:true,staffView:false,receiver_id:'support',display_name:'Техподдержка',ad_title:'Свяжитесь с поддержкой RP Маркет 08',last_text:'Нажмите, чтобы написать в поддержку',last_id:0,unread:false,pinned:true}
  ];
 }
@@ -1810,7 +1863,7 @@ function renderChatList(items,note){
   const pr=(!c.global&&!c.support&&uid)?(chatProfilesCache.get(uid)||{}):(c.staffView?chatProfilesCache.get(uid)||{}:null);
   const name=c.display_name||((pr&&pr.display_name)||'Игрок');
   const verified=pr&&rankLevel(pr.rank)>=3?'<span class="verified-mark">✓</span>':'';
-  const prefix=c.global?'💬 ': '';
+  const prefix='';
   const subtitle=(c.ad_title||'Личный чат')+': '+(c.last_text||'Нет сообщений');
   const avatar=chatAvatar(pr,uid,name,c.global?'global':(c.support&&!c.staffView?'support':null));
   const b=document.createElement('button');b.type='button';b.className='chat-item'+(c.unread?' unread':'');
@@ -1897,33 +1950,132 @@ function startPrivateChat(targetOrAd,nameOpt,titleOpt){
  closeModal();showPage('chatsPage');openChat(c);
 }
 
-let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true;
+let msgBusy=false,lastSig='',curRows=[],pending=[],stickBottom=true,doneDealsSeen=-1;
+function chatDayLabel(iso){
+ const d=new Date(iso);if(Number.isNaN(d.getTime()))return '';
+ const t=new Date(),y=new Date(Date.now()-864e5);
+ if(d.toDateString()===t.toDateString())return 'Сегодня';
+ if(d.toDateString()===y.toDateString())return 'Вчера';
+ return d.toLocaleDateString('ru-RU',d.getFullYear()===t.getFullYear()?{day:'numeric',month:'long'}:{day:'numeric',month:'long',year:'numeric'});
+}
+function lastSeenText(row){
+ const v=row&&(row.last_seen_at||row.last_seen);
+ const d=v?new Date(v):null;
+ if(!d||Number.isNaN(d.getTime()))return 'был(а) в сети недавно';
+ if(Date.now()-d.getTime()<120000)return 'в сети';
+ const hm=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),t=new Date(),y=new Date(Date.now()-864e5);
+ if(d.toDateString()===t.toDateString())return 'был(а) в сети сегодня в '+hm;
+ if(d.toDateString()===y.toDateString())return 'был(а) в сети вчера в '+hm;
+ return 'был(а) в сети '+d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' в '+hm;
+}
+async function refreshPeerSeen(chat){
+ if(!chat||chat.global||chat.support||!$('chatSub'))return;
+ try{
+  const r=await api('roles',{query:'?select=*&user_id=eq.'+encodeURIComponent(String(chat.receiver_id))+'&limit=1'});
+  if(activeChat!==chat||!$('chatSub'))return;
+  const row=r&&r[0];
+  if(row)chatProfilesCache.set(String(chat.receiver_id),Object.assign({},chatProfilesCache.get(String(chat.receiver_id))||{},row));
+  const txt=lastSeenText(row);
+  $('chatSub').textContent=txt;$('chatSub').classList.toggle('online',txt==='в сети');
+ }catch(_){}
+}
 function msgHTML(m){
  if(String(m.text||'').startsWith('[DEAL_')){const d=Array.from(curDeals.values()).find(x=>x.id===m.id);return d?dealCardHTML(d):'';}
  const sid=String(m.sender_id||''),mine=sid===String(meId),p=m._p;
+ const priv=!!(activeChat&&!activeChat.global&&!activeChat.support);
+ if(priv){
+  let meta;
+  if(p)meta=p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':'<span class="b-time">'+(p.state==='ok'?'отправлено':'отправляется…')+'</span>';
+  else meta='<span class="b-time">'+escapeHTML(formatChatTime(m.created_at))+(mine?' <span class="b-check">✓</span>':'')+'</span>';
+  return '<div class="msg-row'+(mine?' mine':'')+'"><div class="bubble pv'+(mine?' mine':'')+(p?' pending':'')+'"><span class="b-text">'+escapeHTML(m.text)+'</span>'+meta+'</div></div>';
+ }
  const pr=mine?(myRole||{}):(chatProfilesCache.get(sid)||{});
  const name=pr.display_name||m.sender_name||(mine?meName:sid)||'Игрок';
  const tail=p?(p.state==='fail'?'<span class="msg-fail" data-retry="'+escapeHTML(p.id)+'">⚠ Не отправлено — нажмите, чтобы повторить</span>':(p.state==='ok'?'<span class="msg-time">отправлено</span>':'<span class="msg-time">отправляется…</span>')):'<span class="msg-time">'+escapeHTML(formatChatTime(m.created_at))+'</span>';
  return '<div class="msg-row'+(mine?' mine':'')+'">'+avatarHTML(pr,sid,name,32)+'<div class="bubble'+(mine?' mine':'')+(p?' pending':'')+'"><div class="msg-author" data-uid="'+escapeHTML(sid)+'">'+escapeHTML(name)+'</div>'+escapeHTML(m.text)+tail+'</div></div>';
 }
+function trackDoneDeals(){
+ const n=Array.from(curDeals.values()).filter(d=>d.st==='done').length;
+ if(n!==doneDealsSeen){const first=doneDealsSeen<0;doneDealsSeen=n;if(!first||n>0)refreshMyDeals();}
+}
 function renderMsgs(stick){
  const box=$('messagesBox');if(!box||!activeChat)return;
  curDeals=(activeChat.global||activeChat.support)?new Map():dealState(curRows);
+ trackDoneDeals();
  const mineP=pending.filter(p=>p.key===activeChat.key).map(p=>({sender_id:meId,text:p.text,_p:p}));
  const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
- box.innerHTML=curRows.concat(mineP).map(msgHTML).join('')||'<div class="empty">Начните общение первым 👋</div>';
+ let lastDay='';
+ const html=curRows.concat(mineP).map(m=>{
+  const h=msgHTML(m);if(!h)return '';
+  const day=chatDayLabel(m.created_at||new Date().toISOString());
+  let sep='';if(day&&day!==lastDay){lastDay=day;sep='<div class="day-sep"><span>'+escapeHTML(day)+'</span></div>';}
+  return sep+h;
+ }).join('');
+ box.innerHTML=html||'<div class="empty">Начните общение первым 👋</div>';
  if(stick||near||stickBottom){box.scrollTop=box.scrollHeight;stickBottom=false;}
+}
+async function uploadReportPhoto(file){
+ const fn='reports/'+meId+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)+'.jpg',base='https://zhakfkqqurjlqdthsnhz.supabase.co';
+ const up=await fetch(base+'/storage/v1/object/avatars/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'image/jpeg'},body:await compressImage(file,1280,0.8)});
+ if(!up.ok)throw new Error('не удалось загрузить фото ('+up.status+')');
+ return base+'/storage/v1/object/public/avatars/'+fn;
+}
+function openDialogReport(chat){
+ const old=$('rpOv');if(old)old.remove();
+ const reasons=['Мошенничество','Обман / не отвечает','Нарушение правил','Спам / фейк','Другое'];
+ let reason='',files=[];
+ const ov=document.createElement('div');ov.id='rpOv';ov.className='rp-ov';
+ ov.innerHTML='<div class="rp-box"><div class="rp-head"><b>Жалоба на диалог</b><button type="button" class="rp-x" id="rpX">✕</button></div><div class="rp-chips">'+reasons.map(r=>'<button type="button" class="rp-chip" data-r="'+escapeHTML(r)+'">'+escapeHTML(r)+'</button>').join('')+'</div><button type="button" class="rp-add" id="rpAdd">+ Добавить фото (до 3)</button><input type="file" id="rpFile" accept="image/*" multiple hidden><div class="rp-note" id="rpNote">Можно прикрепить до 3 скриншотов.</div><textarea id="rpText" class="rp-text" maxlength="500" placeholder="Комментарий (опционально)"></textarea><div class="rp-actions"><button type="button" class="rp-cancel" id="rpCancel">Отмена</button><button type="button" class="rp-send" id="rpSend">Отправить</button></div></div>';
+ document.body.appendChild(ov);
+ const close=()=>ov.remove();
+ ov.addEventListener('click',e=>{if(e.target===ov)close();});
+ $('rpX').onclick=close;$('rpCancel').onclick=close;
+ ov.querySelectorAll('.rp-chip').forEach(b=>b.onclick=()=>{reason=b.dataset.r;ov.querySelectorAll('.rp-chip').forEach(x=>x.classList.toggle('on',x===b));});
+ $('rpAdd').onclick=()=>$('rpFile').click();
+ $('rpFile').onchange=e=>{
+  Array.from(e.target.files||[]).forEach(f=>{if(files.length<3)files.push(f);});
+  e.target.value='';
+  $('rpNote').textContent=files.length?('Прикреплено фото: '+files.length+' из 3'):'Можно прикрепить до 3 скриншотов.';
+  $('rpAdd').textContent=files.length>=3?'Фото добавлены':'+ Добавить фото (до 3)';
+ };
+ $('rpSend').onclick=async()=>{
+  if(!reason){toast('Выберите причину жалобы');return;}
+  const btn=$('rpSend');btn.disabled=true;btn.textContent='Отправляем…';
+  try{
+   const photos=[];
+   for(const f of files)photos.push(await uploadReportPhoto(f));
+   await api('dialog_reports',{method:'POST',headers:{'Prefer':'return=minimal'},body:{reporter_id:String(meId),reporter_name:String(meName),target_id:String(chat.receiver_id||''),target_name:String(chat.display_name||''),room_id:String(chat.room_id||''),ad_title:String(chat.ad_title||''),reason:reason,comment:($('rpText').value||'').trim().slice(0,500),photos:photos}});
+   toast('Жалоба отправлена администрации ✅');close();
+  }catch(e){toast('Не удалось отправить жалобу: '+(e&&e.message||'ошибка'));if($('rpSend')){btn.disabled=false;btn.textContent='Отправить';}}
+ };
 }
 function openChat(chat){
  chat.key=chat.key||(chat.global?'global':(chat.support?chat.room_id:'dm_user_'+chat.receiver_id));
  if(!chat.rooms||!chat.rooms.length)chat.rooms=[chat.room_id];
  if(!chat.global&&!chat.support&&chat.receiver_id&&!chat.rooms.includes(chat.room_id))chat.rooms.push(chat.room_id);
- showModal(chat.display_name,'');activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;
- const canDelete=!chat.global||!!(myRank&&myRank.level>=7);
- $('modalBody').innerHTML='<div class="chat-top"><button type="button" class="close" id="chatBackBtn" aria-label="Закрыть чат">✕</button><div class="small muted chat-sub" id="chatSub"></div>'+((!chat.global&&!chat.support)?'<button type="button" class="inline-btn deal-btn" id="dealBtn">🤝 Сделка</button>':'')+(canDelete?'<button type="button" class="inline-btn chat-del" id="deleteChatBtn">🗑️ Удалить чат</button>':'')+'</div><div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Сообщение…" autocomplete="off"><button type="submit">➤</button></form>';
- $('chatSub').textContent=chat.ad_title||'Личный чат';
- if($('chatBackBtn'))$('chatBackBtn').onclick=closeModal;
+ showModal(chat.display_name,'');activeChat=chat;lastSig='';curRows=[];pending=[];stickBottom=true;doneDealsSeen=-1;
+ const priv=!chat.global&&!chat.support,canDelete=!chat.global||!!(myRank&&myRank.level>=7),peer=String(chat.receiver_id||''),hasMenu=priv||canDelete;
+ const pr=priv?(chatProfilesCache.get(peer)||{}):null;
+ let av;
+ if(chat.global)av='<div class="cav" style="width:46px;height:46px;background:linear-gradient(135deg,#7b42f6,#ec4899);font-size:22px;cursor:default">💬</div>';
+ else if(chat.support&&!chat.staffView)av='<div class="cav" style="width:46px;height:46px;background:#2481cc;font-size:22px;cursor:default">🎧</div>';
+ else av=avatarHTML(pr||{},peer,chat.display_name,46);
+ const sub=chat.global?'Общение игроков маркетплейса':(chat.support?(chat.ad_title||'Техподдержка'):(pr&&pr.last_seen_at?lastSeenText(pr):'был(а) в сети недавно'));
+ const ad=priv?(ads||[]).find(a=>String(a.title||'')===String(chat.ad_title||'')):null;
+ const img=ad&&((ad.images&&ad.images[0])||ad.image_url);
+ const strip=priv?'<div class="deal-strip"><div class="ds-thumb">'+(img?'<img src="'+escapeHTML(img)+'" alt="">':escapeHTML((ad&&ad.emoji)||'💼'))+'</div><div class="ds-title">'+escapeHTML(chat.ad_title&&chat.ad_title!=='Личный чат'?chat.ad_title:'Личный диалог')+'</div>'+(ad?'<div class="ds-price">'+escapeHTML(formatPrice(ad.price))+'</div>':'')+'<button type="button" id="dealBtn" class="ds-btn">Договорились</button></div>':'';
+ const menu='<div class="chat-menu" id="chatMenu">'+(priv?'<button type="button" id="chatProfileBtn">👤 Профиль собеседника</button><button type="button" id="chatReportBtn">🚩 Пожаловаться на диалог</button>':'')+(canDelete?'<button type="button" class="danger" id="deleteChatBtn">🗑️ Удалить чат</button>':'')+'</div>';
+ $('modalBody').innerHTML='<div class="chat-head1"><button type="button" class="chat-back" id="chatBackBtn" aria-label="Закрыть чат">‹ Назад</button></div>'
+  +'<div class="chat-head2">'+(hasMenu?'<div class="chat-menu-wrap"><button type="button" class="chat-menu-btn" id="chatMenuBtn" aria-label="Меню чата">⋮</button>'+menu+'</div>':'')
+  +'<div class="chat-who"><strong>'+escapeHTML(chat.display_name||'Чат')+'</strong><span id="chatSub" class="chat-seen">'+escapeHTML(sub)+'</span></div><div id="chatHeadAv" class="chat-head-av">'+av+'</div></div>'
+  +strip+'<div id="messagesBox" class="messages"><div class="loading">Загружаем сообщения…</div></div><div id="dealPanel"></div><form id="sendMessageForm" class="send-row"><input class="field" name="text" maxlength="600" placeholder="Напишите сообщение..." autocomplete="off"><button type="submit" aria-label="Отправить">→</button></form>';
+ $('chatBackBtn').onclick=closeModal;
  if($('dealBtn'))$('dealBtn').onclick=openProposeDealModal;
+ const mb=$('chatMenuBtn'),mn=$('chatMenu');
+ if(mb&&mn){mb.onclick=e=>{e.stopPropagation();mn.classList.toggle('open');};if(window.__chatMenuClose)$('modalBody').removeEventListener('click',window.__chatMenuClose);window.__chatMenuClose=e=>{if(!e.target.closest('#chatMenuBtn,#deleteChatBtn'))mn.classList.remove('open');};$('modalBody').addEventListener('click',window.__chatMenuClose);}
+ if($('chatProfileBtn'))$('chatProfileBtn').onclick=()=>openPublicProfile(peer);
+ if($('chatReportBtn'))$('chatReportBtn').onclick=()=>{if(mn)mn.classList.remove('open');openDialogReport(chat);};
+ if(priv&&$('chatHeadAv'))$('chatHeadAv').onclick=()=>openPublicProfile(peer);
  const delBtn=$('deleteChatBtn');
  if(delBtn){let armed=false,timer=null;delBtn.onclick=()=>{if(!armed){armed=true;delBtn.textContent='Точно удалить? Нажмите ещё раз';timer=setTimeout(()=>{armed=false;if($('deleteChatBtn'))$('deleteChatBtn').textContent='🗑️ Удалить чат';},3500);return;}clearTimeout(timer);deleteCurrentChat();};}
  $('messagesBox').addEventListener('click',e=>{
@@ -1933,7 +2085,8 @@ function openChat(chat){
  });
  $('sendMessageForm').addEventListener('submit',sendMessage);
  $('modalWrap').classList.add('chat-fullscreen');
- loadMessages();chatTimer=setInterval(()=>loadMessages(),3000);
+ loadMessages();let tk=0;chatTimer=setInterval(()=>{loadMessages();if(++tk%10===0)refreshPeerSeen(chat);},3000);
+ if(priv)refreshPeerSeen(chat);
 }
 async function loadMessages(){
  if(!activeChat||msgBusy)return;
@@ -2087,9 +2240,11 @@ function openProposeDealModal(){
  const other=String(chat.receiver_id),me=String(meId);
  const titles=Array.from(new Set((ads||[]).filter(a=>[me,other].includes(String(a.seller_id))).map(a=>a.title).filter(Boolean)));
  const t0=chat.ad_title&&chat.ad_title!=='Личный чат'?chat.ad_title:'';
- panel.innerHTML='<div class="deal-form"><b>🤝 Предложение сделки</b><input class="field" id="dlTitle" list="dlTitles" maxlength="70" placeholder="Товар / объявление" value="'+escapeHTML(t0)+'"><datalist id="dlTitles">'+titles.map(t=>'<option value="'+escapeHTML(t)+'">').join('')+'</datalist><input class="field" id="dlPrice" inputmode="numeric" placeholder="Итоговая сумма, например 15 000 000"><select class="field" id="dlRole"><option value="seller">Я продавец (передал товар)</option><option value="buyer">Я покупатель (оплатил товар)</option></select><div style="display:flex;gap:8px"><button type="button" class="btn" id="dlSend" style="margin:0">Отправить предложение</button><button type="button" class="btn secondary" id="dlCancel" style="margin:0;width:auto;padding:12px 16px">✕</button></div></div>';
+ const ad0=(ads||[]).find(a=>String(a.title||'')===t0),p0=ad0&&Number(ad0.price)>0?formatSpacedDigits(Math.round(Number(ad0.price))):'';
+ panel.innerHTML='<div class="deal-form"><b>🤝 Предложение сделки</b><input class="field" id="dlTitle" list="dlTitles" maxlength="70" placeholder="Товар / объявление" value="'+escapeHTML(t0)+'"><datalist id="dlTitles">'+titles.map(t=>'<option value="'+escapeHTML(t)+'">').join('')+'</datalist><input class="field" id="dlPrice" inputmode="numeric" placeholder="Итоговая сумма, например 15 000 000" value="'+escapeHTML(p0)+'"><select class="field" id="dlRole"><option value="seller">Я продавец (передал товар)</option><option value="buyer">Я покупатель (оплатил товар)</option></select><div style="display:flex;gap:8px"><button type="button" class="btn" id="dlSend" style="margin:0">Отправить предложение</button><button type="button" class="btn secondary" id="dlCancel" style="margin:0;width:auto;padding:12px 16px">✕</button></div></div>';
  $('dlPrice').oninput=()=>{$('dlPrice').value=formatSpacedDigits($('dlPrice').value);};
  $('dlCancel').onclick=()=>{panel.innerHTML='';};
+ if(ad0)$('dlRole').value=String(ad0.seller_id)===other?'buyer':'seller';
  $('dlSend').onclick=async()=>{
   const title=$('dlTitle').value.trim();if(!title){toast('Укажите товар');return;}
   const price=Number($('dlPrice').value.replace(/\D/g,''))||0,isSeller=$('dlRole').value==='seller';
@@ -2101,6 +2256,26 @@ function openProposeDealModal(){
   }catch(e){toast('Не удалось отправить: '+e.message);if($('dlSend'))$('dlSend').disabled=false;}
  };
 }
+async function recountDeals(uid){
+ uid=String(uid);
+ const rows=await api('messages',{query:'?select=text&text=like.'+encodeURIComponent('[DEAL_DONE:*')+'&or=(sender_id.eq.'+encodeURIComponent(uid)+',receiver_id.eq.'+encodeURIComponent(uid)+')&limit=2000'});
+ return new Set((rows||[]).map(r=>String(r.text||''))).size;
+}
+let dealsBusy=false;
+async function refreshMyDeals(){
+ if(dealsBusy||!myRole)return;dealsBusy=true;
+ try{
+  const stored=Number(myRole.deals_success)||0,n=Math.max(stored,await recountDeals(meId));
+  if(n!==stored){myRole.deals_success=n;patchRole(meId,{deals_success:n,deals_total:Math.max(Number(myRole.deals_total)||0,n)});}
+  const el=$('profileDealsSuccess');if(el)el.textContent=n;
+ }catch(_){}finally{dealsBusy=false;}
+}
+let presenceOff=false;
+function pingPresence(){
+ if(presenceOff||!myRole||document.visibilityState!=='visible')return;
+ api('roles',{method:'PATCH',query:'?user_id=eq.'+encodeURIComponent(meId),headers:{'Prefer':'return=minimal'},body:{last_seen_at:new Date().toISOString()}}).catch(e=>{if(/last_seen_at|column/i.test(String(e&&e.message)))presenceOff=true;});
+}
+function startPresence(){pingPresence();setInterval(pingPresence,60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pingPresence();});}
 async function confirmDeal(d,sys){
  const o=d.o,a=String(o.seller_id),b=String(o.buyer_id),now=Date.now();
  try{
@@ -2111,12 +2286,7 @@ async function confirmDeal(d,sys){
   if(day(a)>=10||day(b)>=10){toast('Лимит: не более 10 сделок в сутки');return false;}
  }catch(_){}
  await sys('[DEAL_DONE:'+o.offer_id+']');
- const rs=await api('roles',{query:'?select=user_id,deals_success,deals_total&user_id=in.('+[a,b].map(encodeURIComponent).join(',')+')'}).catch(()=>[]);
- for(const u of [a,b]){
-  const r=(rs||[]).find(x=>String(x.user_id)===u)||{},f={deals_success:(r.deals_success||0)+1,deals_total:(r.deals_total||0)+1};
-  const ok=await patchRole(u,f,'bump_deals',{p_user_id:u});
-  if(ok&&u===String(meId)&&myRole)Object.assign(myRole,f);
- }
+ await refreshMyDeals();
  if(Number(o.price)>0){
   try{
    const ad=(ads||[]).find(x=>String(x.title)===String(o.ad_title));
@@ -2161,15 +2331,19 @@ async function loadReviews(uid){
 }
 async function loadReportsAdmin() {
  const box = $('adminReportsBox'); if (!box) return;
- try {
-  const reps = await api('reports', { query: '?select=*&order=id.desc&limit=30' }) || [];
-  if (!reps.length) { box.innerHTML = '<div class="small muted">Активных жалоб нет ✅</div>'; return; }
-  box.innerHTML = reps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>Лот #'+escapeHTML(r.ad_id)+': '+escapeHTML(r.ad_title||'Без названия')+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div><div class="small muted">Продавец: '+escapeHTML(r.seller_id)+' · От: '+escapeHTML(r.reporter_id)+'</div></div>').join('');
-  box.querySelectorAll('[data-del-rep]').forEach(b => b.addEventListener('click', async () => {
-   await api('reports', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(b.dataset.delRep) });
-   toast('Жалоба закрыта'); loadReportsAdmin();
-  }));
- } catch (e) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; }
+ let reps = [], dreps = [], repsErr = false;
+ try { reps = await api('reports', { query: '?select=*&order=id.desc&limit=30' }) || []; } catch (e) { repsErr = true; }
+ try { dreps = await api('dialog_reports', { query: '?select=*&order=id.desc&limit=30' }) || []; } catch (e) { dreps = []; }
+ if (repsErr && !dreps.length) { box.innerHTML = '<div class="small muted">Таблица reports не найдена</div>'; return; }
+ if (!reps.length && !dreps.length) { box.innerHTML = '<div class="small muted">Активных жалоб нет ✅</div>'; return; }
+ const adRows = reps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>Лот #'+escapeHTML(r.ad_id)+': '+escapeHTML(r.ad_title||'Без названия')+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'" data-tbl="reports">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div><div class="small muted">Продавец: '+escapeHTML(r.seller_id)+' · От: '+escapeHTML(r.reporter_id)+'</div></div>').join('');
+ const dlgRows = dreps.map(r => '<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>💬 Жалоба на диалог: '+escapeHTML(r.target_name||r.target_id)+'</b><button type="button" class="inline-btn" data-del-rep="'+escapeHTML(r.id)+'" data-tbl="dialog_reports">Закрыть</button></div><div style="color:var(--danger);margin:4px 0">Причина: '+escapeHTML(r.reason)+'</div>'+(r.comment?'<div style="margin:3px 0">'+escapeHTML(r.comment)+'</div>':'')+'<div class="small muted">На игрока: '+escapeHTML(r.target_id)+' · От: '+escapeHTML(r.reporter_name||'')+' ('+escapeHTML(r.reporter_id)+')'+(r.ad_title?' · Лот: '+escapeHTML(r.ad_title):'')+'</div>'+((Array.isArray(r.photos)&&r.photos.length)?'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+r.photos.map(u=>'<a href="'+escapeHTML(u)+'" target="_blank" rel="noopener"><img src="'+escapeHTML(u)+'" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></a>').join('')+'</div>':'')+'</div>').join('');
+ box.innerHTML = dlgRows + adRows;
+ box.querySelectorAll('[data-del-rep]').forEach(b => b.addEventListener('click', async () => {
+  try { await api(b.dataset.tbl || 'reports', { method: 'DELETE', query: '?id=eq.' + encodeURIComponent(b.dataset.delRep) }); toast('Жалоба закрыта'); }
+  catch (e) { toast('Не удалось закрыть: ' + e.message); }
+  loadReportsAdmin();
+ }));
 }
 const DEAL_TERMS = [
  { code: 'п. 1.2', text: 'Сервис RP Маркет 08 не предоставляет гарантий успешности обмена или сделки между игроками — площадка служит только для коммуникации.' },
@@ -2327,7 +2501,7 @@ function showPage(pageId) {
  });
  if (pageId === 'chatsPage' && typeof loadChats === 'function') loadChats();
  if (pageId === 'pricesPage' && typeof loadPriceHistory === 'function') loadPriceHistory(false);
- if (pageId === 'profilePage' && typeof renderProfile === 'function') renderProfile();
+ if (pageId === 'profilePage' && typeof renderProfile === 'function') { renderProfile(); if (typeof refreshMyDeals === 'function') refreshMyDeals(); }
 }
 
 document.querySelectorAll('#bottomNav .nav-item[data-page]').forEach(btn => {
@@ -2381,7 +2555,7 @@ function openMyAdsModal() {
 async function init() {
  renderCategories();renderDealFilters();
  loadAds();
- loadRole().then(ok => { if (ok) startTenure(); });
+ loadRole().then(ok => { if (ok) { startTenure(); startPresence(); refreshMyDeals(); } });
 }
 init();
 })();
