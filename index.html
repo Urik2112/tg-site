@@ -1686,20 +1686,18 @@ async function loadChats() {
    unread: false
   });
 
-  if (!isStaff) {
-   map.set('support_' + meId, {
-    room_id: 'support_' + meId,
-    global: false,
-    support: true,
-    staffView: false,
-    receiver_id: 'support',
-    display_name: '🛟 Техподдержка RP Маркет 08',
-    ad_title: 'Помощь и вопросы администрации',
-    last_text: 'Нажмите, чтобы написать в поддержку',
-    last_id: 0,
-    unread: false
-   });
-  }
+  map.set('support_' + meId, {
+   room_id: 'support_' + meId,
+   global: false,
+   support: true,
+   staffView: false,
+   receiver_id: 'support',
+   display_name: '🛟 Техподдержка RP Маркет 08',
+   ad_title: 'Помощь и вопросы администрации',
+   last_text: 'Нажмите, чтобы написать в поддержку',
+   last_id: 0,
+   unread: false
+  });
 
   const peerIds = new Set();
 
@@ -1726,12 +1724,13 @@ async function loadChats() {
 
    if (otherId && otherId !== 'support' && otherId !== 'global') peerIds.add(otherId);
 
-   if (!map.has(rid)) {
+   const mapKey = isSup ? rid : ('dm_user_' + otherId);
+   if (!map.has(mapKey)) {
     const otherName = isSup
      ? (isMySupport ? '🛟 Техподдержка RP Маркет 08' : ('🛟 Тикет #' + otherId))
      : (String(m.sender_id) === String(meId) ? ('Игрок ' + otherId) : (m.sender_name || otherId));
 
-    map.set(rid, {
+    map.set(mapKey, {
      room_id: rid,
      global: false,
      support: isSup,
@@ -1744,7 +1743,7 @@ async function loadChats() {
      unread: (seen[rid] || 0) < (m.id || 0) && String(m.sender_id) !== String(meId)
     });
    } else {
-    const item = map.get(rid);
+    const item = map.get(mapKey);
     if ((m.id || 0) > item.last_id) {
      item.last_id = m.id || 0;
      item.last_text = String(m.text || '');
